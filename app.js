@@ -619,16 +619,33 @@ function highlightCode (code, lang, codeTheme) {
     );
 }
 
+function safeUrl (url) {
+  if (!url) return "";
+  const allowed = ["http:", "https:", "data:", "mailto:"];
+  try {
+    const parsed = new URL(url, window.location.href);
+    if (allowed.includes(parsed.protocol)) return url;
+    return "";
+  } catch {
+    if (url.startsWith("/") || url.startsWith("./") || url.startsWith("../")) return url;
+    return "";
+  }
+}
+
 function parseInline (text, links) {
   let value = escapeHtml(text);
 
-  value = value.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, (_, alt, src) =>
-    imageHtml(alt, src),
-  );
+  value = value.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, (_, alt, src) => {
+    const safeSrc = safeUrl(src);
+    if (!safeSrc) return escapeHtml(`![${alt}](${src})`);
+    return imageHtml(alt, safeSrc);
+  });
 
   value = value.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, (_, label, href) => {
-    const id = links.findIndex((item) => item.href === href);
-    const index = id >= 0 ? id + 1 : links.push({ label, href });
+    const safeHref = safeUrl(href);
+    if (!safeHref) return escapeHtml(`[${label}](${href})`);
+    const id = links.findIndex((item) => item.href === safeHref);
+    const index = id >= 0 ? id + 1 : links.push({ label, href: safeHref });
     return `${label}<sup style="color:#888;font-size:12px;">[${index}]</sup>`;
   });
 
@@ -800,8 +817,7 @@ function renderMarkdown (markdown, theme, codeTheme) {
   let inCode = false;
   let codeLang = "";
   let codeBuffer = [];
-  let listType = null;
-  let listBuffer = [];
+  let listStack = []; // [{ type: 'ul'|'ol', indent: number, items: [{ text, childrenHtml }] }]
 
   const flushParagraph = () => {
     if (!paragraph.length) return;
@@ -809,28 +825,47 @@ function renderMarkdown (markdown, theme, codeTheme) {
     paragraph = [];
   };
 
-  const flushList = () => {
-    if (!listBuffer.length || !listType) return;
-    const tag = listType === "ol" ? "ol" : "ul";
-    const items = listBuffer
-      .map((item) =>
-        inline("li", parseInline(item, links), {
-          margin: "0 0 7px",
-          paddingLeft: "2px",
-          color: theme.color,
-          fontSize: themeFontSize(theme),
-          lineHeight: themeLineHeight(theme, 1.8),
-        }),
-      )
-      .join("");
-    html += inline(tag, items, {
+  function getListIndent (line) {
+    const m = line.match(/^(\s*)/);
+    return m ? m[1].length : 0;
+  }
+
+  function renderListNode (list) {
+    const tag = list.type;
+    const items = list.items.map((item) => {
+      const content = parseInline(item.text, links) + (item.childrenHtml || "");
+      return inline("li", content, {
+        margin: "0 0 7px",
+        paddingLeft: "2px",
+        color: theme.color,
+        fontSize: themeFontSize(theme),
+        lineHeight: themeLineHeight(theme, 1.8),
+      });
+    }).join("");
+    return inline(tag, items, {
       margin: "0 0 18px 22px",
       padding: "0",
       color: theme.color,
     });
-    listType = null;
-    listBuffer = [];
-  };
+  }
+
+  function flushListsAbove (indent) {
+    while (listStack.length && listStack[listStack.length - 1].indent > indent) {
+      const list = listStack.pop();
+      const listHtml = renderListNode(list);
+      if (listStack.length) {
+        const parent = listStack[listStack.length - 1];
+        parent.items[parent.items.length - 1].childrenHtml =
+          (parent.items[parent.items.length - 1].childrenHtml || "") + listHtml;
+      } else {
+        html += listHtml;
+      }
+    }
+  }
+
+  function flushAllLists () {
+    flushListsAbove(-1);
+  }
 
   const flushCode = () => {
     const label = codeLang
@@ -880,7 +915,7 @@ function renderMarkdown (markdown, theme, codeTheme) {
         inCode = false;
       } else {
         flushParagraph();
-        flushList();
+        flushAllLists();
         inCode = true;
         codeLang = line.replace(/^```/, "").trim();
       }
@@ -894,21 +929,21 @@ function renderMarkdown (markdown, theme, codeTheme) {
 
     if (!line) {
       flushParagraph();
-      flushList();
+      flushAllLists();
       continue;
     }
 
     const imageOnly = /^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)$/.exec(line);
     if (imageOnly) {
       flushParagraph();
-      flushList();
+      flushAllLists();
       html += imageHtml(imageOnly[1], imageOnly[2]);
       continue;
     }
 
     if (isTableStart(lines, i)) {
       flushParagraph();
-      flushList();
+      flushAllLists();
       const headers = splitTableRow(lines[i]);
       i += 2;
       const rows = [];
@@ -971,7 +1006,7 @@ function renderMarkdown (markdown, theme, codeTheme) {
     const heading = /^(#{1,4})\s+(.+)$/.exec(line);
     if (heading) {
       flushParagraph();
-      flushList();
+      flushAllLists();
       const level = heading[1].length;
       const baseSize = theme.fontSize || 16;
       const size = [0, baseSize + 8, baseSize + 4, baseSize + 2, baseSize][level];
@@ -997,14 +1032,14 @@ function renderMarkdown (markdown, theme, codeTheme) {
 
     if (/^>\s?/.test(line)) {
       flushParagraph();
-      flushList();
+      flushAllLists();
       html += inline("blockquote", parseInline(line.replace(/^>\s?/, ""), links), quoteStyle(theme));
       continue;
     }
 
     if (/^(-{3,}|\*{3,})$/.test(line)) {
       flushParagraph();
-      flushList();
+      flushAllLists();
       html += selfClosing("hr", {
         height: "1px",
         border: "0",
@@ -1014,30 +1049,58 @@ function renderMarkdown (markdown, theme, codeTheme) {
       continue;
     }
 
-    const task = /^[-*+]\s+\[([ xX])]\s+(.+)$/.exec(line);
-    const unordered = /^[-*+]\s+(.+)$/.exec(line);
-    const ordered = /^\d+\.\s+(.+)$/.exec(line);
+    const task = /^(\s*)[-*+]\s+\[([ xX])]\s+(.+)$/.exec(raw);
+    const unordered = /^(\s*)[-*+]\s+(.+)$/.exec(raw);
+    const ordered = /^(\s*)\d+\.\s+(.+)$/.exec(raw);
     if (task || unordered || ordered) {
       flushParagraph();
+      const indent = getListIndent(raw);
       const currentType = ordered ? "ol" : "ul";
-      if (listType && listType !== currentType) flushList();
-      listType = currentType;
+      let content;
       if (task) {
-        const checked = /x/i.test(task[1]);
-        listBuffer.push(`${checked ? "☑" : "☐"} ${task[2]}`);
+        const checked = /x/i.test(task[2]);
+        content = `${checked ? "☑" : "☐"} ${task[3]}`;
       } else {
-        listBuffer.push((unordered || ordered)[1]);
+        content = (unordered || ordered)[2];
+      }
+
+      flushListsAbove(indent);
+
+      if (!listStack.length) {
+        listStack.push({ type: currentType, indent, items: [{ text: content, childrenHtml: "" }] });
+      } else {
+        const top = listStack[listStack.length - 1];
+        if (top.indent === indent) {
+          if (top.type === currentType) {
+            top.items.push({ text: content, childrenHtml: "" });
+          } else {
+            const list = listStack.pop();
+            const listHtml = renderListNode(list);
+            if (listStack.length) {
+              listStack[listStack.length - 1].items[listStack[listStack.length - 1].items.length - 1].childrenHtml =
+                (listStack[listStack.length - 1].items[listStack[listStack.length - 1].items.length - 1].childrenHtml || "") + listHtml;
+            } else {
+              html += listHtml;
+            }
+            listStack.push({ type: currentType, indent, items: [{ text: content, childrenHtml: "" }] });
+          }
+        } else if (top.indent < indent) {
+          listStack.push({ type: currentType, indent, items: [{ text: content, childrenHtml: "" }] });
+        } else {
+          flushAllLists();
+          listStack.push({ type: currentType, indent, items: [{ text: content, childrenHtml: "" }] });
+        }
       }
       continue;
     }
 
-    flushList();
+    flushAllLists();
     paragraph.push(line);
   }
 
   if (inCode) flushCode();
   flushParagraph();
-  flushList();
+  flushAllLists();
 
   if (links.length) {
     const linkItems = links
