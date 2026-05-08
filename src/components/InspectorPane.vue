@@ -48,16 +48,30 @@ function toggleFocus() {
     <div class="flex items-center justify-between gap-3 h-11 px-4 shrink-0 text-[11px] font-semibold tracking-widest uppercase text-text-tertiary border-b border-border-subtle dark:border-border sticky top-0 z-[2] bg-surface">
       <strong class="text-text-secondary font-semibold">创作助手</strong>
     </div>
+
     <div class="flex-1 overflow-y-auto px-4 pb-5">
-      <div class="grid grid-cols-2 gap-4 py-5 border-b border-border-subtle dark:border-border">
-        <div v-for="item in statsData" :key="item.label">
-          <strong class="block text-[22px] font-semibold tabular-nums tracking-tight leading-tight text-text">{{ item.value }}</strong>
-          <span class="block mt-1 text-[11px] font-semibold tracking-widest uppercase text-text-tertiary">{{ item.label }}</span>
+      <!-- Stats -->
+      <div class="grid grid-cols-2 gap-2 py-4">
+        <div
+          v-for="item in statsData"
+          :key="item.label"
+          class="rounded-lg border border-border-subtle dark:border-border bg-surface-hover/50 dark:bg-surface-hover/30 px-3 py-2.5"
+        >
+          <strong class="block text-xl font-semibold tabular-nums tracking-tight leading-tight text-text">{{ item.value }}</strong>
+          <span class="block mt-0.5 text-[10px] font-semibold tracking-widest uppercase text-text-tertiary">{{ item.label }}</span>
         </div>
       </div>
 
-      <div class="pt-5">
-        <h2 class="mb-3 text-[11px] font-semibold tracking-widest uppercase text-text-tertiary">质量检查</h2>
+      <!-- Warnings -->
+      <div class="mt-4 pt-4 border-t border-border-subtle dark:border-border">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="w-3.5 h-3.5 text-text-tertiary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+            <path d="M12 8v4" />
+            <path d="M12 16h.01" />
+          </svg>
+          <h2 class="text-[11px] font-semibold tracking-widest uppercase text-text-tertiary">质量检查</h2>
+        </div>
         <div class="flex flex-col gap-2">
           <div
             v-for="(w, i) in warnings"
@@ -73,93 +87,127 @@ function toggleFocus() {
         </div>
       </div>
 
-      <div class="pt-5 mt-5 border-t border-border-subtle dark:border-border">
-        <h2 class="mb-3 text-[11px] font-semibold tracking-widest uppercase text-text-tertiary">主题速览</h2>
-        <div class="flex flex-col gap-2 max-h-80 overflow-y-auto">
+      <!-- Themes -->
+      <div class="mt-4 pt-4 border-t border-border-subtle dark:border-border">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="w-3.5 h-3.5 text-text-tertiary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+            <path d="M2 12h20" />
+          </svg>
+          <h2 class="text-[11px] font-semibold tracking-widest uppercase text-text-tertiary">主题速览</h2>
+        </div>
+        <div class="flex flex-col gap-1.5 max-h-[280px] overflow-y-auto pr-0.5">
           <button
             v-for="[key, theme] in themeList"
             :key="key"
-            class="flex items-center gap-3 w-full p-2.5 rounded-md text-left bg-transparent hover:bg-surface-hover transition-colors cursor-pointer border-none"
-            :class="{ 'bg-surface-hover shadow-[inset_0_0_0_1.5px_var(--color-border)]': themeStore.currentThemeKey === key }"
+            class="group flex items-center gap-3 w-full p-2 rounded-lg text-left bg-transparent hover:bg-surface-hover transition-all border"
+            :class="themeStore.currentThemeKey === key
+              ? 'border-border bg-surface-hover shadow-sm'
+              : 'border-transparent hover:border-border-subtle'"
             type="button"
             @click="selectTheme(key)"
           >
             <span
-              class="w-9 h-9 rounded-md border border-border-subtle shrink-0 grid place-items-center overflow-hidden"
+              class="w-8 h-8 rounded-md border shrink-0 grid place-items-center overflow-hidden"
+              :class="themeStore.currentThemeKey === key ? 'border-border' : 'border-border-subtle group-hover:border-border'"
               :style="{ background: theme.base.canvas || theme.base.bgSoft }"
             >
-              <span class="block w-5 h-[2.5px] rounded-full" :style="{ background: theme.base.accent }" />
-              <span class="block w-[18px] h-[2.5px] rounded-full" :style="{ background: theme.base.border }" />
+              <span class="flex flex-col items-center gap-[3px]">
+                <span class="block w-4 h-[2px] rounded-full" :style="{ background: theme.base.accent }" />
+                <span class="block w-3 h-[2px] rounded-full" :style="{ background: theme.base.border }" />
+              </span>
             </span>
-            <span>
-              <strong class="block text-[13px] font-medium leading-tight text-text">{{ theme.name }}</strong>
-              <span class="block mt-0.5 text-xs leading-snug text-text-tertiary">{{ theme.description }}</span>
+            <span class="min-w-0">
+              <strong class="block text-[13px] font-medium leading-tight text-text truncate">{{ theme.name }}</strong>
+              <span class="block mt-0.5 text-[11px] leading-snug text-text-tertiary truncate">{{ theme.description }}</span>
             </span>
           </button>
         </div>
       </div>
 
-      <div class="pt-5 mt-5 border-t border-border-subtle dark:border-border">
-        <h2 class="mb-3 text-[11px] font-semibold tracking-widest uppercase text-text-tertiary">自定义主题</h2>
+      <!-- Custom Theme -->
+      <div class="mt-4 pt-4 border-t border-border-subtle dark:border-border">
         <button
           type="button"
-          class="w-full h-9 px-3.5 rounded-md text-[13px] font-medium hover:bg-surface-hover bg-transparent border-none"
+          class="w-full h-9 px-3.5 rounded-lg text-[13px] font-medium hover:bg-surface-hover bg-transparent border border-border-subtle hover:border-border transition-all"
           @click="openThemeEditor"
         >
-          编辑我的主题
+          ✨ 编辑我的主题
         </button>
       </div>
 
-      <div class="pt-5 mt-5 border-t border-border-subtle dark:border-border">
-        <h2 class="mb-3 text-[11px] font-semibold tracking-widest uppercase text-text-tertiary">图片设置</h2>
-        <label class="grid gap-1.5 mb-3">
-          <span class="text-xs font-medium text-text-secondary">图片宽度</span>
-          <select
-            :value="settingsStore.imageSettings.width"
-            @change="e => updateImageSetting('width', (e.target as HTMLSelectElement).value)"
+      <!-- Image Settings -->
+      <div class="mt-4 pt-4 border-t border-border-subtle dark:border-border">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="w-3.5 h-3.5 text-text-tertiary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <polyline points="21 15 16 10 5 21" />
+          </svg>
+          <h2 class="text-[11px] font-semibold tracking-widest uppercase text-text-tertiary">图片设置</h2>
+        </div>
+        <div class="space-y-3">
+          <label class="block">
+            <span class="block text-xs font-medium text-text-secondary mb-1.5">图片宽度</span>
+            <select
+              class="w-full"
+              :value="settingsStore.imageSettings.width"
+              @change="e => updateImageSetting('width', (e.target as HTMLSelectElement).value)"
+            >
+              <option value="100%">100%</option>
+              <option value="92%">92%</option>
+              <option value="80%">80%</option>
+            </select>
+          </label>
+          <label class="block">
+            <span class="block text-xs font-medium text-text-secondary mb-1.5">圆角</span>
+            <input
+              type="range"
+              min="0"
+              max="16"
+              :value="settingsStore.imageSettings.radius"
+              @input="e => updateImageSetting('radius', Number((e.target as HTMLInputElement).value))"
+            />
+          </label>
+          <label class="flex items-center gap-2.5 text-[13px] text-text-secondary">
+            <input
+              type="checkbox"
+              :checked="settingsStore.imageSettings.caption"
+              @change="e => updateImageSetting('caption', (e.target as HTMLInputElement).checked)"
+            />
+            <span>使用 alt 文本生成图注</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Preview Layout -->
+      <div class="mt-4 pt-4 border-t border-border-subtle dark:border-border">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="w-3.5 h-3.5 text-text-tertiary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+            <line x1="8" y1="21" x2="16" y2="21" />
+            <line x1="12" y1="17" x2="12" y2="21" />
+          </svg>
+          <h2 class="text-[11px] font-semibold tracking-widest uppercase text-text-tertiary">预览布局</h2>
+        </div>
+        <div class="space-y-3">
+          <label class="block">
+            <span class="block text-xs font-medium text-text-secondary mb-1.5">缩放</span>
+            <select v-model="settingsStore.previewZoom" class="w-full">
+              <option :value="0.86">86%</option>
+              <option :value="1">100%</option>
+              <option :value="1.12">112%</option>
+            </select>
+          </label>
+          <button
+            type="button"
+            class="w-full h-9 px-3.5 rounded-lg text-[13px] font-medium hover:bg-surface-hover bg-transparent border border-border-subtle hover:border-border transition-all"
+            @click="toggleFocus"
           >
-            <option value="100%">100%</option>
-            <option value="92%">92%</option>
-            <option value="80%">80%</option>
-          </select>
-        </label>
-        <label class="grid gap-1.5 mb-3">
-          <span class="text-xs font-medium text-text-secondary">圆角</span>
-          <input
-            type="range"
-            min="0"
-            max="16"
-            :value="settingsStore.imageSettings.radius"
-            @input="e => updateImageSetting('radius', Number((e.target as HTMLInputElement).value))"
-          />
-        </label>
-        <label class="flex items-center gap-2.5 text-[13px] text-text-secondary cursor-pointer">
-          <input
-            type="checkbox"
-            :checked="settingsStore.imageSettings.caption"
-            @change="e => updateImageSetting('caption', (e.target as HTMLInputElement).checked)"
-          />
-          <span>使用 alt 文本生成图注</span>
-        </label>
-      </div>
-
-      <div class="pt-5 mt-5 border-t border-border-subtle dark:border-border">
-        <h2 class="mb-3 text-[11px] font-semibold tracking-widest uppercase text-text-tertiary">预览布局</h2>
-        <label class="grid gap-1.5 mb-3">
-          <span class="text-xs font-medium text-text-secondary">缩放</span>
-          <select v-model="settingsStore.previewZoom">
-            <option :value="0.86">86%</option>
-            <option :value="1">100%</option>
-            <option :value="1.12">112%</option>
-          </select>
-        </label>
-        <button
-          type="button"
-          class="w-full h-9 px-3.5 rounded-md text-[13px] font-medium hover:bg-surface-hover bg-transparent border-none"
-          @click="toggleFocus"
-        >
-          {{ settingsStore.isFocusPreview ? '退出专注' : '专注预览' }}
-        </button>
+            {{ settingsStore.isFocusPreview ? '退出专注' : '专注预览' }}
+          </button>
+        </div>
       </div>
     </div>
   </aside>

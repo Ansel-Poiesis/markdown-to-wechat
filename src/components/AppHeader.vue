@@ -92,7 +92,7 @@ function selectCodeTheme(key: string) {
         <DropdownMenuTrigger as-child>
           <button
             type="button"
-            class="w-9 h-9 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface-hover hover:text-text text-base cursor-pointer border border-transparent hover:border-border-subtle transition-colors bg-transparent"
+            class="w-9 h-9 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface-hover hover:text-text text-base border border-border-subtle hover:border-border transition-all bg-transparent"
             aria-label="设置"
           >
             ⚙️
@@ -115,7 +115,7 @@ function selectCodeTheme(key: string) {
                 v-for="[key, theme] in codeThemeList"
                 :key="key"
                 :value="key"
-                class="flex items-center gap-2 px-2 py-2 rounded-md text-[13px] font-medium text-text cursor-pointer outline-none hover:bg-surface-hover focus:bg-surface-hover select-none data-[state=checked]:text-accent"
+                class="flex items-center gap-2 px-2 py-2 rounded-md text-[13px] font-medium text-text outline-none hover:bg-surface-hover focus:bg-surface-hover select-none data-[state=checked]:text-accent"
               >
                 <span class="w-2 h-2 rounded-full shrink-0" :style="{ background: theme.accent || theme.keyword }" />
                 {{ theme.name }}
@@ -125,13 +125,13 @@ function selectCodeTheme(key: string) {
             <DropdownMenuSeparator class="h-px bg-border-subtle dark:bg-border my-2 mx-2" />
 
             <DropdownMenuItem
-              class="flex items-center gap-2 px-2 py-2 rounded-md text-[13px] font-medium text-text cursor-pointer outline-none hover:bg-surface-hover focus:bg-surface-hover select-none"
+              class="flex items-center gap-2 px-2 py-2 rounded-md text-[13px] font-medium text-text outline-none hover:bg-surface-hover focus:bg-surface-hover select-none"
               @click="ui.openModal('themeEditor')"
             >
               🎨 编辑我的主题
             </DropdownMenuItem>
             <DropdownMenuItem
-              class="flex items-center gap-2 px-2 py-2 rounded-md text-[13px] font-medium text-text cursor-pointer outline-none hover:bg-surface-hover focus:bg-surface-hover select-none"
+              class="flex items-center gap-2 px-2 py-2 rounded-md text-[13px] font-medium text-text outline-none hover:bg-surface-hover focus:bg-surface-hover select-none"
               @click="ui.openModal('shortcut')"
             >
               ⌨️ 快捷键
@@ -140,7 +140,7 @@ function selectCodeTheme(key: string) {
             <DropdownMenuSeparator class="h-px bg-border-subtle dark:bg-border my-2 mx-2" />
 
             <DropdownMenuItem
-              class="flex items-center gap-2 px-2 py-2 rounded-md text-[13px] font-medium text-text cursor-pointer outline-none hover:bg-surface-hover focus:bg-surface-hover select-none"
+              class="flex items-center gap-2 px-2 py-2 rounded-md text-[13px] font-medium text-text outline-none hover:bg-surface-hover focus:bg-surface-hover select-none"
               @click="handleExport"
             >
               📤 导出 HTML
@@ -151,7 +151,7 @@ function selectCodeTheme(key: string) {
 
       <button
         type="button"
-        class="w-9 h-9 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface-hover hover:text-text text-base cursor-pointer border border-transparent hover:border-border-subtle transition-colors bg-transparent"
+        class="w-9 h-9 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface-hover hover:text-text text-base border border-border-subtle hover:border-border transition-all bg-transparent"
         aria-label="草稿管理"
         @click="ui.openModal('draft')"
       >
@@ -159,7 +159,7 @@ function selectCodeTheme(key: string) {
       </button>
       <button
         type="button"
-        class="w-9 h-9 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface-hover hover:text-text text-base cursor-pointer border border-transparent hover:border-border-subtle transition-colors bg-transparent"
+        class="w-9 h-9 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface-hover hover:text-text text-base border border-border-subtle hover:border-border transition-all bg-transparent"
         aria-label="分享"
         @click="handleShare"
       >
@@ -167,7 +167,7 @@ function selectCodeTheme(key: string) {
       </button>
       <button
         type="button"
-        class="w-9 h-9 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface-hover hover:text-text text-base cursor-pointer border border-transparent hover:border-border-subtle transition-colors bg-transparent"
+        class="w-9 h-9 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface-hover hover:text-text text-base border border-border-subtle hover:border-border transition-all bg-transparent"
         aria-label="深色模式"
         @click="toggleDark"
       >
@@ -175,21 +175,21 @@ function selectCodeTheme(key: string) {
       </button>
       <button
         type="button"
-        class="h-9 px-3.5 rounded-md text-[13px] font-medium cursor-pointer border border-border-subtle hover:bg-surface-hover bg-transparent transition-colors"
+        class="h-9 px-3.5 rounded-md text-[13px] font-medium border border-border-subtle hover:bg-surface-hover hover:border-border bg-transparent transition-all"
         @click="handleSmartFormat"
       >
         智能排版
       </button>
       <button
         type="button"
-        class="h-9 px-3.5 rounded-md text-[13px] font-medium cursor-pointer border border-border-subtle hover:bg-surface-hover bg-transparent transition-colors"
+        class="h-9 px-3.5 rounded-md text-[13px] font-medium border border-border-subtle hover:bg-surface-hover hover:border-border bg-transparent transition-all"
         @click="loadSample"
       >
         示例
       </button>
       <button
         type="button"
-        class="h-9 px-3.5 rounded-md text-[13px] font-medium cursor-pointer bg-accent text-accent-contrast hover:bg-accent-hover border-none transition-colors"
+        class="h-9 px-3.5 rounded-md text-[13px] font-medium bg-accent text-accent-contrast hover:bg-accent-hover border border-accent hover:border-accent-hover transition-all"
         @click="handleCopy"
       >
         复制到公众号
