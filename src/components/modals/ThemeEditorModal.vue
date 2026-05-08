@@ -19,7 +19,7 @@ const quoteMode = ref<'bar' | 'panel' | 'soft'>('bar')
 const fontFamily = ref("-apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif")
 const colorInputRef = ref<HTMLInputElement | null>(null)
 
-const presetColors = ['#07c160', '#111111', '#006d77', '#2468a2', '#b14f2a', '#8ab4a6', '#dc2626', '#2563eb', '#f59e0b', '#7c3aed']
+const presetColors = ['#07c160', '#111111', '#006d77', '#2468a2', '#b14f2a', '#8ab4a6', '#dc2626', '#7c3aed']
 
 const fontOptions = [
   { label: '系统默认', value: "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif" },
@@ -229,7 +229,7 @@ function renderArticle(content, theme) {
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="isOpen" class="modal-backdrop" @click.self="close">
-        <section class="modal" role="dialog" aria-modal="true" style="min-width: 720px; max-width: 960px; width: 85vw;">
+        <section class="modal max-h-[85vh] flex flex-col" role="dialog" aria-modal="true" style="min-width: 720px; max-width: 960px; width: 85vw;">
           <div class="flex items-start justify-between gap-4 shrink-0 px-6 pt-5 pb-4">
             <div>
               <p class="text-[11px] font-semibold tracking-widest uppercase text-text-tertiary mb-0.5">Theme Builder</p>
@@ -245,34 +245,36 @@ function renderArticle(content, theme) {
             </button>
           </div>
 
-          <div class="grid grid-cols-[280px_1fr] gap-6 px-6 pb-6">
+          <div class="grid grid-cols-[280px_1fr] gap-6 px-6 pb-6 flex-1 min-h-0 overflow-hidden">
             <!-- Controls -->
-            <div class="space-y-6">
+            <div class="space-y-6 h-full overflow-y-auto pr-1">
               <!-- Color -->
               <div class="space-y-2.5">
-                <span class="text-xs font-semibold text-text-secondary">主色</span>
-                <div class="flex flex-wrap gap-2 items-center">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-text-secondary">主色</span>
+                  <span class="text-[11px] font-mono text-text-tertiary">{{ accent }}</span>
+                </div>
+                <div class="flex gap-2 items-center">
                   <button
                     v-for="c in presetColors"
                     :key="c"
                     type="button"
-                    class="w-7 h-7 rounded-full border-2 transition-all active:scale-90"
+                    class="w-6 h-6 rounded-full border-2 transition-all active:scale-90"
                     :class="accent === c ? 'border-text scale-110 shadow-sm' : 'border-transparent hover:scale-105'"
                     :style="{ background: c }"
                     @click="accent = c"
                   />
                   <button
                     type="button"
-                    class="w-7 h-7 rounded-full border-2 border-border-subtle hover:border-border transition-all relative overflow-hidden"
+                    class="w-6 h-6 rounded-full border-2 border-border-subtle hover:border-border transition-all relative overflow-hidden"
                     :style="{ background: accent }"
                     @click="colorInputRef?.click()"
                   >
                     <span class="absolute inset-0 flex items-center justify-center">
-                      <AppIcon name="palette" :size="12" class="text-white mix-blend-difference" />
+                      <AppIcon name="palette" :size="10" class="text-white mix-blend-difference" />
                     </span>
                   </button>
                   <input ref="colorInputRef" v-model="accent" type="color" class="absolute opacity-0 w-0 h-0" />
-                  <span class="text-xs font-mono text-text-tertiary ml-1">{{ accent }}</span>
                 </div>
               </div>
 
@@ -415,7 +417,7 @@ function renderArticle(content, theme) {
             </div>
 
             <!-- Preview -->
-            <div class="border border-border rounded-2xl overflow-hidden flex flex-col bg-white shadow-sm">
+            <div class="border border-border rounded-2xl overflow-hidden flex flex-col bg-white shadow-sm h-full">
               <div class="shrink-0 px-5 py-3 border-b border-border-subtle flex items-center gap-2.5 bg-bg/40">
                 <span class="w-2 h-2 rounded-full bg-success" />
                 <span class="text-[11px] font-semibold tracking-widest uppercase text-text-tertiary">实时预览</span>
