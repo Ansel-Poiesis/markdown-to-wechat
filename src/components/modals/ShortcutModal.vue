@@ -100,7 +100,7 @@ function close() {
             </div>
           </div>
           <div class="flex justify-end gap-2.5 shrink-0 px-5 pt-4 pb-5 border-t border-border-subtle dark:border-border">
-            <button type="button" class="h-9 px-3.5 rounded-md text-[13px] font-medium bg-text text-surface border border-text hover:opacity-90 transition-all" @click="close">知道了</button>
+            <button type="button" class="h-9 px-3.5 rounded-md text-[13px] font-medium bg-[#18181b] text-white border border-[#18181b] hover:bg-[#27272a] hover:border-[#27272a] transition-all" @click="close">知道了</button>
           </div>
         </section>
       </div>

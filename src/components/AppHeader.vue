@@ -107,10 +107,7 @@ function selectCodeTheme(key: string) {
             <DropdownMenuLabel class="px-2 py-1.5 text-[11px] font-semibold tracking-widest uppercase text-text-tertiary select-none">
               代码主题
             </DropdownMenuLabel>
-            <DropdownMenuRadioGroup
-              :value="themeStore.currentCodeThemeKey"
-              @update:value="selectCodeTheme"
-            >
+            <DropdownMenuRadioGroup v-model="themeStore.currentCodeThemeKey">
               <DropdownMenuRadioItem
                 v-for="[key, theme] in codeThemeList"
                 :key="key"
@@ -189,7 +186,7 @@ function selectCodeTheme(key: string) {
       </button>
       <button
         type="button"
-        class="h-9 px-3.5 rounded-md text-[13px] font-medium bg-text text-surface border border-text hover:opacity-90 transition-all"
+        class="h-9 px-3.5 rounded-md text-[13px] font-medium bg-[#18181b] text-white border border-[#18181b] hover:bg-[#27272a] hover:border-[#27272a] transition-all"
         @click="handleCopy"
       >
         复制到公众号

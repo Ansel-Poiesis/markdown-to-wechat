@@ -74,9 +74,9 @@ onMounted(() => {
     ]"
     style="height: calc(100dvh - 64px)"
   >
-    <EditorPane v-model="content" />
+    <EditorPane v-show="!settingsStore.isFocusPreview" v-model="content" />
     <PreviewPane :html="renderedHtml" />
-    <InspectorPane :stats="stats" :warnings="warnings" />
+    <InspectorPane v-show="!settingsStore.isFocusPreview" :stats="stats" :warnings="warnings" />
   </main>
 
   <Teleport to="body">
