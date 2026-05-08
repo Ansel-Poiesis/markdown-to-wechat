@@ -274,8 +274,8 @@ function renderArticle(content, theme) {
                       <AppIcon name="palette" :size="10" class="text-white mix-blend-difference" />
                     </span>
                   </button>
-                  <input ref="colorInputRef" v-model="accent" type="color" class="absolute opacity-0 w-0 h-0" />
                 </div>
+                <input ref="colorInputRef" v-model="accent" type="color" class="absolute opacity-0 w-0 h-0 pointer-events-none" tabindex="-1" />
               </div>
 
               <!-- Typography -->
