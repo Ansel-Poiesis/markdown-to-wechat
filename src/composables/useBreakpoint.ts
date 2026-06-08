@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 
 export function useBreakpoint() {
   const isMobile = ref(false)
@@ -6,8 +6,8 @@ export function useBreakpoint() {
 
   function update() {
     const w = window.innerWidth
-    isMobile.value = w < 768
-    isTablet.value = w >= 768 && w < 1024
+    isMobile.value = w < 640
+    isTablet.value = w >= 640 && w < 1024
   }
 
   onMounted(() => {

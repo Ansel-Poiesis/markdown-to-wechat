@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useEditorStore } from '@/stores/editor'
 import { useUiStore } from '@/stores/ui'
 import type { Draft } from '@/types'
@@ -9,22 +9,76 @@ const editorStore = useEditorStore()
 const ui = useUiStore()
 
 const STORAGE_KEY = 'wechat-md-drafts'
+const ACTIVE_DRAFT_KEY = 'wechat-md-active-draft-id'
 const drafts = ref<Draft[]>([])
+const activeDraftId = ref<number | null>(null)
 const editingId = ref<number | null>(null)
 const editName = ref('')
 const showConfirmDelete = ref<number | null>(null)
 
+const activeDraft = computed(() =>
+  activeDraftId.value === null
+    ? null
+    : drafts.value.find((d) => d.id === activeDraftId.value) || null,
+)
+
+function isDraft(value: unknown): value is Draft {
+  const candidate = value as Partial<Draft>
+  return (
+    typeof candidate?.id === 'number' &&
+    typeof candidate.name === 'string' &&
+    typeof candidate.content === 'string' &&
+    typeof candidate.createdAt === 'string' &&
+    typeof candidate.updatedAt === 'string'
+  )
+}
+
 function loadDrafts() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) drafts.value = JSON.parse(stored)
-  } catch { /* ignore */ }
+    const parsed = stored ? JSON.parse(stored) : []
+    drafts.value = Array.isArray(parsed) ? parsed.filter(isDraft) : []
+
+    const storedActive = Number(localStorage.getItem(ACTIVE_DRAFT_KEY))
+    activeDraftId.value =
+      Number.isFinite(storedActive) && drafts.value.some((d) => d.id === storedActive)
+        ? storedActive
+        : null
+  } catch {
+    drafts.value = []
+    activeDraftId.value = null
+  }
 }
 
 function saveDrafts() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(drafts.value))
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
+}
+
+function saveActiveDraft() {
+  if (activeDraftId.value === null) return
+  const draft = drafts.value.find((d) => d.id === activeDraftId.value)
+  if (!draft) return
+  if (draft.content === editorStore.content) return
+  draft.content = editorStore.content
+  draft.updatedAt = new Date().toISOString()
+  saveDrafts()
+}
+
+function persistActiveDraft(id: number | null) {
+  activeDraftId.value = id
+  try {
+    if (id === null) {
+      localStorage.removeItem(ACTIVE_DRAFT_KEY)
+    } else {
+      localStorage.setItem(ACTIVE_DRAFT_KEY, String(id))
+    }
+  } catch {
+    /* ignore */
+  }
 }
 
 function getPreview(content: string): string {
@@ -43,6 +97,7 @@ function formatDate(iso: string): string {
 }
 
 function createDraft() {
+  saveActiveDraft()
   const now = new Date().toISOString()
   const draft: Draft = {
     id: Date.now(),
@@ -53,7 +108,8 @@ function createDraft() {
   }
   drafts.value.unshift(draft)
   saveDrafts()
-  loadDraft(draft.id)
+  persistActiveDraft(draft.id)
+  editorStore.setContent('')
   ui.showToast('已创建新草稿')
 }
 
@@ -73,31 +129,30 @@ function saveCurrentAsDraft() {
   }
   drafts.value.unshift(draft)
   saveDrafts()
-  ui.showToast('已保存为新草稿')
+  persistActiveDraft(draft.id)
+  ui.showToast(`已保存为「${draft.name}」`)
 }
 
 function loadDraft(id: number) {
-  // Save current content to current draft first
-  const draft = drafts.value.find(d => d.id === id)
+  saveActiveDraft()
+  const draft = drafts.value.find((d) => d.id === id)
   if (!draft) return
+  persistActiveDraft(id)
   editorStore.setContent(draft.content)
   ui.showToast(`已加载「${draft.name}」`)
 }
 
-function updateDraftContent() {
-  // Auto-save current content to the most recently loaded draft
-  // This is called when content changes
-}
-
 function deleteDraft(id: number) {
-  drafts.value = drafts.value.filter(d => d.id !== id)
+  const deletingActive = activeDraftId.value === id
+  drafts.value = drafts.value.filter((d) => d.id !== id)
+  if (deletingActive) persistActiveDraft(null)
   saveDrafts()
   showConfirmDelete.value = null
-  ui.showToast('已删除草稿')
+  ui.showToast(deletingActive ? '已删除当前草稿，编辑内容仍保留' : '已删除草稿')
 }
 
 function renameDraft(id: number) {
-  const draft = drafts.value.find(d => d.id === id)
+  const draft = drafts.value.find((d) => d.id === id)
   if (!draft) return
   editingId.value = id
   editName.value = draft.name
@@ -105,7 +160,7 @@ function renameDraft(id: number) {
 
 function confirmRename() {
   if (editingId.value === null) return
-  const draft = drafts.value.find(d => d.id === editingId.value)
+  const draft = drafts.value.find((d) => d.id === editingId.value)
   if (draft && editName.value.trim()) {
     draft.name = editName.value.trim()
     saveDrafts()
@@ -114,27 +169,55 @@ function confirmRename() {
 }
 
 function saveToDraft(id: number) {
-  const draft = drafts.value.find(d => d.id === id)
+  saveActiveDraft()
+  const draft = drafts.value.find((d) => d.id === id)
   if (!draft) return
   draft.content = editorStore.content
   draft.updatedAt = new Date().toISOString()
   saveDrafts()
+  persistActiveDraft(id)
   ui.showToast(`已保存到「${draft.name}」`)
 }
 
 const sortedDrafts = computed(() =>
-  [...drafts.value].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  [...drafts.value].sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+  ),
 )
 
-onMounted(loadDrafts)
+onMounted(() => {
+  loadDrafts()
+  if (activeDraft.value) {
+    editorStore.setContent(activeDraft.value.content)
+  }
+})
+
+watch(
+  () => editorStore.content,
+  (content) => {
+    if (activeDraftId.value === null) return
+    const draft = drafts.value.find((d) => d.id === activeDraftId.value)
+    if (!draft || draft.content === content) return
+    draft.content = content
+    draft.updatedAt = new Date().toISOString()
+    saveDrafts()
+  },
+)
 
 defineExpose({ saveCurrentAsDraft, createDraft })
 </script>
 
 <template>
   <div class="flex flex-col gap-2">
-    <div class="flex items-center justify-between mb-1">
-      <h3 class="text-[11px] font-semibold tracking-widest uppercase text-text-tertiary">草稿管理</h3>
+    <div class="flex items-center justify-between gap-2 mb-1">
+      <div class="min-w-0">
+        <h3 class="text-[11px] font-semibold tracking-widest uppercase text-text-tertiary">
+          草稿管理
+        </h3>
+        <p v-if="activeDraft" class="text-[10px] text-text-tertiary truncate mt-0.5">
+          正在编辑：{{ activeDraft.name }}
+        </p>
+      </div>
       <div class="flex gap-1">
         <button
           type="button"
@@ -164,7 +247,12 @@ defineExpose({ saveCurrentAsDraft, createDraft })
       <div
         v-for="draft in sortedDrafts"
         :key="draft.id"
-        class="group relative flex flex-col p-2.5 rounded-xl border border-transparent hover:border-border-subtle hover:bg-surface-hover transition-all cursor-pointer"
+        class="group relative flex flex-col p-2.5 rounded-xl border transition-all cursor-pointer"
+        :class="
+          activeDraftId === draft.id
+            ? 'border-accent/30 bg-accent/[0.04]'
+            : 'border-transparent hover:border-border-subtle hover:bg-surface-hover'
+        "
         @click="loadDraft(draft.id)"
       >
         <div class="flex items-center gap-2 mb-1">
@@ -172,18 +260,33 @@ defineExpose({ saveCurrentAsDraft, createDraft })
             <input
               v-model="editName"
               class="flex-1 min-w-0 h-6 px-2 text-[13px] rounded border border-accent bg-surface text-text focus:outline-none"
-              @keydown.enter="confirmRename"
-              @keydown.escape="editingId = null"
+              @click.stop
+              @keydown.enter.stop="confirmRename"
+              @keydown.escape.stop="editingId = null"
               @blur="confirmRename"
             />
           </template>
           <template v-else>
-            <strong class="flex-1 min-w-0 text-[13px] font-medium text-text truncate">{{ draft.name }}</strong>
+            <strong class="flex-1 min-w-0 text-[13px] font-medium text-text truncate">{{
+              draft.name
+            }}</strong>
           </template>
-          <span class="text-[10px] text-text-tertiary shrink-0">{{ formatDate(draft.updatedAt) }}</span>
+          <span
+            v-if="activeDraftId === draft.id"
+            class="text-[9px] font-semibold text-accent bg-accent/10 px-1.5 py-0.5 rounded-full shrink-0"
+          >
+            当前
+          </span>
+          <span class="text-[10px] text-text-tertiary shrink-0">{{
+            formatDate(draft.updatedAt)
+          }}</span>
         </div>
-        <p class="text-[11px] text-text-tertiary leading-relaxed line-clamp-2">{{ getPreview(draft.content) }}</p>
-        <div class="flex items-center gap-1 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <p class="text-[11px] text-text-tertiary leading-relaxed line-clamp-2">
+          {{ getPreview(draft.content) }}
+        </p>
+        <div
+          class="flex items-center gap-1 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+        >
           <button
             type="button"
             title="保存当前内容到此草稿"

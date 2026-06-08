@@ -1,70 +1,67 @@
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
-import { themes, codeThemes, applyCustomThemeSettings, THEME_KEY, CODE_THEME_KEY, LAST_LIGHT_THEME_KEY } from '@/config/themes'
-import type { Theme, CodeTheme } from '@/types'
+import { themes, codeThemes, THEME_KEY, CODE_THEME_KEY } from '@/config/themes'
+import { useSettingsStore, FONT_FAMILIES } from '@/stores/settings'
+import type { Theme, CodeTheme, ThemeBase } from '@/types'
 
 export const useThemeStore = defineStore('theme', () => {
-  const storedTheme = useStorage(THEME_KEY, 'classic')
-  const storedCodeTheme = useStorage(CODE_THEME_KEY, 'light')
-  const lastLightTheme = useStorage(LAST_LIGHT_THEME_KEY, 'classic')
+  const storedCodeTheme = useStorage(CODE_THEME_KEY, 'paper')
 
-  const currentThemeKey = computed({
-    get: () => {
-      const key = storedTheme.value
-      return (themes[key] || key === 'custom') ? key : 'classic'
-    },
-    set: (key: string) => {
-      if (key !== 'night') {
-        lastLightTheme.value = key
-      }
-      storedTheme.value = key
-    },
-  })
+  // 固定使用杂志主题
+  const currentThemeKey = 'magazine'
+  const currentTheme = computed(() => themes.magazine as Theme)
 
   const currentCodeThemeKey = computed({
-    get: () => (codeThemes[storedCodeTheme.value] ? storedCodeTheme.value : 'light'),
+    get: () => (codeThemes[storedCodeTheme.value] ? storedCodeTheme.value : 'paper'),
     set: (key: string) => {
       storedCodeTheme.value = key
     },
   })
 
-  const customTheme = ref<Theme>(applyCustomThemeSettings())
+  const currentCodeTheme = computed(
+    () => (codeThemes[currentCodeThemeKey.value] || codeThemes.paper) as CodeTheme,
+  )
 
-  const allThemes = computed(() => {
-    const result: Record<string, Theme> = { ...themes }
-    result.custom = customTheme.value
-    return result
-  })
-
-  const currentTheme = computed(() => (allThemes.value[currentThemeKey.value] || allThemes.value.classic) as Theme)
-  const currentCodeTheme = computed(() => (codeThemes[currentCodeThemeKey.value] || codeThemes.light) as CodeTheme)
-  const themeBase = computed(() => currentTheme.value.base)
-
-  const setCustomTheme = (settings: Partial<Theme['base']>) => {
-    const baseTheme = themes[lastLightTheme.value]?.base ?? (themes.classic as Theme).base
-    customTheme.value = {
-      name: '我的主题',
-      description: '根据你的配色、字号和行宽保存。',
-      base: { ...baseTheme, ...settings },
+  // 主题基础色 + 用户排版设置合并
+  const themeBase = computed<ThemeBase>(() => {
+    const base = currentTheme.value.base
+    const settings = useSettingsStore()
+    const fontFamily = FONT_FAMILIES[settings.fontFamilyKey]?.css ?? base.fontFamily
+    return {
+      ...base,
+      fontFamily,
+      fontSize: settings.fontSize,
+      lineHeight: settings.lineHeight,
+      width: settings.contentWidth,
+      pageMargin: settings.pageMargin,
+      accent: settings.accentColor || base.accent,
+      h1Mode: settings.h1Mode,
+      headingMode: settings.headingMode,
+      h2Mode: settings.h2Mode || settings.headingMode,
+      h3Mode: settings.h3Mode || settings.headingMode,
+      h4Mode: settings.h4Mode || settings.headingMode,
+      quoteMode: settings.quoteMode,
+      quoteMode2: settings.quoteMode2,
+      textIndent: settings.textIndent,
+      textJustify: settings.textJustify,
+      macCodeBlock: settings.macCodeBlock,
+      codeLineNumbers: settings.codeLineNumbers,
+      h1Color: settings.h1Color || undefined,
+      h2Color: settings.h2Color || undefined,
+      h3Color: settings.h3Color || undefined,
+      h4Color: settings.h4Color || undefined,
+      headingAccent: settings.underlineColor || undefined,
+      quoteAccent: settings.quoteAccent || undefined,
+      letterSpacing: settings.letterSpacing || undefined,
+      paragraphSpacing: settings.paragraphSpacing || undefined,
+      boldColor: settings.boldColor || undefined,
+      boldMode: settings.boldMode || undefined,
+      underlineColor: settings.underlineColor || undefined,
+      underlineMode: settings.underlineMode || undefined,
+      canvas: settings.canvasColor || undefined,
     }
-    try {
-      localStorage.setItem('wechat-md-custom-theme', JSON.stringify({
-        accent: settings.accent,
-        fontSize: settings.fontSize,
-        lineHeight: settings.lineHeight,
-        width: settings.width,
-        h1Mode: settings.h1Mode,
-        headingMode: settings.headingMode,
-        quoteMode: settings.quoteMode,
-        fontFamily: settings.fontFamily,
-      }))
-    } catch { /* ignore */ }
-  }
-
-  const resetCustomTheme = () => {
-    customTheme.value = applyCustomThemeSettings()
-  }
+  })
 
   return {
     currentThemeKey,
@@ -72,9 +69,5 @@ export const useThemeStore = defineStore('theme', () => {
     currentTheme,
     currentCodeTheme,
     themeBase,
-    customTheme,
-    allThemes,
-    setCustomTheme,
-    resetCustomTheme,
   }
 })

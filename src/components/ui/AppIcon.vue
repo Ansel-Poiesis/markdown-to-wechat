@@ -1,6 +1,37 @@
 <script setup lang="ts">
 defineProps<{
-  name: 'settings' | 'draft' | 'share' | 'sun' | 'moon' | 'sparkles' | 'wand' | 'fileText' | 'download' | 'keyboard' | 'copy' | 'check' | 'alertCircle' | 'info' | 'palette' | 'image' | 'monitor' | 'maximize' | 'minimize' | 'chevronDown' | 'x' | 'trash' | 'pencil' | 'plus' | 'checkCircle' | 'warning' | 'save' | 'eye' | 'externalLink'
+  name:
+    | 'settings'
+    | 'draft'
+    | 'share'
+    | 'sun'
+    | 'moon'
+    | 'sparkles'
+    | 'wand'
+    | 'fileText'
+    | 'download'
+    | 'keyboard'
+    | 'copy'
+    | 'check'
+    | 'alertCircle'
+    | 'info'
+    | 'palette'
+    | 'image'
+    | 'monitor'
+    | 'smartphone'
+    | 'maximize'
+    | 'minimize'
+    | 'chevronDown'
+    | 'x'
+    | 'trash'
+    | 'pencil'
+    | 'pen'
+    | 'plus'
+    | 'checkCircle'
+    | 'warning'
+    | 'save'
+    | 'eye'
+    | 'externalLink'
   size?: number
 }>()
 </script>
@@ -17,7 +48,9 @@ defineProps<{
     stroke-linejoin="round"
   >
     <template v-if="name === 'settings'">
-      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+      <path
+        d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+      />
       <circle cx="12" cy="12" r="3" />
     </template>
     <template v-else-if="name === 'draft'">
@@ -49,11 +82,15 @@ defineProps<{
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
     </template>
     <template v-else-if="name === 'sparkles'">
-      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+      <path
+        d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"
+      />
     </template>
     <template v-else-if="name === 'wand'">
       <path d="M15 4V2" />
-      <path d="M15 16a5 5 0 1 1-4.995-5.217L9.6 7.6l2.8 2.8 2.8-2.8c-.4-.8-.4-1.6 0-2.4l1.6-1.6L15 4" />
+      <path
+        d="M15 16a5 5 0 1 1-4.995-5.217L9.6 7.6l2.8 2.8 2.8-2.8c-.4-.8-.4-1.6 0-2.4l1.6-1.6L15 4"
+      />
       <path d="m2 2 20 20" />
     </template>
     <template v-else-if="name === 'fileText'">
@@ -98,7 +135,9 @@ defineProps<{
       <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
       <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
       <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
-      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.506 17.461 2 12 2z" />
+      <path
+        d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.506 17.461 2 12 2z"
+      />
     </template>
     <template v-else-if="name === 'image'">
       <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -109,6 +148,10 @@ defineProps<{
       <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
       <line x1="8" y1="21" x2="16" y2="21" />
       <line x1="12" y1="17" x2="12" y2="21" />
+    </template>
+    <template v-else-if="name === 'smartphone'">
+      <rect x="7" y="2" width="10" height="20" rx="2" ry="2" />
+      <line x1="12" y1="18" x2="12.01" y2="18" />
     </template>
     <template v-else-if="name === 'maximize'">
       <path d="M8 3H5a2 2 0 0 0-2 2v3" />
@@ -136,6 +179,10 @@ defineProps<{
     <template v-else-if="name === 'pencil'">
       <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
     </template>
+    <template v-else-if="name === 'pen'">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </template>
     <template v-else-if="name === 'plus'">
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
@@ -145,7 +192,9 @@ defineProps<{
       <polyline points="22 4 12 14.01 9 11.01" />
     </template>
     <template v-else-if="name === 'warning'">
-      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <path
+        d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+      />
       <line x1="12" y1="9" x2="12" y2="13" />
       <line x1="12" y1="17" x2="12.01" y2="17" />
     </template>

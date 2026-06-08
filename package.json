@@ -3,9 +3,12 @@
   "version": "2.0.0",
   "private": true,
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
+    "build:electron": "vite build && electron-builder --win",
+    "build:web": "vite build --outDir docs",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
@@ -32,6 +35,8 @@
     "@vitejs/plugin-vue": "^6.0.6",
     "@vue/eslint-config-typescript": "^14.7.0",
     "@vue/tsconfig": "^0.9.1",
+    "electron": "^42.3.3",
+    "electron-builder": "^26.15.0",
     "eslint": "^10.2.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-oxlint": "~1.60.0",
@@ -43,10 +48,41 @@
     "tailwindcss": "^4.2.4",
     "typescript": "~6.0.0",
     "vite": "^8.0.8",
+    "vite-plugin-electron": "^1.0.4",
+    "vite-plugin-electron-renderer": "^1.0.0",
     "vite-plugin-vue-devtools": "^8.1.1",
     "vue-tsc": "^3.2.6"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
+  },
+  "build": {
+    "appId": "com.mingchuan.markdown-wechat",
+    "productName": "微信Markdown排版",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "微信Markdown排版"
+    }
   }
 }

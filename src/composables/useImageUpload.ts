@@ -147,7 +147,10 @@ export function createImageHandler(
         event.preventDefault()
         for (const file of files) {
           const result = await processImageFile(file)
-          onInsert(result.markdown, { originalSize: result.originalSize, compressedSize: result.compressedSize })
+          onInsert(result.markdown, {
+            originalSize: result.originalSize,
+            compressedSize: result.compressedSize,
+          })
         }
         return true
       },
@@ -158,7 +161,10 @@ export function createImageHandler(
         event.preventDefault()
         for (const file of files) {
           const result = await processImageFile(file)
-          onInsert(result.markdown, { originalSize: result.originalSize, compressedSize: result.compressedSize })
+          onInsert(result.markdown, {
+            originalSize: result.originalSize,
+            compressedSize: result.compressedSize,
+          })
         }
         return true
       },

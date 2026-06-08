@@ -15,9 +15,9 @@ import { sampleMarkdown } from '@/config/templates'
 import AppHeader from '@/components/AppHeader.vue'
 import EditorPane from '@/components/EditorPane.vue'
 import PreviewPane from '@/components/PreviewPane.vue'
-import InspectorPane from '@/components/InspectorPane.vue'
+import SettingsPanel from '@/components/SettingsPanel.vue'
+import ChatPanel from '@/components/ChatPanel.vue'
 import PreflightModal from '@/components/modals/PreflightModal.vue'
-import ThemeEditorModal from '@/components/modals/ThemeEditorModal.vue'
 
 const editorStore = useEditorStore()
 const themeStore = useThemeStore()
@@ -36,35 +36,31 @@ const content = computed({
   set: (v) => editorStore.setContent(v),
 })
 
-// Resizable splitter
-const mainRef = ref<HTMLElement>()
-const editorWidth = ref(560)
-const isDragging = ref(false)
+// No-op (layout fixed)
 
-function onDragStart() {
-  isDragging.value = true
-  document.body.style.cursor = 'col-resize'
-  document.body.style.userSelect = 'none'
-}
+onMounted(() => {
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      if (ui.activeModals.preflight) {
+        ui.closeModal('preflight')
+        return
+      }
 
-function onDragMove(e: MouseEvent) {
-  if (!isDragging.value || !mainRef.value) return
-  const rect = mainRef.value.getBoundingClientRect()
-  const gap = 16
-  const newWidth = e.clientX - rect.left - gap / 2
-  const minLeft = 280
-  const minRight = 360
-  const maxLeft = rect.width - gap - minRight
-  if (newWidth >= minLeft && newWidth <= maxLeft) {
-    editorWidth.value = newWidth
-  }
-}
+      return
+    }
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'c') {
+      event.preventDefault()
+      const hasBlocking = warnings.value.some((w) => w.level === 'danger')
+      if (hasBlocking) {
+        ui.openModal('preflight')
+      } else {
+        copyRenderedHtml(renderedHtml.value)
+      }
+    }
+  })
+})
 
-function onDragEnd() {
-  isDragging.value = false
-  document.body.style.cursor = ''
-  document.body.style.userSelect = ''
-}
+// nothing to clean up
 
 const { stats } = useMarkdownAnalyzer(content)
 const { warnings, preflightCounts } = useMarkdownWarnings(content)
@@ -85,123 +81,91 @@ function loadSample() {
 }
 
 function handleExport() {
-  const html = renderMarkdown(editorStore.content, themeStore.themeBase, themeStore.currentCodeTheme, settingsStore.wechatElements)
+  const html = renderMarkdown(
+    editorStore.content,
+    themeStore.themeBase,
+    themeStore.currentCodeTheme,
+    settingsStore.wechatElements,
+  )
   exportHtml(html)
   ui.showToast('HTML 已导出')
 }
 
-watch(() => content.value, (v, oldV) => {
-  if (oldV === '' && v.length > 0) {
-    const formatted = formatMarkdown(v)
-    if (formatted !== v) {
-      editorStore.setContent(formatted)
-    }
-  }
-})
-
-onMounted(() => {
-  if (mainRef.value) {
-    const rect = mainRef.value.getBoundingClientRect()
-    editorWidth.value = (rect.width - 68) / 2
-  }
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      if (ui.activeModals.preflight) { ui.closeModal('preflight'); return }
-      if (ui.activeModals.themeEditor) { ui.closeModal('themeEditor'); return }
-      if (ui.showSettings) { ui.showSettings = false; return }
-      return
-    }
-    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'c') {
-      event.preventDefault()
-      const hasBlocking = warnings.value.some(w => w.level === 'danger')
-      if (hasBlocking) {
-        ui.openModal('preflight')
-      } else {
-        copyRenderedHtml(renderedHtml.value)
+watch(
+  () => content.value,
+  (v, oldV) => {
+    if (oldV === '' && v.length > 0) {
+      const formatted = formatMarkdown(v)
+      if (formatted !== v) {
+        editorStore.setContent(formatted)
       }
     }
-  })
-  document.addEventListener('mousemove', onDragMove)
-  document.addEventListener('mouseup', onDragEnd)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('mousemove', onDragMove)
-  document.removeEventListener('mouseup', onDragEnd)
-})
+  },
+)
 </script>
 
 <template>
-  <AppHeader :rendered-html="renderedHtml" :warnings="warnings" :stats="stats" @export-html="handleExport" />
+  <AppHeader
+    :rendered-html="renderedHtml"
+    :warnings="warnings"
+    :stats="stats"
+    @export-html="handleExport"
+  />
 
-  <!-- Desktop layout -->
+  <!-- Desktop layout: Editor | Settings | Preview -->
   <template v-if="!isMobile">
-    <!-- Overlay to close assistant panel on outside click -->
-    <div
-      v-show="ui.showSettings"
-      class="fixed inset-0 z-[35]"
-      @click="ui.showSettings = false"
-    />
-    <InspectorPane
-      v-show="ui.showSettings"
-      :stats="stats"
-      :warnings="warnings"
-      class="fixed right-4 top-[72px] z-40 w-[280px] shadow-xl"
-      style="max-height: calc(100dvh - 80px);"
-    />
     <main
-      ref="mainRef"
-      class="flex gap-4 p-4 min-h-0"
-      style="height: calc(100dvh - 64px)"
+      class="mx-auto max-w-[1440px] w-full grid gap-3 p-3 min-h-0"
+      style="
+        height: calc(100dvh - 64px);
+        grid-template-columns:
+          minmax(230px, 0.9fr) minmax(260px, 300px)
+          minmax(360px, 1.2fr);
+      "
     >
       <EditorPane
         v-model="content"
-        class="min-h-0 shrink-0"
-        :style="{ width: `${editorWidth}px` }"
+        class="min-h-0 min-w-0"
         @load-sample="loadSample"
-        @scroll="(r: number) => scrollRatio = r"
+        @scroll="(r: number) => (scrollRatio = r)"
       />
-      <div
-        class="w-1 shrink-0 cursor-col-resize flex items-center justify-center group z-10"
-        @mousedown="onDragStart"
-      >
-        <div
-          class="w-0.5 h-8 rounded-full bg-border transition-colors"
-          :class="isDragging ? 'bg-accent' : 'group-hover:bg-accent'"
-        />
-      </div>
-      <PreviewPane :html="renderedHtml" :scroll-ratio="scrollRatio" class="flex-1 min-h-0" />
+      <SettingsPanel class="min-h-0 min-w-0" />
+      <PreviewPane :html="renderedHtml" :scroll-ratio="scrollRatio" class="min-h-0 min-w-0" />
     </main>
   </template>
 
   <!-- Mobile layout -->
   <template v-else>
-    <main class="flex flex-col min-h-0" style="height: calc(100dvh - 64px - 48px)">
+    <main
+      class="flex flex-col min-h-0 w-full max-w-[100vw] overflow-hidden"
+      style="height: calc(100dvh - 64px - 48px)"
+    >
       <EditorPane
         v-show="mobileTab === 'editor'"
         v-model="content"
-        class="flex-1 min-h-0"
+        class="flex-1 min-h-0 w-full min-w-0"
         @load-sample="loadSample"
       />
       <PreviewPane
         v-show="mobileTab === 'preview'"
         :html="renderedHtml"
         :scroll-ratio="1"
-        class="flex-1 min-h-0"
+        class="flex-1 min-h-0 w-full min-w-0"
       />
-      <div v-show="mobileTab === 'inspector'" class="flex-1 min-h-0 overflow-y-auto p-3">
-        <InspectorPane
-          :stats="stats"
-          :warnings="warnings"
-          class="!relative !right-auto !top-auto !w-full !shadow-none"
-        />
+      <div
+        v-show="mobileTab === 'inspector'"
+        class="flex-1 min-h-0 w-full min-w-0 overflow-y-auto p-3"
+      >
+        <SettingsPanel class="!w-full" />
       </div>
     </main>
 
     <!-- Mobile tab bar -->
-    <nav class="fixed bottom-0 left-0 right-0 z-50 h-12 bg-surface border-t border-border-subtle flex items-center justify-around safe-area-bottom">
+    <nav
+      class="fixed bottom-0 left-0 right-0 z-50 h-12 w-full max-w-[100vw] overflow-hidden bg-surface border-t border-border-subtle flex items-center justify-around safe-area-bottom"
+    >
       <button
-        v-for="tab in (['editor', 'preview', 'inspector'] as const)"
+        v-for="tab in ['editor', 'preview', 'inspector'] as const"
         :key="tab"
         type="button"
         class="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors"
@@ -212,13 +176,19 @@ onUnmounted(() => {
           :name="tab === 'editor' ? 'pencil' : tab === 'preview' ? 'eye' : 'settings'"
           :size="18"
         />
-        <span class="text-[10px] font-medium">{{ tab === 'editor' ? '编辑' : tab === 'preview' ? '预览' : '助手' }}</span>
+        <span class="text-[10px] font-medium">{{
+          tab === 'editor' ? '编辑' : tab === 'preview' ? '预览' : '设置'
+        }}</span>
       </button>
     </nav>
   </template>
 
   <Teleport to="body">
-    <TransitionGroup name="toast" tag="div" class="fixed bottom-5 right-5 z-[1000] flex flex-col gap-2">
+    <TransitionGroup
+      name="toast"
+      tag="div"
+      class="fixed bottom-5 right-5 z-[1000] flex flex-col gap-2"
+    >
       <div
         v-for="toast in ui.toasts"
         :key="toast.id"
@@ -236,12 +206,28 @@ onUnmounted(() => {
   </Teleport>
 
   <PreflightModal :warnings="warnings" :counts="preflightCounts" :html="renderedHtml" />
-  <ThemeEditorModal />
 
+  <!-- Chat panel slide-over -->
+  <Transition name="chat-slide">
+    <div
+      v-if="ui.showChat"
+      class="fixed top-0 right-0 z-[60] h-full w-[380px] max-w-[90vw] shadow-2xl border-l border-border-subtle"
+    >
+      <ChatPanel @close="ui.toggleChat()" />
+    </div>
+  </Transition>
 </template>
 
 <style scoped>
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.chat-slide-enter-active,
+.chat-slide-leave-active {
+  transition: transform 0.25s ease;
+}
+.chat-slide-enter-from,
+.chat-slide-leave-to {
+  transform: translateX(100%);
 }
 </style>

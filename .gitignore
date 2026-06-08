@@ -1,8 +1,13 @@
 node_modules/
+node_modules_old/
 .vite/
 *.tsbuildinfo
+.env
 .DS_Store
 Thumbs.db
 desktop.ini
 pnpm-lock.yaml
 pnpm-workspace.yaml
+dist/
+dist-electron/
+release/
