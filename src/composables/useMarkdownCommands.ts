@@ -14,10 +14,6 @@ const LIST_RE = /^(\s*)([-*+]|\d+\.)\s+/
 // Match task list prefix specifically
 const TASK_RE = /^(\s*)([-*+])\s+\[([ xX])]\s*/
 
-function getLinePrefix(text: string): string {
-  return text.match(LIST_RE)?.[0] ?? ''
-}
-
 function isTaskItem(text: string): boolean {
   return TASK_RE.test(text)
 }

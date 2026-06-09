@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { CodeTheme, ThemeBase } from '@/types'
 
 export function escapeHtml(value: string): string {
@@ -25,7 +24,7 @@ function alphaColor(color: string | undefined, alpha = '33'): string {
     const opacity = Math.round((parseInt(alpha, 16) / 255) * 100) / 100
     return `rgba(${r}, ${g}, ${b}, ${opacity})`
   }
-  return color
+  return hex
 }
 
 function inline(
@@ -112,7 +111,7 @@ export function highlightCode(
     rust: 'as async await break const continue crate else enum extern false fn for if impl in let loop match mod move mut pub ref return self Self static struct super trait true type unsafe use where while',
   }
   const normalized = (lang || 'js').toLowerCase()
-  const keywords = keywordSets[normalized] || keywordSets.js
+  const keywords = keywordSets[normalized] ?? keywordSets.js ?? ''
   return escaped
     .replace(/(&lt;!--[\s\S]*?--&gt;|\/\/.*$|\/\*[\s\S]*?\*\/)/gm, (match) =>
       inline('span', match, { color: commentColor }),
@@ -128,9 +127,12 @@ export function highlightCode(
 
 export function safeUrl(url: string): string {
   if (!url) return ''
-  const allowed = ['http:', 'https:', 'data:', 'mailto:']
+  const allowed = ['http:', 'https:', 'mailto:']
   try {
     const parsed = new URL(url, window.location.href)
+    if (parsed.protocol === 'data:') {
+      return /^data:image\/(?:png|jpe?g|gif|webp);base64,[a-z0-9+/=\s]+$/i.test(url) ? url : ''
+    }
     if (allowed.includes(parsed.protocol)) return url
     return ''
   } catch {
@@ -235,10 +237,12 @@ function parseInline(
 }
 
 function isTableStart(lines: string[], index: number): boolean {
+  const line = lines[index] ?? ''
+  const separatorLine = lines[index + 1] ?? ''
   return (
     index + 1 < lines.length &&
-    /\|/.test(lines[index]) &&
-    /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(lines[index + 1])
+    /\|/.test(line) &&
+    /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(separatorLine)
   )
 }
 
@@ -659,30 +663,10 @@ interface ListNode {
   items: Array<{ text: string; childrenHtml: string }>
 }
 
-export interface RenderAppendix {
-  followEnabled?: boolean
-  followName?: string
-  followSlogan?: string
-}
-
-function renderAppendix(theme: ThemeBase, appendix?: RenderAppendix): string {
-  if (!appendix?.followEnabled) return ''
-  const name = escapeHtml(appendix.followName || '公众号名称')
-  const slogan = escapeHtml(appendix.followSlogan || '感谢阅读，觉得有帮助可以分享给朋友')
-  return `
-<p style="margin:28px 0 0;padding:20px 16px 4px;background:${theme.bgSoft};text-align:center;border-top:3px solid ${theme.accent};">
-  <span style="color:${theme.muted};font-size:14px;line-height:1.6;">${slogan}</span>
-</p>
-<p style="margin:0;padding:4px 16px 20px;background:${theme.bgSoft};text-align:center;">
-  <strong style="color:${theme.accent};font-size:18px;line-height:1.4;letter-spacing:1px;">${name}</strong>
-</p>`
-}
-
 export function renderMarkdown(
   markdown: string,
   theme: ThemeBase,
   codeTheme: CodeTheme,
-  appendix?: RenderAppendix,
 ): string {
   const lines = markdown.replace(/\r\n/g, '\n').split('\n')
   const links: Array<{ label: string; href: string }> = []
@@ -698,12 +682,15 @@ export function renderMarkdown(
   const footnoteDefPattern = /^\[\^([^\]]+)\]:\s+(.+)$/
   const footnoteDefLines = new Set<number>()
   for (let i = 0; i < lines.length; i++) {
-    const m = lines[i].trim().match(footnoteDefPattern)
-    if (m) {
-      footnotes.push({ id: m[1], content: m[2] })
+    const sourceLine = lines[i] ?? ''
+    const m = sourceLine.trim().match(footnoteDefPattern)
+    const id = m?.[1]
+    const content = m?.[2]
+    if (id && content) {
+      footnotes.push({ id, content })
       footnoteDefLines.add(i)
       // Register as a link so references can find the index
-      links.push({ label: `^${m[1]}`, href: `fn:${m[1]}` })
+      links.push({ label: `^${id}`, href: `fn:${id}` })
     }
   }
 
@@ -715,7 +702,7 @@ export function renderMarkdown(
 
   function getListIndent(line: string): number {
     const m = line.match(/^(\s*)/)
-    return m ? m[1].length : 0
+    return m?.[1]?.length ?? 0
   }
 
   function renderListNode(list: ListNode): string {
@@ -740,14 +727,22 @@ export function renderMarkdown(
     })
   }
 
+  function appendChildList(listHtml: string) {
+    const parent = listStack[listStack.length - 1]
+    const lastItem = parent?.items[parent.items.length - 1]
+    if (!lastItem) {
+      html += listHtml
+      return
+    }
+    lastItem.childrenHtml = (lastItem.childrenHtml || '') + listHtml
+  }
+
   function flushListsAbove(indent: number) {
-    while (listStack.length && listStack[listStack.length - 1].indent > indent) {
+    while (listStack.length && (listStack[listStack.length - 1]?.indent ?? -1) > indent) {
       const list = listStack.pop()!
       const listHtml = renderListNode(list)
       if (listStack.length) {
-        const parent = listStack[listStack.length - 1]
-        parent.items[parent.items.length - 1].childrenHtml =
-          (parent.items[parent.items.length - 1].childrenHtml || '') + listHtml
+        appendChildList(listHtml)
       } else {
         html += listHtml
       }
@@ -827,13 +822,13 @@ export function renderMarkdown(
   }
 
   for (let i = 0; i < lines.length; i += 1) {
-    const raw = lines[i]
+    const raw = lines[i] ?? ''
     const line = raw.trim()
 
     // Skip footnote definitions (already pre-scanned)
     if (footnoteDefLines.has(i)) continue
 
-    if (/^```/.test(line)) {
+    if (line.startsWith('```')) {
       if (inCode) {
         flushCode()
         inCode = false
@@ -861,19 +856,25 @@ export function renderMarkdown(
     if (imageOnly) {
       flushParagraph()
       flushAllLists()
-      html += imageHtml(imageOnly[1], imageOnly[2])
+      const alt = imageOnly[1] ?? ''
+      const safeSrc = safeUrl(imageOnly[2] ?? '')
+      html += safeSrc
+        ? imageHtml(alt, safeSrc)
+        : inline('p', escapeHtml(line), paragraphStyle(theme))
       continue
     }
 
     if (isTableStart(lines, i)) {
       flushParagraph()
       flushAllLists()
-      const headers = splitTableRow(lines[i])
-      const alignments = parseTableAlignments(lines[i + 1])
+      const headers = splitTableRow(lines[i] ?? '')
+      const alignments = parseTableAlignments(lines[i + 1] ?? '')
       i += 2
       const rows: string[][] = []
-      while (i < lines.length && /\|/.test(lines[i]) && lines[i].trim()) {
-        rows.push(splitTableRow(lines[i]))
+      while (i < lines.length) {
+        const rowLine = lines[i] ?? ''
+        if (!/\|/.test(rowLine) || !rowLine.trim()) break
+        rows.push(splitTableRow(rowLine))
         i += 1
       }
       i -= 1
@@ -929,11 +930,11 @@ export function renderMarkdown(
     if (heading) {
       flushParagraph()
       flushAllLists()
-      const level = heading[1].length
+      const level = (heading[1] ?? '').length
       const baseSize = theme.fontSize || 16
-      const size = [0, baseSize + 8, baseSize + 4, baseSize + 2, baseSize][level]
+      const size = [0, baseSize + 8, baseSize + 4, baseSize + 2, baseSize][level] ?? baseSize
       const marginTop = level === 1 ? '0' : '28px'
-      const content = parseInline(heading[2], links, theme)
+      const content = parseInline(heading[2] ?? '', links, theme)
       if (level === 1) {
         html += inline('h1', h1Content(content, theme), h1Style(theme))
       } else {
@@ -961,7 +962,7 @@ export function renderMarkdown(
       const quoteLines: string[] = [line.replace(/^>\s?/, '')]
       let qi = i + 1
       while (qi < lines.length) {
-        const quoteLine = lines[qi].trim()
+        const quoteLine = (lines[qi] ?? '').trim()
         if (quoteLine === '>') {
           quoteLines.push('')
           qi += 1
@@ -995,10 +996,10 @@ export function renderMarkdown(
       const currentType = ordered ? 'ol' : 'ul'
       let content: string
       if (task) {
-        const checked = /x/i.test(task[2])
-        content = `${checked ? '☑' : '☐'} ${task[3]}`
+        const checked = /x/i.test(task[2] ?? '')
+        content = `${checked ? '☑' : '☐'} ${task[3] ?? ''}`
       } else {
-        content = (unordered || ordered)![2]
+        content = unordered?.[2] ?? ordered?.[2] ?? ''
       }
 
       flushListsAbove(indent)
@@ -1007,19 +1008,20 @@ export function renderMarkdown(
         listStack.push({ type: currentType, indent, items: [{ text: content, childrenHtml: '' }] })
       } else {
         const top = listStack[listStack.length - 1]
-        if (top.indent === indent) {
+        if (!top) {
+          listStack.push({
+            type: currentType,
+            indent,
+            items: [{ text: content, childrenHtml: '' }],
+          })
+        } else if (top.indent === indent) {
           if (top.type === currentType) {
             top.items.push({ text: content, childrenHtml: '' })
           } else {
             const list = listStack.pop()!
             const listHtml = renderListNode(list)
             if (listStack.length) {
-              listStack[listStack.length - 1].items[
-                listStack[listStack.length - 1].items.length - 1
-              ].childrenHtml =
-                (listStack[listStack.length - 1].items[
-                  listStack[listStack.length - 1].items.length - 1
-                ].childrenHtml || '') + listHtml
+              appendChildList(listHtml)
             } else {
               html += listHtml
             }
@@ -1118,14 +1120,12 @@ export function renderMarkdown(
     )
   }
 
-  const appendixHtml = renderAppendix(theme, appendix)
   const pageMargin = Number(theme.pageMargin ?? 0)
   const hasPagePadding = Number.isFinite(pageMargin) && pageMargin > 0
 
   return inline(
     'section',
-    (html || inline('p', '开始输入 Markdown，右侧会实时预览。', paragraphStyle(theme))) +
-      appendixHtml,
+    html || inline('p', '开始输入 Markdown，右侧会实时预览。', paragraphStyle(theme)),
     {
       color: theme.color,
       fontFamily: theme.fontFamily,

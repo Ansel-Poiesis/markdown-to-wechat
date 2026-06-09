@@ -111,7 +111,6 @@ function insertLink() {
 function insertImage() {
   const view = getEditorView()
   if (!view) return
-  const doc = view.state.doc.toString()
   const { from, to } = view.state.selection.main
   const replacement = `![图片描述](https://)`
   view.dispatch({

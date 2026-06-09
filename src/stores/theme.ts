@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
-import { themes, codeThemes, THEME_KEY, CODE_THEME_KEY } from '@/config/themes'
+import { themes, codeThemes, CODE_THEME_KEY } from '@/config/themes'
 import { useSettingsStore, FONT_FAMILIES } from '@/stores/settings'
 import type { Theme, CodeTheme, ThemeBase } from '@/types'
 
@@ -35,6 +35,11 @@ export const useThemeStore = defineStore('theme', () => {
       lineHeight: settings.lineHeight,
       width: settings.contentWidth,
       pageMargin: settings.pageMargin,
+      color: settings.textColor || base.color,
+      muted: settings.mutedColor || base.muted,
+      border: settings.borderColor || base.border,
+      bgSoft: settings.bgSoftColor || base.bgSoft,
+      quoteBg: settings.quoteBgColor || base.quoteBg,
       accent: settings.accentColor || base.accent,
       h1Mode: settings.h1Mode,
       headingMode: settings.headingMode,
@@ -51,7 +56,7 @@ export const useThemeStore = defineStore('theme', () => {
       h2Color: settings.h2Color || undefined,
       h3Color: settings.h3Color || undefined,
       h4Color: settings.h4Color || undefined,
-      headingAccent: settings.underlineColor || undefined,
+      headingAccent: settings.headingAccent || undefined,
       quoteAccent: settings.quoteAccent || undefined,
       letterSpacing: settings.letterSpacing || undefined,
       paragraphSpacing: settings.paragraphSpacing || undefined,

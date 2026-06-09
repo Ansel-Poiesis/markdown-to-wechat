@@ -6,7 +6,6 @@ defineProps<{
     | 'share'
     | 'sun'
     | 'moon'
-    | 'sparkles'
     | 'wand'
     | 'fileText'
     | 'download'
@@ -80,11 +79,6 @@ defineProps<{
     </template>
     <template v-else-if="name === 'moon'">
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </template>
-    <template v-else-if="name === 'sparkles'">
-      <path
-        d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"
-      />
     </template>
     <template v-else-if="name === 'wand'">
       <path d="M15 4V2" />

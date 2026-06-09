@@ -1,9 +1,9 @@
 /**
- * MiMo 模型配置
- * 定义所有可用的 MiMo 模型及其能力、API 端点和参数
+ * MiMo 文本模型配置
+ * 用于辅助排版的流式文本生成。
  */
 
-export type ModelCapability = 'chat' | 'asr' | 'tts' | 'voiceclone' | 'voicedesign'
+export type ModelCapability = 'chat'
 
 export interface MimoModel {
   id: string
@@ -17,12 +17,6 @@ export interface MimoModel {
     temperature?: number
     reasoning_effort?: string
   }
-  /** TTS 特有参数 */
-  ttsDefaults?: {
-    voice?: string
-    speed?: number
-    format?: 'mp3' | 'wav' | 'pcm'
-  }
   /** 是否支持流式输出 */
   streamable: boolean
   /** 标签（用于 UI 分类） */
@@ -32,7 +26,6 @@ export interface MimoModel {
 const BASE_URL = import.meta.env.VITE_MIMO_API_URL?.replace('/chat/completions', '') || 'https://api.xiaomimimo.com/v1'
 
 export const MIMO_MODELS: MimoModel[] = [
-  // ── 文本生成模型 ──────────────────────────────────────────
   {
     id: 'mimo-v2.5-pro',
     name: 'MiMo v2.5 Pro',
@@ -61,59 +54,6 @@ export const MIMO_MODELS: MimoModel[] = [
     streamable: true,
     tags: ['文本', '快速'],
   },
-
-  // ── 语音识别模型 ──────────────────────────────────────────
-  {
-    id: 'mimo-v2.5-asr',
-    name: 'MiMo v2.5 ASR',
-    description: '语音转文字，支持多语言识别',
-    capability: 'asr',
-    endpoint: `${BASE_URL}/audio/transcriptions`,
-    streamable: false,
-    tags: ['语音', '识别'],
-  },
-
-  // ── 语音合成模型 ──────────────────────────────────────────
-  {
-    id: 'mimo-v2.5-tts',
-    name: 'MiMo v2.5 TTS',
-    description: '基础语音合成，多种音色可选',
-    capability: 'tts',
-    endpoint: `${BASE_URL}/audio/speech`,
-    ttsDefaults: {
-      voice: 'alloy',
-      speed: 1.0,
-      format: 'mp3',
-    },
-    streamable: false,
-    tags: ['语音', '合成'],
-  },
-  {
-    id: 'mimo-v2.5-tts-voiceclone',
-    name: 'MiMo v2.5 声音克隆',
-    description: '克隆指定音色进行语音合成',
-    capability: 'voiceclone',
-    endpoint: `${BASE_URL}/audio/speech`,
-    ttsDefaults: {
-      speed: 1.0,
-      format: 'mp3',
-    },
-    streamable: false,
-    tags: ['语音', '克隆'],
-  },
-  {
-    id: 'mimo-v2.5-tts-voicedesign',
-    name: 'MiMo v2.5 声音设计',
-    description: '自定义设计语音音色与风格',
-    capability: 'voicedesign',
-    endpoint: `${BASE_URL}/audio/speech`,
-    ttsDefaults: {
-      speed: 1.0,
-      format: 'mp3',
-    },
-    streamable: false,
-    tags: ['语音', '设计'],
-  },
 ]
 
 // ── 便捷查询 ────────────────────────────────────────────────
@@ -126,11 +66,6 @@ export function getModelsByCapability(capability: ModelCapability): MimoModel[] 
 /** 获取所有文本生成模型（用于排版功能） */
 export function getChatModels(): MimoModel[] {
   return getModelsByCapability('chat')
-}
-
-/** 获取所有 TTS 相关模型 */
-export function getTTSModels(): MimoModel[] {
-  return MIMO_MODELS.filter(m => ['tts', 'voiceclone', 'voicedesign'].includes(m.capability))
 }
 
 /** 按 ID 查找模型 */

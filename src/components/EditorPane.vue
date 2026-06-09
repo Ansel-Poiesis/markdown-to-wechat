@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { EditorView, basicSetup } from 'codemirror'
 import { markdown } from '@codemirror/lang-markdown'
 import { keymap } from '@codemirror/view'
 import { markdownCommandsKeymap } from '@/composables/useMarkdownCommands'
-import { useSmartFormat } from '@/composables/useSmartFormat'
 import { mimoFormatStream } from '@/composables/useMimoStream'
 import { useEditorStore } from '@/stores/editor'
+import { useSettingsStore } from '@/stores/settings'
 import { useUiStore } from '@/stores/ui'
 import {
   processImageFile,
@@ -25,9 +25,12 @@ const emit = defineEmits<{
 
 const editorHost = ref<HTMLDivElement>()
 const editorStore = useEditorStore()
+const settings = useSettingsStore()
 const ui = useUiStore()
-const { formatMarkdown } = useSmartFormat()
 let view: EditorView | null = null
+const editorStyle = computed(() => ({
+  fontSize: `${Number(settings.fontSize) || 16}px`,
+}))
 
 // Track which format mode is active for toggle styling
 const formatMode = ref<'none' | 'pure' | 'format'>('none')
@@ -251,26 +254,26 @@ watch(
           </span>
         </Transition>
       </strong>
-      <div class="flex items-center gap-0.5 bg-bg rounded-lg p-0.5">
+      <div class="editor-actions">
         <button
           type="button"
-          class="flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-medium transition-all active:scale-95"
+          class="editor-action-button"
           :class="
             formatMode === 'pure'
-              ? 'bg-surface text-text shadow-sm font-semibold'
+              ? 'editor-action-button--active'
               : 'text-text-tertiary hover:text-text'
           "
           title="清除所有 Markdown 格式，仅保留纯文本"
           @click="handlePure"
         >
-          纯净
+          清除格式
         </button>
         <button
           type="button"
-          class="flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-medium transition-all active:scale-95"
+          class="editor-action-button"
           :class="[
             formatMode === 'format'
-              ? 'bg-surface text-text shadow-sm font-semibold'
+              ? 'editor-action-button--active'
               : 'text-text-tertiary hover:text-text',
             formatLoading && 'opacity-60 cursor-wait',
           ]"
@@ -289,40 +292,74 @@ watch(
             />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
           </svg>
-          {{ formatLoading ? '取消' : '排版' }}
+          {{ formatLoading ? '取消' : '辅助排版' }}
         </button>
       </div>
     </div>
-    <div class="flex-1 min-h-0 relative overflow-hidden">
-      <div ref="editorHost" class="absolute inset-0 font-mono text-sm leading-relaxed"></div>
-      <Transition name="fade">
-        <div
-          v-if="!modelValue"
-          class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-text-tertiary select-none pointer-events-none"
-        >
-          <AppIcon name="fileText" :size="32" class="opacity-40" />
-          <div class="text-center">
-            <p class="text-[13px] font-medium text-text-secondary mb-1">
-              粘贴 Markdown 或拖入图片开始排版
-            </p>
-            <button
-              type="button"
-              class="text-xs text-accent hover:underline pointer-events-auto"
-              @click="emit('loadSample')"
-            >
-              加载示例内容
-            </button>
+    <div class="editor-scroll">
+      <div class="editor-canvas">
+        <div ref="editorHost" class="editor-host font-mono leading-relaxed" :style="editorStyle"></div>
+        <Transition name="fade">
+          <div
+            v-if="!modelValue"
+            class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-text-tertiary select-none pointer-events-none"
+          >
+            <AppIcon name="fileText" :size="32" class="opacity-40" />
+            <div class="text-center">
+              <p class="text-[13px] font-medium text-text-secondary mb-1">
+                粘贴 Markdown 或拖入图片开始排版
+              </p>
+              <button
+                type="button"
+                class="text-xs text-accent hover:underline pointer-events-auto"
+                @click="emit('loadSample')"
+              >
+                加载示例内容
+              </button>
+            </div>
           </div>
-        </div>
-      </Transition>
+        </Transition>
+      </div>
     </div>
   </section>
 </template>
 
 <style scoped>
+.editor-scroll {
+  flex: 1;
+  min-height: 0;
+  padding: 32px 24px 8px;
+  background: #ececec;
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+}
+
+.editor-canvas {
+  position: relative;
+  min-width: 0;
+  flex: 1 0 auto;
+  min-height: calc(100dvh - 170px);
+  background: var(--color-surface);
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.06),
+    0 10px 28px rgb(0 0 0 / 0.08);
+}
+
+.editor-host {
+  position: absolute;
+  inset: 0;
+}
+
 div :deep(.cm-editor) {
   height: 100%;
   background: var(--color-surface);
+  font-size: inherit;
+}
+div :deep(.cm-content) {
+  font-size: inherit;
 }
 div :deep(.cm-scroller) {
   padding: 16px 20px 16px 20px;
@@ -334,6 +371,43 @@ div :deep(.cm-gutters) {
 div :deep(.cm-lineNumbers) {
   color: var(--color-text-tertiary);
   font-size: 12px;
+}
+
+:global(.dark) .editor-scroll {
+  background: #2a2a2a;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.editor-action-button {
+  min-width: 0;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-subtle);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 650;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.editor-action-button--active {
+  color: var(--color-text);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-xs);
 }
 
 .fade-enter-active,

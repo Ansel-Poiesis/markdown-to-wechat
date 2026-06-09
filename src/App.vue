@@ -2,8 +2,8 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useEditorStore } from '@/stores/editor'
 import { useThemeStore } from '@/stores/theme'
-import { useSettingsStore } from '@/stores/settings'
 import { useUiStore } from '@/stores/ui'
+import { useDraftStore } from '@/stores/drafts'
 import { renderMarkdown } from '@/utils/markdownRenderer'
 import { useMarkdownAnalyzer } from '@/composables/useMarkdownAnalyzer'
 import { useMarkdownWarnings } from '@/composables/useMarkdownWarnings'
@@ -16,13 +16,12 @@ import AppHeader from '@/components/AppHeader.vue'
 import EditorPane from '@/components/EditorPane.vue'
 import PreviewPane from '@/components/PreviewPane.vue'
 import SettingsPanel from '@/components/SettingsPanel.vue'
-import ChatPanel from '@/components/ChatPanel.vue'
 import PreflightModal from '@/components/modals/PreflightModal.vue'
 
 const editorStore = useEditorStore()
 const themeStore = useThemeStore()
-const settingsStore = useSettingsStore()
 const ui = useUiStore()
+const draftStore = useDraftStore()
 const { isMobile } = useBreakpoint()
 const { copyRenderedHtml } = useClipboard()
 const { formatMarkdown } = useSmartFormat()
@@ -36,31 +35,37 @@ const content = computed({
   set: (v) => editorStore.setContent(v),
 })
 
-// No-op (layout fixed)
+function handleGlobalKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    if (ui.activeModals.preflight) {
+      ui.closeModal('preflight')
+    }
+    return
+  }
+  if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'c') {
+    event.preventDefault()
+    const hasBlocking = warnings.value.some((w) => w.level === 'danger')
+    if (hasBlocking) {
+      ui.openModal('preflight')
+    } else {
+      copyRenderedHtml(renderedHtml.value)
+    }
+  }
+}
 
 onMounted(() => {
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      if (ui.activeModals.preflight) {
-        ui.closeModal('preflight')
-        return
-      }
-
-      return
-    }
-    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'c') {
-      event.preventDefault()
-      const hasBlocking = warnings.value.some((w) => w.level === 'danger')
-      if (hasBlocking) {
-        ui.openModal('preflight')
-      } else {
-        copyRenderedHtml(renderedHtml.value)
-      }
-    }
-  })
+  draftStore.loadDrafts()
+  if (draftStore.activeDraft) {
+    editorStore.setContent(draftStore.activeDraft.content)
+  } else if (editorStore.content.trim()) {
+    draftStore.updateActiveDraft(editorStore.content)
+  }
+  document.addEventListener('keydown', handleGlobalKeydown)
 })
 
-// nothing to clean up
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleGlobalKeydown)
+})
 
 const { stats } = useMarkdownAnalyzer(content)
 const { warnings, preflightCounts } = useMarkdownWarnings(content)
@@ -71,7 +76,6 @@ const renderedHtml = computed(() => {
     content.value,
     themeStore.themeBase,
     themeStore.currentCodeTheme,
-    settingsStore.wechatElements,
   )
 })
 
@@ -85,7 +89,6 @@ function handleExport() {
     editorStore.content,
     themeStore.themeBase,
     themeStore.currentCodeTheme,
-    settingsStore.wechatElements,
   )
   exportHtml(html)
   ui.showToast('HTML 已导出')
@@ -98,8 +101,11 @@ watch(
       const formatted = formatMarkdown(v)
       if (formatted !== v) {
         editorStore.setContent(formatted)
+        draftStore.updateActiveDraft(formatted)
+        return
       }
     }
+    draftStore.updateActiveDraft(v)
   },
 )
 </script>
@@ -115,13 +121,8 @@ watch(
   <!-- Desktop layout: Editor | Settings | Preview -->
   <template v-if="!isMobile">
     <main
-      class="mx-auto max-w-[1440px] w-full grid gap-3 p-3 min-h-0"
-      style="
-        height: calc(100dvh - 64px);
-        grid-template-columns:
-          minmax(230px, 0.9fr) minmax(260px, 300px)
-          minmax(360px, 1.2fr);
-      "
+      class="desktop-workspace mx-auto w-full gap-3 px-4 py-3 min-h-0"
+      style="height: calc(100dvh - 64px)"
     >
       <EditorPane
         v-model="content"
@@ -129,7 +130,11 @@ watch(
         @load-sample="loadSample"
         @scroll="(r: number) => (scrollRatio = r)"
       />
-      <SettingsPanel class="min-h-0 min-w-0" />
+      <SettingsPanel
+        :stats="stats"
+        :warnings="warnings"
+        class="min-h-0 min-w-0"
+      />
       <PreviewPane :html="renderedHtml" :scroll-ratio="scrollRatio" class="min-h-0 min-w-0" />
     </main>
   </template>
@@ -156,7 +161,7 @@ watch(
         v-show="mobileTab === 'inspector'"
         class="flex-1 min-h-0 w-full min-w-0 overflow-y-auto p-3"
       >
-        <SettingsPanel class="!w-full" />
+        <SettingsPanel :stats="stats" :warnings="warnings" class="!w-full" />
       </div>
     </main>
 
@@ -206,28 +211,29 @@ watch(
   </Teleport>
 
   <PreflightModal :warnings="warnings" :counts="preflightCounts" :html="renderedHtml" />
-
-  <!-- Chat panel slide-over -->
-  <Transition name="chat-slide">
-    <div
-      v-if="ui.showChat"
-      class="fixed top-0 right-0 z-[60] h-full w-[380px] max-w-[90vw] shadow-2xl border-l border-border-subtle"
-    >
-      <ChatPanel @close="ui.toggleChat()" />
-    </div>
-  </Transition>
 </template>
 
 <style scoped>
+.desktop-workspace {
+  max-width: min(1760px, 100vw);
+  display: grid;
+  grid-template-columns: minmax(520px, 1fr) minmax(340px, 0.62fr) 679px;
+  align-items: stretch;
+}
+
+@media (max-width: 1480px) {
+  .desktop-workspace {
+    grid-template-columns: minmax(320px, 1.15fr) minmax(292px, 0.85fr) minmax(440px, 1fr);
+  }
+}
+
+@media (max-width: 1060px) {
+  .desktop-workspace {
+    grid-template-columns: minmax(280px, 1.05fr) minmax(272px, 0.95fr) minmax(340px, 0.9fr);
+  }
+}
+
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0);
-}
-.chat-slide-enter-active,
-.chat-slide-leave-active {
-  transition: transform 0.25s ease;
-}
-.chat-slide-enter-from,
-.chat-slide-leave-to {
-  transform: translateX(100%);
 }
 </style>

@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useThemeStore } from '@/stores/theme'
-import { useSettingsStore, FONT_FAMILIES } from '@/stores/settings'
+import { useSettingsStore, FONT_FAMILIES, STYLE_PRESETS } from '@/stores/settings'
 import { codeThemes } from '@/config/themes'
 import type { BoldMode, FontFamilyKey, UnderlineMode } from '@/types'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import DraftPanel from '@/components/DraftPanel.vue'
+import ColorPresetControl from '@/components/settings/ColorPresetControl.vue'
 
 type IconName = InstanceType<typeof AppIcon>['$props']['name']
-type SettingsTab = 'body' | 'components' | 'drafts'
+type SettingsTab = 'theme' | 'style' | 'drafts'
 type ComponentSection =
   | 'h1'
   | 'h2'
@@ -19,12 +20,11 @@ type ComponentSection =
   | 'bold'
   | 'code'
   | 'background'
-  | 'wechat'
 
 const themeStore = useThemeStore()
 const settings = useSettingsStore()
 
-const activeTab = ref<SettingsTab>('body')
+const activeTab = ref<SettingsTab>('theme')
 const openSections = ref<Record<ComponentSection, boolean>>({
   background: true,
   h1: false,
@@ -35,12 +35,11 @@ const openSections = ref<Record<ComponentSection, boolean>>({
   underline: false,
   bold: false,
   code: false,
-  wechat: false,
 })
 
 const tabs: Array<{ key: SettingsTab; label: string; icon: IconName }> = [
-  { key: 'body', label: '正文样式', icon: 'palette' },
-  { key: 'components', label: '组件', icon: 'fileText' },
+  { key: 'theme', label: '主题', icon: 'palette' },
+  { key: 'style', label: '样式', icon: 'palette' },
   { key: 'drafts', label: '草稿', icon: 'draft' },
 ]
 
@@ -58,9 +57,9 @@ const fontFamilyOptions = (
   Object.entries(FONT_FAMILIES) as [FontFamilyKey, (typeof FONT_FAMILIES)['sans']][]
 ).map(([key, v]) => ({ key, label: v.label }))
 
-const fontSizeOptions = [14, 16, 18, 20, 22]
+const fontSizeOptions = [12, 14, 16, 18, 20]
 const lineHeightOptions = [1, 1.6, 2, 2.6, 3]
-const pageMarginOptions = [12, 18, 24, 30, 36]
+const pageMarginOptions = [12, 20, 28, 34, 36]
 const paragraphSpacingOptions = [
   { label: '0.5', value: 0.5 },
   { label: '1.0', value: 1 },
@@ -114,27 +113,6 @@ const quoteMode2Options = [
   { key: 'fade', label: '淡化' },
 ]
 
-const ACCENT_PRESETS = [
-  { label: '陶土', color: '#b14f2a' },
-  { label: '酒红', color: '#8b3a4a' },
-  { label: '墨绿', color: '#3a6b52' },
-  { label: '藏蓝', color: '#3a5a8b' },
-]
-
-const BG_PRESETS = [
-  { label: '纯白', color: '#ffffff' },
-  { label: '暖白', color: '#fefcf9' },
-  { label: '米色', color: '#faf6ed' },
-  { label: '浅灰', color: '#f6f6f6' },
-]
-
-const TEXT_COLOR_PRESETS = [
-  { label: '墨色', color: '#332b24' },
-  { label: '炭黑', color: '#18181b' },
-  { label: '灰褐', color: '#5f554d' },
-  { label: '深蓝', color: '#24364f' },
-]
-
 const underlineModeOptions: Array<{ key: UnderlineMode; label: string }> = [
   { key: 'solid', label: '实线' },
   { key: 'dashed', label: '虚线' },
@@ -175,55 +153,18 @@ function isOpen(section: ComponentSection) {
   return openSections.value[section]
 }
 
-function resetUnderlineColors() {
-  resetColor('underlineColor')
-}
-
-const colorPickers = ref<Record<string, boolean>>({})
-const historyTimers = new Map<string, ReturnType<typeof window.setTimeout>>()
-
-function setColor(target: string, color: string) {
+function applyColor(target: string, color: string) {
   ;(settings as unknown as Record<string, string>)[target] = color
-  if (historyTimers.has(target)) {
-    window.clearTimeout(historyTimers.get(target))
+}
+
+function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
+  return {
+    '--theme-color': preset.color,
+    '--theme-canvas': preset.settings.canvasColor,
+    '--theme-soft': preset.settings.bgSoftColor,
+    '--theme-border': preset.settings.borderColor,
+    '--theme-text': preset.settings.textColor,
   }
-  const timer = window.setTimeout(() => {
-    if (colorValue(target).toLowerCase() === color.toLowerCase()) {
-      settings.rememberColor(color)
-    }
-    historyTimers.delete(target)
-  }, 3000)
-  historyTimers.set(target, timer)
-}
-
-function resetColor(target: string) {
-  ;(settings as unknown as Record<string, string>)[target] = ''
-}
-
-function resetCanvasColor() {
-  settings.canvasColor = '#ffffff'
-}
-
-function updateCustomColor(target: string, event: Event) {
-  const color = (event.target as HTMLInputElement).value
-  setColor(target, color)
-}
-
-function colorValue(target: string) {
-  return (settings as unknown as Record<string, string>)[target] || ''
-}
-
-const visibleColorHistory = computed(() => settings.colorHistory.slice(0, 3))
-
-function toggleColorPicker(target: string) {
-  colorPickers.value = {
-    ...colorPickers.value,
-    [target]: !colorPickers.value[target],
-  }
-}
-
-function isColorPickerOpen(target: string) {
-  return !!colorPickers.value[target]
 }
 </script>
 
@@ -239,26 +180,9 @@ function isColorPickerOpen(target: string) {
         </span>
         <div class="min-w-0">
           <h2 class="settings-title">设置</h2>
-          <p class="settings-subtitle">暖色杂志 · 微信输出</p>
         </div>
       </div>
     </header>
-
-    <section class="preview-control" aria-label="预览缩放">
-      <span class="control-label">预览</span>
-      <div class="segmented segmented--compact">
-        <button
-          v-for="opt in zoomOptions"
-          :key="opt.value"
-          type="button"
-          class="segmented-button"
-          :class="String(settings.previewZoom) === opt.value ? 'segmented-button--active' : ''"
-          @click="settings.previewZoom = opt.value"
-        >
-          {{ opt.label }}
-        </button>
-      </div>
-    </section>
 
     <nav class="settings-tabs" aria-label="设置分区">
       <button
@@ -275,7 +199,54 @@ function isColorPickerOpen(target: string) {
     </nav>
 
     <div class="settings-body">
-      <section v-if="activeTab === 'body'" class="section-stack">
+      <section v-if="activeTab === 'theme'" class="section-stack">
+        <div class="theme-grid">
+          <button
+            v-for="preset in STYLE_PRESETS"
+            :key="preset.key"
+            type="button"
+            class="theme-card"
+            :class="settings.activeStylePreset === preset.key ? 'theme-card--active' : ''"
+            :style="themeCardStyle(preset)"
+            @click="settings.applyStylePreset(preset.key)"
+          >
+            <span class="theme-card__preview" aria-hidden="true">
+              <span class="theme-paper">
+                <span class="theme-paper__title" />
+                <span class="theme-paper__line theme-paper__line--long" />
+                <span class="theme-paper__line" />
+              </span>
+              <span class="theme-card__swatches">
+                <span :style="{ background: preset.settings.canvasColor }" />
+                <span :style="{ background: preset.settings.textColor }" />
+                <span :style="{ background: preset.settings.accentColor }" />
+                <span :style="{ background: preset.settings.bgSoftColor }" />
+              </span>
+            </span>
+            <span class="theme-card__copy">
+              <strong>{{ preset.label }}</strong>
+              <small>{{ preset.description }}</small>
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <section v-else-if="activeTab === 'style'" class="section-stack">
+        <div class="setting-row setting-row--inline">
+          <span class="control-label">预览</span>
+          <div class="segmented segmented--compact">
+            <button
+              v-for="opt in zoomOptions"
+              :key="opt.value"
+              type="button"
+              class="segmented-button"
+              :class="String(settings.previewZoom) === opt.value ? 'segmented-button--active' : ''"
+              @click="settings.previewZoom = opt.value"
+            >
+              {{ opt.label }}
+            </button>
+          </div>
+        </div>
         <div class="section-heading">
           <div>
             <h3>正文样式</h3>
@@ -348,6 +319,18 @@ function isColorPickerOpen(target: string) {
             </div>
           </div>
 
+          <div class="switch-grid switch-grid--single">
+            <button
+              type="button"
+              class="switch-card"
+              :class="settings.textJustify ? 'switch-card--active' : ''"
+              @click="settings.textJustify = !settings.textJustify"
+            >
+              <span>两端对齐</span>
+              <span class="switch-dot" />
+            </button>
+          </div>
+
           <div class="setting-row setting-row--inline">
             <span class="control-label">段距</span>
             <div class="segmented">
@@ -395,22 +378,8 @@ function isColorPickerOpen(target: string) {
               </button>
             </div>
           </div>
-
-          <div class="switch-grid switch-grid--single">
-            <button
-              type="button"
-              class="switch-card"
-              :class="settings.textJustify ? 'switch-card--active' : ''"
-              @click="settings.textJustify = !settings.textJustify"
-            >
-              <span>两端对齐</span>
-              <span class="switch-dot" />
-            </button>
-          </div>
         </div>
-      </section>
 
-      <section v-else-if="activeTab === 'components'" class="section-stack">
         <div class="accordion">
           <article class="accordion-item">
             <button type="button" class="accordion-button" @click="toggleSection('background')">
@@ -424,47 +393,13 @@ function isColorPickerOpen(target: string) {
               />
             </button>
             <div v-show="isOpen('background')" class="accordion-body">
-              <div class="color-line">
-                <button
-                  v-for="preset in BG_PRESETS"
-                  :key="preset.color"
-                  type="button"
-                  class="color-swatch color-swatch--light"
-                  :class="
-                    (settings.canvasColor || '#ffffff') === preset.color
-                      ? 'color-swatch--active'
-                      : ''
-                  "
-                  :title="preset.label"
-                  :aria-label="preset.label"
-                  :style="{ background: preset.color }"
-                  @click="setColor('canvasColor', preset.color)"
-                />
-                <button
-                  v-for="color in visibleColorHistory"
-                  :key="`bg-${color}`"
-                  type="button"
-                  class="color-swatch color-swatch--light"
-                  :class="settings.canvasColor === color ? 'color-swatch--active' : ''"
-                  :style="{ background: color }"
-                  :title="color"
-                  :aria-label="color"
-                  @click="setColor('canvasColor', color)"
-                />
-                <button type="button" class="custom-color-button" title="自选颜色" @click="toggleColorPicker('canvasColor')">
-                  <AppIcon name="pen" :size="13" />
-                </button>
-                <input
-                  v-if="isColorPickerOpen('canvasColor')"
-                  type="color"
-                  class="inline-color-input"
-                  :value="settings.canvasColor || '#ffffff'"
-                  @input="updateCustomColor('canvasColor', $event)"
-                />
-                <button type="button" class="reset-inline" @click="resetCanvasColor">
-                  恢复默认
-                </button>
-              </div>
+              <ColorPresetControl
+                kind="background"
+                :value="settings.canvasColor || '#ffffff'"
+                fallback="#ffffff"
+                light
+                @change="(color) => applyColor('canvasColor', color)"
+              />
             </div>
           </article>
           <article class="accordion-item">
@@ -491,50 +426,12 @@ function isColorPickerOpen(target: string) {
                   {{ opt.label }}
                 </button>
               </div>
-              <div class="color-setting-row color-setting-row--plain">
-                <div class="color-line">
-                  <button
-                    v-for="preset in TEXT_COLOR_PRESETS"
-                    :key="`h1-${preset.color}`"
-                    type="button"
-                    class="color-swatch"
-                    :class="settings.h1Color === preset.color ? 'color-swatch--active' : ''"
-                    :title="preset.label"
-                    :aria-label="preset.label"
-                    :style="{ background: preset.color }"
-                    @click="setColor('h1Color', preset.color)"
-                  />
-                  <button
-                    v-for="color in visibleColorHistory"
-                    :key="`h1-history-${color}`"
-                    type="button"
-                    class="color-swatch"
-                    :class="settings.h1Color === color ? 'color-swatch--active' : ''"
-                    :style="{ background: color }"
-                    :title="color"
-                    :aria-label="color"
-                    @click="setColor('h1Color', color)"
-                  />
-                  <button
-                    type="button"
-                    class="custom-color-button"
-                    title="自选颜色"
-                    @click="toggleColorPicker('h1Color')"
-                  >
-                    <AppIcon name="pen" :size="13" />
-                  </button>
-                  <input
-                    v-if="isColorPickerOpen('h1Color')"
-                    type="color"
-                    class="inline-color-input"
-                    :value="settings.h1Color || '#332b24'"
-                    @input="updateCustomColor('h1Color', $event)"
-                  />
-                  <button type="button" class="reset-inline" @click="resetColor('h1Color')">
-                    恢复默认
-                  </button>
-                </div>
-              </div>
+              <ColorPresetControl
+                kind="text"
+                :value="settings.h1Color"
+                fallback="#332b24"
+                @change="(color) => applyColor('h1Color', color)"
+              />
             </div>
           </article>
 
@@ -562,50 +459,12 @@ function isColorPickerOpen(target: string) {
                   {{ opt.label }}
                 </button>
               </div>
-              <div class="color-setting-row color-setting-row--plain">
-                <div class="color-line">
-                  <button
-                    v-for="preset in TEXT_COLOR_PRESETS"
-                    :key="`h2-${preset.color}`"
-                    type="button"
-                    class="color-swatch"
-                    :class="settings.h2Color === preset.color ? 'color-swatch--active' : ''"
-                    :title="preset.label"
-                    :aria-label="preset.label"
-                    :style="{ background: preset.color }"
-                    @click="setColor('h2Color', preset.color)"
-                  />
-                  <button
-                    v-for="color in visibleColorHistory"
-                    :key="`h2-history-${color}`"
-                    type="button"
-                    class="color-swatch"
-                    :class="settings.h2Color === color ? 'color-swatch--active' : ''"
-                    :style="{ background: color }"
-                    :title="color"
-                    :aria-label="color"
-                    @click="setColor('h2Color', color)"
-                  />
-                  <button
-                    type="button"
-                    class="custom-color-button"
-                    title="自选颜色"
-                    @click="toggleColorPicker('h2Color')"
-                  >
-                    <AppIcon name="pen" :size="13" />
-                  </button>
-                  <input
-                    v-if="isColorPickerOpen('h2Color')"
-                    type="color"
-                    class="inline-color-input"
-                    :value="settings.h2Color || '#332b24'"
-                    @input="updateCustomColor('h2Color', $event)"
-                  />
-                  <button type="button" class="reset-inline" @click="resetColor('h2Color')">
-                    恢复默认
-                  </button>
-                </div>
-              </div>
+              <ColorPresetControl
+                kind="text"
+                :value="settings.h2Color"
+                fallback="#332b24"
+                @change="(color) => applyColor('h2Color', color)"
+              />
             </div>
           </article>
 
@@ -633,50 +492,12 @@ function isColorPickerOpen(target: string) {
                   {{ opt.label }}
                 </button>
               </div>
-              <div class="color-setting-row color-setting-row--plain">
-                <div class="color-line">
-                  <button
-                    v-for="preset in TEXT_COLOR_PRESETS"
-                    :key="`h3-${preset.color}`"
-                    type="button"
-                    class="color-swatch"
-                    :class="settings.h3Color === preset.color ? 'color-swatch--active' : ''"
-                    :title="preset.label"
-                    :aria-label="preset.label"
-                    :style="{ background: preset.color }"
-                    @click="setColor('h3Color', preset.color)"
-                  />
-                  <button
-                    v-for="color in visibleColorHistory"
-                    :key="`h3-history-${color}`"
-                    type="button"
-                    class="color-swatch"
-                    :class="settings.h3Color === color ? 'color-swatch--active' : ''"
-                    :style="{ background: color }"
-                    :title="color"
-                    :aria-label="color"
-                    @click="setColor('h3Color', color)"
-                  />
-                  <button
-                    type="button"
-                    class="custom-color-button"
-                    title="自选颜色"
-                    @click="toggleColorPicker('h3Color')"
-                  >
-                    <AppIcon name="pen" :size="13" />
-                  </button>
-                  <input
-                    v-if="isColorPickerOpen('h3Color')"
-                    type="color"
-                    class="inline-color-input"
-                    :value="settings.h3Color || '#332b24'"
-                    @input="updateCustomColor('h3Color', $event)"
-                  />
-                  <button type="button" class="reset-inline" @click="resetColor('h3Color')">
-                    恢复默认
-                  </button>
-                </div>
-              </div>
+              <ColorPresetControl
+                kind="text"
+                :value="settings.h3Color"
+                fallback="#332b24"
+                @change="(color) => applyColor('h3Color', color)"
+              />
             </div>
           </article>
 
@@ -704,50 +525,12 @@ function isColorPickerOpen(target: string) {
                   {{ opt.label }}
                 </button>
               </div>
-              <div class="color-setting-row color-setting-row--plain">
-                <div class="color-line">
-                  <button
-                    v-for="preset in TEXT_COLOR_PRESETS"
-                    :key="`h4-${preset.color}`"
-                    type="button"
-                    class="color-swatch"
-                    :class="settings.h4Color === preset.color ? 'color-swatch--active' : ''"
-                    :title="preset.label"
-                    :aria-label="preset.label"
-                    :style="{ background: preset.color }"
-                    @click="setColor('h4Color', preset.color)"
-                  />
-                  <button
-                    v-for="color in visibleColorHistory"
-                    :key="`h4-history-${color}`"
-                    type="button"
-                    class="color-swatch"
-                    :class="settings.h4Color === color ? 'color-swatch--active' : ''"
-                    :style="{ background: color }"
-                    :title="color"
-                    :aria-label="color"
-                    @click="setColor('h4Color', color)"
-                  />
-                  <button
-                    type="button"
-                    class="custom-color-button"
-                    title="自选颜色"
-                    @click="toggleColorPicker('h4Color')"
-                  >
-                    <AppIcon name="pen" :size="13" />
-                  </button>
-                  <input
-                    v-if="isColorPickerOpen('h4Color')"
-                    type="color"
-                    class="inline-color-input"
-                    :value="settings.h4Color || '#332b24'"
-                    @input="updateCustomColor('h4Color', $event)"
-                  />
-                  <button type="button" class="reset-inline" @click="resetColor('h4Color')">
-                    恢复默认
-                  </button>
-                </div>
-              </div>
+              <ColorPresetControl
+                kind="text"
+                :value="settings.h4Color"
+                fallback="#332b24"
+                @change="(color) => applyColor('h4Color', color)"
+              />
             </div>
           </article>
 
@@ -775,46 +558,12 @@ function isColorPickerOpen(target: string) {
                   {{ opt.label }}
                 </button>
               </div>
-              <div class="color-setting-row">
-                <span class="control-label">颜色</span>
-                <div class="color-line">
-                  <button
-                    v-for="preset in ACCENT_PRESETS"
-                    :key="`bold-${preset.color}`"
-                    type="button"
-                    class="color-swatch"
-                    :class="settings.boldColor === preset.color ? 'color-swatch--active' : ''"
-                    :title="preset.label"
-                    :aria-label="preset.label"
-                    :style="{ background: preset.color }"
-                    @click="setColor('boldColor', preset.color)"
-                  />
-                  <button
-                    v-for="color in visibleColorHistory"
-                    :key="`bold-history-${color}`"
-                    type="button"
-                    class="color-swatch"
-                    :class="settings.boldColor === color ? 'color-swatch--active' : ''"
-                    :style="{ background: color }"
-                    :title="color"
-                    :aria-label="color"
-                    @click="setColor('boldColor', color)"
-                  />
-                  <button type="button" class="custom-color-button" title="自选颜色" @click="toggleColorPicker('boldColor')">
-                    <AppIcon name="pen" :size="13" />
-                  </button>
-                  <input
-                    v-if="isColorPickerOpen('boldColor')"
-                    type="color"
-                    class="inline-color-input"
-                    :value="settings.boldColor || settings.accentColor"
-                    @input="updateCustomColor('boldColor', $event)"
-                  />
-                  <button type="button" class="reset-inline" @click="resetColor('boldColor')">
-                    恢复默认
-                  </button>
-                </div>
-              </div>
+              <ColorPresetControl
+                kind="accent"
+                :value="settings.boldColor"
+                :fallback="settings.accentColor"
+                @change="(color) => applyColor('boldColor', color)"
+              />
             </div>
           </article>
 
@@ -842,46 +591,12 @@ function isColorPickerOpen(target: string) {
                   {{ opt.label }}
                 </button>
               </div>
-              <div class="color-setting-row">
-                <span class="control-label">颜色</span>
-                <div class="color-line">
-                  <button
-                    v-for="preset in ACCENT_PRESETS"
-                    :key="`line-${preset.color}`"
-                    type="button"
-                    class="color-swatch"
-                    :class="settings.underlineColor === preset.color ? 'color-swatch--active' : ''"
-                    :title="preset.label"
-                    :aria-label="preset.label"
-                    :style="{ background: preset.color }"
-                    @click="setColor('underlineColor', preset.color)"
-                  />
-                  <button
-                    v-for="color in visibleColorHistory"
-                    :key="`line-history-${color}`"
-                    type="button"
-                    class="color-swatch"
-                    :class="settings.underlineColor === color ? 'color-swatch--active' : ''"
-                    :style="{ background: color }"
-                    :title="color"
-                    :aria-label="color"
-                    @click="setColor('underlineColor', color)"
-                  />
-                  <button type="button" class="custom-color-button" title="自选颜色" @click="toggleColorPicker('underlineColor')">
-                    <AppIcon name="pen" :size="13" />
-                  </button>
-                  <input
-                    v-if="isColorPickerOpen('underlineColor')"
-                    type="color"
-                    class="inline-color-input"
-                    :value="settings.underlineColor || settings.accentColor"
-                    @input="updateCustomColor('underlineColor', $event)"
-                  />
-                  <button type="button" class="reset-inline" @click="resetUnderlineColors">
-                    恢复默认
-                  </button>
-                </div>
-              </div>
+              <ColorPresetControl
+                kind="accent"
+                :value="settings.underlineColor"
+                :fallback="settings.accentColor"
+                @change="(color) => applyColor('underlineColor', color)"
+              />
             </div>
           </article>
 
@@ -927,46 +642,12 @@ function isColorPickerOpen(target: string) {
                   </button>
                 </div>
               </div>
-              <div class="color-setting-row">
-                <span class="control-label">颜色</span>
-                <div class="color-line">
-                  <button
-                    v-for="preset in ACCENT_PRESETS"
-                    :key="`quote-${preset.color}`"
-                    type="button"
-                    class="color-swatch"
-                    :class="settings.quoteAccent === preset.color ? 'color-swatch--active' : ''"
-                    :title="preset.label"
-                    :aria-label="preset.label"
-                    :style="{ background: preset.color }"
-                    @click="setColor('quoteAccent', preset.color)"
-                  />
-                  <button
-                    v-for="color in visibleColorHistory"
-                    :key="`quote-history-${color}`"
-                    type="button"
-                    class="color-swatch"
-                    :class="settings.quoteAccent === color ? 'color-swatch--active' : ''"
-                    :style="{ background: color }"
-                    :title="color"
-                    :aria-label="color"
-                    @click="setColor('quoteAccent', color)"
-                  />
-                  <button type="button" class="custom-color-button" title="自选颜色" @click="toggleColorPicker('quoteAccent')">
-                    <AppIcon name="pen" :size="13" />
-                  </button>
-                  <input
-                    v-if="isColorPickerOpen('quoteAccent')"
-                    type="color"
-                    class="inline-color-input"
-                    :value="settings.quoteAccent || settings.accentColor"
-                    @input="updateCustomColor('quoteAccent', $event)"
-                  />
-                  <button type="button" class="reset-inline" @click="resetColor('quoteAccent')">
-                    恢复默认
-                  </button>
-                </div>
-              </div>
+              <ColorPresetControl
+                kind="accent"
+                :value="settings.quoteAccent"
+                :fallback="settings.accentColor"
+                @change="(color) => applyColor('quoteAccent', color)"
+              />
             </div>
           </article>
 
@@ -1019,59 +700,6 @@ function isColorPickerOpen(target: string) {
             </div>
           </article>
 
-          <article class="accordion-item">
-            <button type="button" class="accordion-button" @click="toggleSection('wechat')">
-              <span>公众号尾部</span>
-              <strong>{{ settings.wechatElements.followEnabled ? '开启' : '关闭' }}</strong>
-              <AppIcon
-                name="chevronDown"
-                :size="14"
-                class="accordion-chevron"
-                :class="isOpen('wechat') ? '' : '-rotate-90'"
-              />
-            </button>
-            <div v-show="isOpen('wechat')" class="accordion-body">
-              <button
-                type="button"
-                class="switch-card switch-card--wide"
-                :class="settings.wechatElements.followEnabled ? 'switch-card--active' : ''"
-                @click="
-                  settings.updateWechatElements({
-                    followEnabled: !settings.wechatElements.followEnabled,
-                  })
-                "
-              >
-                <span>关注引导</span>
-                <span class="switch-dot" />
-              </button>
-              <template v-if="settings.wechatElements.followEnabled">
-                <input
-                  :value="settings.wechatElements.followName"
-                  type="text"
-                  placeholder="公众号名称"
-                  class="setting-input"
-                  @input="
-                    (e) =>
-                      settings.updateWechatElements({
-                        followName: (e.target as HTMLInputElement).value,
-                      })
-                  "
-                />
-                <input
-                  :value="settings.wechatElements.followSlogan"
-                  type="text"
-                  placeholder="引导语"
-                  class="setting-input"
-                  @input="
-                    (e) =>
-                      settings.updateWechatElements({
-                        followSlogan: (e.target as HTMLInputElement).value,
-                      })
-                  "
-                />
-              </template>
-            </div>
-          </article>
         </div>
       </section>
 
@@ -1079,7 +707,6 @@ function isColorPickerOpen(target: string) {
         <div class="section-heading">
           <div>
             <h3>草稿</h3>
-            <p>本地保存</p>
           </div>
         </div>
         <DraftPanel />
@@ -1118,22 +745,6 @@ function isColorPickerOpen(target: string) {
   line-height: 1.25;
   font-weight: 700;
   color: var(--color-text);
-}
-
-.settings-subtitle {
-  margin: 2px 0 0;
-  font-size: 11px;
-  line-height: 1.3;
-  color: var(--color-text-tertiary);
-}
-
-.preview-control {
-  padding: 10px 12px;
-  display: grid;
-  grid-template-columns: 36px minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .settings-tabs {
@@ -1183,6 +794,125 @@ function isColorPickerOpen(target: string) {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.theme-card {
+  min-width: 0;
+  min-height: 104px;
+  padding: 10px;
+  border-radius: 10px;
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 11px;
+  color: var(--color-text);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--theme-soft, #f4f4f5) 72%, white), white 58%),
+    var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--theme-border, var(--color-border-subtle)) 72%, transparent);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.theme-card:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--theme-color, var(--color-accent)) 46%, var(--color-border));
+  box-shadow:
+    0 10px 22px rgb(24 24 27 / 0.06),
+    0 0 0 1px color-mix(in srgb, var(--theme-color, var(--color-accent)) 16%, transparent);
+}
+
+.theme-card--active {
+  border-color: color-mix(in srgb, var(--theme-color, var(--color-accent)) 62%, var(--color-border));
+  box-shadow:
+    0 10px 22px rgb(24 24 27 / 0.07),
+    inset 0 0 0 1px color-mix(in srgb, var(--theme-color, var(--color-accent)) 22%, transparent);
+}
+
+.theme-card__preview {
+  min-width: 0;
+  min-height: 84px;
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: var(--theme-canvas, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--theme-border, #e4e4e7) 72%, transparent);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.56);
+}
+
+.theme-paper {
+  min-height: 50px;
+  padding: 8px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: color-mix(in srgb, var(--theme-soft, #f4f4f5) 68%, white);
+}
+
+.theme-paper__title {
+  width: 32px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--theme-color, var(--color-accent));
+}
+
+.theme-paper__line {
+  width: 28px;
+  height: 3px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--theme-text, var(--color-text)) 32%, transparent);
+}
+
+.theme-paper__line--long {
+  width: 43px;
+}
+
+.theme-card__swatches {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.theme-card__swatches span {
+  height: 8px;
+  border-radius: 99px;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
+}
+
+.theme-card__copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+}
+
+.theme-card__copy strong {
+  color: var(--color-text);
+  font-size: 15px;
+  line-height: 1.2;
+  font-weight: 760;
+}
+
+.theme-card__copy small {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  line-height: 1.55;
+  font-weight: 550;
 }
 
 .section-heading h3 {
@@ -1387,93 +1117,6 @@ function isColorPickerOpen(target: string) {
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.color-setting-row {
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-}
-
-.color-setting-row--plain {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.color-line {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(4, 22px) repeat(3, 22px) 26px auto minmax(56px, 1fr);
-  align-items: center;
-  gap: 5px;
-  overflow: hidden;
-}
-
-.color-swatch {
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text);
-  border: 2px solid transparent;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
-  transition:
-    transform 0.16s ease,
-    box-shadow 0.16s ease,
-    border-color 0.16s ease;
-}
-
-.custom-color-button {
-  width: 26px;
-  height: 26px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px dashed var(--color-border);
-  background:
-    linear-gradient(90deg, #f87171 0 25%, #facc15 25% 50%, #4ade80 50% 75%, #60a5fa 75%);
-  cursor: pointer;
-  overflow: hidden;
-}
-
-.inline-color-input {
-  width: 28px;
-  height: 26px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-}
-
-.reset-inline {
-  min-width: 0;
-  height: 28px;
-  padding: 0 8px;
-  border-radius: 8px;
-  color: var(--color-text-tertiary);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-subtle);
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.color-swatch:hover {
-  transform: translateY(-1px);
-}
-
-.color-swatch--light {
-  border-color: var(--color-border-subtle);
-}
-
-.color-swatch--active {
-  border-color: var(--color-text);
-  box-shadow:
-    0 0 0 2px var(--color-surface),
-    0 0 0 4px rgb(24 24 27 / 0.16);
 }
 
 .setting-input {

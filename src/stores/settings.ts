@@ -13,12 +13,17 @@ import type {
 } from '@/types'
 
 const PREVIEW_ZOOM_KEY = 'wechat-md-preview-zoom'
-const WECHAT_ELEMENTS_KEY = 'wechat-md-wechat-elements'
 const FONT_FAMILY_KEY = 'wechat-md-font-family'
 const FONT_SIZE_KEY = 'wechat-md-font-size'
 const LINE_HEIGHT_KEY = 'wechat-md-line-height'
 const CONTENT_WIDTH_KEY = 'wechat-md-content-width'
 const PAGE_MARGIN_KEY = 'wechat-md-page-margin'
+const PAGE_MARGIN_VERSION_KEY = 'wechat-md-page-margin-version'
+const TEXT_COLOR_KEY = 'wechat-md-text-color'
+const MUTED_COLOR_KEY = 'wechat-md-muted-color'
+const BORDER_COLOR_KEY = 'wechat-md-border-color'
+const BG_SOFT_COLOR_KEY = 'wechat-md-bg-soft-color'
+const QUOTE_BG_COLOR_KEY = 'wechat-md-quote-bg-color'
 const ACCENT_KEY = 'wechat-md-accent'
 const TEXT_INDENT_KEY = 'wechat-md-text-indent'
 const TEXT_JUSTIFY_KEY = 'wechat-md-text-justify'
@@ -46,13 +51,23 @@ const UNDERLINE_COLOR_KEY = 'wechat-md-underline-color'
 const UNDERLINE_MODE_KEY = 'wechat-md-underline-mode'
 const CANVAS_COLOR_KEY = 'wechat-md-canvas-color'
 const CUSTOM_COLOR_HISTORY_KEY = 'wechat-md-color-history'
+const COLOR_PRESETS_KEY = 'wechat-md-color-presets'
+const STYLE_PRESET_KEY = 'wechat-md-style-preset'
 
-const VALID_FONT_SIZES = [14, 16, 18, 20, 22]
+const VALID_FONT_SIZES = [12, 14, 16, 18, 20]
 const VALID_LINE_HEIGHTS = [1, 1.6, 2, 2.6, 3]
-const VALID_PAGE_MARGINS = [12, 18, 24, 30, 36]
+const VALID_PAGE_MARGINS = [12, 20, 28, 34, 36]
 const VALID_PARAGRAPH_SPACINGS = [0.5, 1, 1.5, 2, 2.5]
 const VALID_TEXT_INDENTS = [0, 1, 2, 3, 4]
 const VALID_LETTER_SPACINGS = ['', '0.6px', '1.2px', '2px', '4px']
+
+export type ColorPresetKind = 'text' | 'accent' | 'background'
+
+export const DEFAULT_COLOR_PRESETS: Record<ColorPresetKind, string[]> = {
+  text: ['#18181b', '#27272a', '#334155', '#1f2937', '#3f3a33', '#24352b', '#3b3345', '#0f172a'],
+  accent: ['#2563eb', '#0f766e', '#c2410c', '#b42318', '#7c3aed', '#be123c', '#a16207', '#4f46e5'],
+  background: ['#ffffff', '#fafafa', '#f8fafc', '#f9fafb', '#fff7ed', '#f8f5f0', '#f5fbf8', '#f8f7ff'],
+}
 
 export const FONT_FAMILIES: Record<FontFamilyKey, { label: string; css: string }> = {
   sans: {
@@ -69,17 +84,278 @@ export const FONT_FAMILIES: Record<FontFamilyKey, { label: string; css: string }
   },
 }
 
+export type StylePresetKey = 'qiuhe' | 'songyan' | 'yuebai' | 'haitang' | 'qingdai' | 'liujin'
+
+export const STYLE_PRESETS: Array<{
+  key: StylePresetKey
+  label: string
+  description: string
+  color: string
+  settings: {
+    fontFamilyKey: FontFamilyKey
+    lineHeight: number
+    pageMargin: number
+    textColor: string
+    mutedColor: string
+    borderColor: string
+    bgSoftColor: string
+    quoteBgColor: string
+    accentColor: string
+    h1Mode: H1Mode
+    h2Mode: HeadingMode
+    h3Mode: HeadingMode
+    h4Mode: HeadingMode
+    quoteMode: QuoteMode
+    quoteMode2: QuoteMode2
+    textIndent: number
+    textJustify: boolean
+    h1Color: string
+    h2Color: string
+    h3Color: string
+    h4Color: string
+    headingAccent: string
+    quoteAccent: string
+    letterSpacing: string
+    paragraphSpacing: number
+    boldColor: string
+    boldMode: BoldMode
+    underlineColor: string
+    underlineMode: UnderlineMode
+    canvasColor: string
+  }
+}> = [
+  {
+    key: 'qiuhe',
+    label: '秋河',
+    description: '暖纸、陶土、深墨，适合叙事和慢节奏长文。',
+    color: '#c45f38',
+    settings: {
+      fontFamilyKey: 'serif',
+      lineHeight: 1.6,
+      pageMargin: 20,
+      textColor: '#2f2822',
+      mutedColor: '#76675a',
+      borderColor: '#ead8c6',
+      bgSoftColor: '#fff3e7',
+      quoteBgColor: '#fff1e4',
+      accentColor: '#c45f38',
+      h1Mode: 'center',
+      h2Mode: 'plain',
+      h3Mode: 'bar',
+      h4Mode: 'plain',
+      quoteMode: 'soft',
+      quoteMode2: 'fade',
+      textIndent: 0,
+      textJustify: false,
+      h1Color: '#332b24',
+      h2Color: '#332b24',
+      h3Color: '#332b24',
+      h4Color: '#5f554d',
+      headingAccent: '#c45f38',
+      quoteAccent: '#c45f38',
+      letterSpacing: '',
+      paragraphSpacing: 1,
+      boldColor: '#c45f38',
+      boldMode: 'default',
+      underlineColor: '#c45f38',
+      underlineMode: 'solid',
+      canvasColor: '#fffaf4',
+    },
+  },
+  {
+    key: 'songyan',
+    label: '松烟',
+    description: '冷灰层级、黑白主导，适合观点、报告和硬分析。',
+    color: '#27272a',
+    settings: {
+      fontFamilyKey: 'serif',
+      lineHeight: 1.6,
+      pageMargin: 20,
+      textColor: '#18181b',
+      mutedColor: '#71717a',
+      borderColor: '#e4e4e7',
+      bgSoftColor: '#f4f4f5',
+      quoteBgColor: '#f4f4f5',
+      accentColor: '#27272a',
+      h1Mode: 'underline',
+      h2Mode: 'plain',
+      h3Mode: 'plain',
+      h4Mode: 'plain',
+      quoteMode: 'bar',
+      quoteMode2: 'bar',
+      textIndent: 0,
+      textJustify: true,
+      h1Color: '#18181b',
+      h2Color: '#18181b',
+      h3Color: '#332b24',
+      h4Color: '#5f554d',
+      headingAccent: '#27272a',
+      quoteAccent: '#52525b',
+      letterSpacing: '',
+      paragraphSpacing: 1,
+      boldColor: '#18181b',
+      boldMode: 'color',
+      underlineColor: '#18181b',
+      underlineMode: 'solid',
+      canvasColor: '#fcfcfb',
+    },
+  },
+  {
+    key: 'yuebai',
+    label: '月白',
+    description: '月白底、蓝灰层，适合现代解释和信息密度高的稿件。',
+    color: '#315f9c',
+    settings: {
+      fontFamilyKey: 'sans',
+      lineHeight: 1.6,
+      pageMargin: 20,
+      textColor: '#172033',
+      mutedColor: '#5f6f86',
+      borderColor: '#dbe6f3',
+      bgSoftColor: '#eef5ff',
+      quoteBgColor: '#edf6ff',
+      accentColor: '#315f9c',
+      h1Mode: 'dash',
+      h2Mode: 'bar',
+      h3Mode: 'dash',
+      h4Mode: 'plain',
+      quoteMode: 'outline',
+      quoteMode2: 'panel',
+      textIndent: 0,
+      textJustify: false,
+      h1Color: '#172033',
+      h2Color: '#1f3f68',
+      h3Color: '#1f3f68',
+      h4Color: '#5f6f86',
+      headingAccent: '#315f9c',
+      quoteAccent: '#315f9c',
+      letterSpacing: '',
+      paragraphSpacing: 1,
+      boldColor: '#315f9c',
+      boldMode: 'underline',
+      underlineColor: '#315f9c',
+      underlineMode: 'double',
+      canvasColor: '#f8fbff',
+    },
+  },
+  {
+    key: 'qingdai',
+    label: '青黛',
+    description: '青绿、浅雾、低对比，适合生活观察和自然感说明。',
+    color: '#2f7667',
+    settings: {
+      fontFamilyKey: 'sans',
+      lineHeight: 1.6,
+      pageMargin: 20,
+      textColor: '#1f332d',
+      mutedColor: '#61756d',
+      borderColor: '#d8e8df',
+      bgSoftColor: '#eef8f2',
+      quoteBgColor: '#edf7f1',
+      accentColor: '#2f7667',
+      h1Mode: 'marker',
+      h2Mode: 'bar',
+      h3Mode: 'plain',
+      h4Mode: 'plain',
+      quoteMode: 'note',
+      quoteMode2: 'fade',
+      textIndent: 0,
+      textJustify: false,
+      h1Color: '#1f332d',
+      h2Color: '#1f332d',
+      h3Color: '#2f4a3d',
+      h4Color: '#61756d',
+      headingAccent: '#2f7667',
+      quoteAccent: '#2f7667',
+      letterSpacing: '',
+      paragraphSpacing: 1.5,
+      boldColor: '#2f7667',
+      boldMode: 'marker',
+      underlineColor: '#2f7667',
+      underlineMode: 'dashed',
+      canvasColor: '#f8fcf9',
+    },
+  },
+  {
+    key: 'haitang',
+    label: '海棠',
+    description: '玫红只作点睛，适合审美、情绪和带温度的表达。',
+    color: '#b94662',
+    settings: {
+      fontFamilyKey: 'serif',
+      lineHeight: 1.6,
+      pageMargin: 20,
+      textColor: '#422932',
+      mutedColor: '#7a5f68',
+      borderColor: '#efd7de',
+      bgSoftColor: '#fff1f4',
+      quoteBgColor: '#fff0f4',
+      accentColor: '#b94662',
+      h1Mode: 'center',
+      h2Mode: 'chip',
+      h3Mode: 'plain',
+      h4Mode: 'plain',
+      quoteMode: 'soft',
+      quoteMode2: 'fade',
+      textIndent: 0,
+      textJustify: false,
+      h1Color: '#422932',
+      h2Color: '#422932',
+      h3Color: '#5f3b46',
+      h4Color: '#7a5f68',
+      headingAccent: '#b94662',
+      quoteAccent: '#b94662',
+      letterSpacing: '',
+      paragraphSpacing: 1.5,
+      boldColor: '#b94662',
+      boldMode: 'color',
+      underlineColor: '#b94662',
+      underlineMode: 'marker',
+      canvasColor: '#fff9fa',
+    },
+  },
+  {
+    key: 'liujin',
+    label: '流金',
+    description: '琥珀明亮但克制，适合教程、清单和轻商业内容。',
+    color: '#a16207',
+    settings: {
+      fontFamilyKey: 'sans',
+      lineHeight: 1.6,
+      pageMargin: 20,
+      textColor: '#3c3322',
+      mutedColor: '#746854',
+      borderColor: '#eadcb8',
+      bgSoftColor: '#fff6db',
+      quoteBgColor: '#fff2c9',
+      accentColor: '#a16207',
+      h1Mode: 'panel',
+      h2Mode: 'chip',
+      h3Mode: 'marker',
+      h4Mode: 'plain',
+      quoteMode: 'note',
+      quoteMode2: 'panel',
+      textIndent: 0,
+      textJustify: false,
+      h1Color: '#3c3322',
+      h2Color: '#3c3322',
+      h3Color: '#6b4b18',
+      h4Color: '#746854',
+      headingAccent: '#a16207',
+      quoteAccent: '#a16207',
+      letterSpacing: '',
+      paragraphSpacing: 1.5,
+      boldColor: '#a16207',
+      boldMode: 'marker',
+      underlineColor: '#a16207',
+      underlineMode: 'marker',
+      canvasColor: '#fffaf0',
+    },
+  },
+]
+
 export const useSettingsStore = defineStore('settings', () => {
-  const previewZoom = useStorage(PREVIEW_ZOOM_KEY, '1')
-  const wechatElements = useStorage<{
-    followEnabled: boolean
-    followName: string
-    followSlogan: string
-  }>(WECHAT_ELEMENTS_KEY, {
-    followEnabled: false,
-    followName: '',
-    followSlogan: '',
-  })
+  const previewZoom = useStorage(PREVIEW_ZOOM_KEY, '1.25')
 
   // Typography — 暖色杂志默认值
   const fontFamilyKey = useStorage<FontFamilyKey>(FONT_FAMILY_KEY, MAGAZINE_DEFAULTS.fontFamilyKey)
@@ -87,8 +363,14 @@ export const useSettingsStore = defineStore('settings', () => {
   const lineHeight = useStorage(LINE_HEIGHT_KEY, MAGAZINE_DEFAULTS.lineHeight)
   const contentWidth = useStorage(CONTENT_WIDTH_KEY, MAGAZINE_DEFAULTS.contentWidth)
   const pageMargin = useStorage(PAGE_MARGIN_KEY, MAGAZINE_DEFAULTS.pageMargin)
+  const pageMarginVersion = useStorage(PAGE_MARGIN_VERSION_KEY, 0)
 
   // Colors
+  const textColor = useStorage(TEXT_COLOR_KEY, MAGAZINE_DEFAULTS.textColor)
+  const mutedColor = useStorage(MUTED_COLOR_KEY, MAGAZINE_DEFAULTS.mutedColor)
+  const borderColor = useStorage(BORDER_COLOR_KEY, MAGAZINE_DEFAULTS.borderColor)
+  const bgSoftColor = useStorage(BG_SOFT_COLOR_KEY, MAGAZINE_DEFAULTS.bgSoftColor)
+  const quoteBgColor = useStorage(QUOTE_BG_COLOR_KEY, MAGAZINE_DEFAULTS.quoteBgColor)
   const accentColor = useStorage(ACCENT_KEY, MAGAZINE_DEFAULTS.accentColor)
 
   // Layout
@@ -129,10 +411,19 @@ export const useSettingsStore = defineStore('settings', () => {
   )
   const canvasColor = useStorage(CANVAS_COLOR_KEY, MAGAZINE_DEFAULTS.canvasColor)
   const colorHistory = useStorage<string[]>(CUSTOM_COLOR_HISTORY_KEY, [])
+  const activeStylePreset = useStorage<StylePresetKey | ''>(STYLE_PRESET_KEY, '')
+  const colorPresets = useStorage<Record<ColorPresetKind, string[]>>(
+    COLOR_PRESETS_KEY,
+    DEFAULT_COLOR_PRESETS,
+  )
 
   if (!VALID_FONT_SIZES.includes(Number(fontSize.value))) fontSize.value = MAGAZINE_DEFAULTS.fontSize
   if (!VALID_LINE_HEIGHTS.includes(Number(lineHeight.value))) {
     lineHeight.value = MAGAZINE_DEFAULTS.lineHeight
+  }
+  if (pageMarginVersion.value < 2 && Number(pageMargin.value) === 24) {
+    pageMargin.value = MAGAZINE_DEFAULTS.pageMargin
+    pageMarginVersion.value = 2
   }
   if (!VALID_PAGE_MARGINS.includes(Number(pageMargin.value))) {
     pageMargin.value = MAGAZINE_DEFAULTS.pageMargin
@@ -146,6 +437,11 @@ export const useSettingsStore = defineStore('settings', () => {
   if (!VALID_LETTER_SPACINGS.includes(letterSpacing.value)) {
     letterSpacing.value = MAGAZINE_DEFAULTS.letterSpacing
   }
+  colorPresets.value = {
+    text: normalizePresetList(colorPresets.value.text, DEFAULT_COLOR_PRESETS.text),
+    accent: normalizePresetList(colorPresets.value.accent, DEFAULT_COLOR_PRESETS.accent),
+    background: normalizePresetList(colorPresets.value.background, DEFAULT_COLOR_PRESETS.background),
+  }
 
   const previewZoomComputed = computed({
     get: () => previewZoom.value,
@@ -153,10 +449,6 @@ export const useSettingsStore = defineStore('settings', () => {
       previewZoom.value = v
     },
   })
-
-  const updateWechatElements = (patch: Partial<typeof wechatElements.value>) => {
-    wechatElements.value = { ...wechatElements.value, ...patch }
-  }
 
   const rememberColor = (color: string) => {
     const normalized = color.trim()
@@ -167,16 +459,70 @@ export const useSettingsStore = defineStore('settings', () => {
     ].slice(0, 6)
   }
 
+  const updateColorPreset = (kind: ColorPresetKind, index: number, color: string) => {
+    const normalized = normalizeHexColor(color)
+    if (!normalized) return
+    const next = normalizePresetList(colorPresets.value[kind], DEFAULT_COLOR_PRESETS[kind])
+    if (!next[index]) return
+    next[index] = normalized
+    colorPresets.value = {
+      ...colorPresets.value,
+      [kind]: next,
+    }
+  }
+
+  const applyStylePreset = (key: StylePresetKey) => {
+    const preset = STYLE_PRESETS.find((item) => item.key === key)
+    if (!preset) return
+    const next = preset.settings
+    fontFamilyKey.value = next.fontFamilyKey
+    lineHeight.value = next.lineHeight
+    pageMargin.value = next.pageMargin
+    textColor.value = next.textColor
+    mutedColor.value = next.mutedColor
+    borderColor.value = next.borderColor
+    bgSoftColor.value = next.bgSoftColor
+    quoteBgColor.value = next.quoteBgColor
+    accentColor.value = next.accentColor
+    h1Mode.value = next.h1Mode
+    h2Mode.value = next.h2Mode
+    h3Mode.value = next.h3Mode
+    h4Mode.value = next.h4Mode
+    quoteMode.value = next.quoteMode
+    quoteMode2.value = next.quoteMode2
+    textIndent.value = next.textIndent
+    textJustify.value = next.textJustify
+    h1Color.value = next.h1Color
+    h2Color.value = next.h2Color
+    h3Color.value = next.h3Color
+    h4Color.value = next.h4Color
+    headingAccent.value = next.headingAccent
+    quoteAccent.value = next.quoteAccent
+    letterSpacing.value = next.letterSpacing
+    paragraphSpacing.value = next.paragraphSpacing
+    boldColor.value = next.boldColor
+    boldMode.value = next.boldMode
+    underlineColor.value = next.underlineColor
+    underlineMode.value = next.underlineMode
+    canvasColor.value = next.canvasColor
+    activeStylePreset.value = key
+  }
+
   return {
     previewZoom: previewZoomComputed,
-    wechatElements: computed(() => wechatElements.value),
-    updateWechatElements,
     rememberColor,
+    updateColorPreset,
+    applyStylePreset,
     fontFamilyKey,
     fontSize,
     lineHeight,
     contentWidth,
     pageMargin,
+    textColor,
+    mutedColor,
+    borderColor,
+    bgSoftColor,
+    quoteBgColor,
     accentColor,
     textIndent,
     textJustify,
@@ -203,5 +549,17 @@ export const useSettingsStore = defineStore('settings', () => {
     underlineMode,
     canvasColor,
     colorHistory,
+    colorPresets,
+    activeStylePreset,
   }
 })
+
+function normalizeHexColor(color: string) {
+  const normalized = color.trim().toLowerCase()
+  return /^#[0-9a-f]{6}$/.test(normalized) ? normalized : ''
+}
+
+function normalizePresetList(value: string[] | undefined, fallback: string[]) {
+  const source = Array.isArray(value) ? value : []
+  return fallback.map((fallbackColor, index) => normalizeHexColor(source[index] || '') || fallbackColor)
+}

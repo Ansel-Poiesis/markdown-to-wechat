@@ -5,7 +5,6 @@ import type { ToastItem, ToastType } from '@/types'
 export const useUiStore = defineStore('ui', () => {
   const toasts = ref<ToastItem[]>([])
   const showSettings = ref(false)
-  const showChat = ref(false)
   const activeModals = ref<Record<string, boolean>>({
     draft: false,
     preflight: false,
@@ -40,19 +39,13 @@ export const useUiStore = defineStore('ui', () => {
     showSettings.value = !showSettings.value
   }
 
-  const toggleChat = () => {
-    showChat.value = !showChat.value
-  }
-
   return {
     toasts,
     showSettings,
-    showChat,
     activeModals,
     showToast,
     openModal,
     closeModal,
     toggleSettings,
-    toggleChat,
   }
 })
