@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useThemeStore } from '@/stores/theme'
-import { useSettingsStore } from '@/stores/settings'
+import { STYLE_PRESETS, useSettingsStore } from '@/stores/settings'
 import { codeThemes } from '@/config/themes'
 
 const themeStore = useThemeStore()
@@ -10,6 +10,14 @@ const settingsStore = useSettingsStore()
 const codeThemeOptions = computed(() =>
   Object.entries(codeThemes).map(([key, t]) => ({ key, label: t.name })),
 )
+
+const activeStyleBadge = computed(() => {
+  const preset = STYLE_PRESETS.find((item) => item.key === settingsStore.activeStylePreset)
+  return {
+    color: preset?.color || '#c45f38',
+    label: preset?.label || '秋河',
+  }
+})
 
 const zoomOptions = [
   { label: '86%', value: '0.86' },
@@ -24,8 +32,8 @@ const zoomOptions = [
   >
     <!-- Theme badge -->
     <div class="flex items-center gap-1.5">
-      <span class="w-2.5 h-2.5 rounded-full bg-[#b14f2a]" />
-      <span class="text-text-secondary text-[11px] font-medium">暖色杂志</span>
+      <span class="w-2.5 h-2.5 rounded-full" :style="{ background: activeStyleBadge.color }" />
+      <span class="text-text-secondary text-[11px] font-medium">{{ activeStyleBadge.label }}</span>
     </div>
 
     <span class="w-px h-4 bg-border-subtle" />

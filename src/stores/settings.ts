@@ -64,9 +64,9 @@ const VALID_LETTER_SPACINGS = ['', '0.6px', '1.2px', '2px', '4px']
 export type ColorPresetKind = 'text' | 'accent' | 'background'
 
 export const DEFAULT_COLOR_PRESETS: Record<ColorPresetKind, string[]> = {
-  text: ['#18181b', '#27272a', '#334155', '#1f2937', '#3f3a33', '#24352b', '#3b3345', '#0f172a'],
-  accent: ['#2563eb', '#0f766e', '#c2410c', '#b42318', '#7c3aed', '#be123c', '#a16207', '#4f46e5'],
-  background: ['#ffffff', '#fafafa', '#f8fafc', '#f9fafb', '#fff7ed', '#f8f5f0', '#f5fbf8', '#f8f7ff'],
+  text: ['#18181b', '#27272a', '#334155', '#1f2937', '#3f3a33', '#20251f', '#24352b', '#0f172a'],
+  accent: ['#789262', '#057748', '#20a162', '#9d2933', '#2563eb', '#0f766e', '#c2410c', '#b42318'],
+  background: ['#ffffff', '#fafafa', '#fffbf0', '#f5f8ef', '#d6ecf0', '#fff7ed', '#f8f5f0', '#f5fbf8'],
 }
 
 export const FONT_FAMILIES: Record<FontFamilyKey, { label: string; css: string }> = {
@@ -84,7 +84,14 @@ export const FONT_FAMILIES: Record<FontFamilyKey, { label: string; css: string }
   },
 }
 
-export type StylePresetKey = 'qiuhe' | 'songyan' | 'yuebai' | 'haitang' | 'qingdai' | 'liujin'
+export type StylePresetKey =
+  | 'qiuhe'
+  | 'songyan'
+  | 'yuebai'
+  | 'qingdai'
+  | 'zhuzhi'
+  | 'haitang'
+  | 'liujin'
 
 export const STYLE_PRESETS: Array<{
   key: StylePresetKey
@@ -274,6 +281,44 @@ export const STYLE_PRESETS: Array<{
       underlineColor: '#2f7667',
       underlineMode: 'dashed',
       canvasColor: '#f8fcf9',
+    },
+  },
+  {
+    key: 'zhuzhi',
+    label: '竹青纸本',
+    description: '竹青主色、松花绿定锚、胭脂点睛，适合纸本长文和研究札记。',
+    color: '#789262',
+    settings: {
+      fontFamilyKey: 'serif',
+      lineHeight: 2,
+      pageMargin: 28,
+      textColor: '#20251f',
+      mutedColor: '#60675d',
+      borderColor: '#d9e2d0',
+      bgSoftColor: '#f5f8ef',
+      quoteBgColor: '#f4f8ee',
+      accentColor: '#789262',
+      h1Mode: 'center',
+      h2Mode: 'bar',
+      h3Mode: 'plain',
+      h4Mode: 'plain',
+      quoteMode: 'soft',
+      quoteMode2: 'fade',
+      textIndent: 0,
+      textJustify: false,
+      h1Color: '#20251f',
+      h2Color: '#057748',
+      h3Color: '#426666',
+      h4Color: '#60675d',
+      headingAccent: '#057748',
+      quoteAccent: '#9d2933',
+      letterSpacing: '',
+      paragraphSpacing: 1.5,
+      boldColor: '#057748',
+      boldMode: 'color',
+      underlineColor: '#20a162',
+      underlineMode: 'marker',
+      canvasColor: '#fffbf0',
     },
   },
   {
