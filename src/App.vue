@@ -12,7 +12,7 @@ import { useClipboard } from '@/composables/useClipboard'
 import { useSmartFormat } from '@/composables/useSmartFormat'
 import { useExport } from '@/composables/useExport'
 import { useBreakpoint } from '@/composables/useBreakpoint'
-import { sampleMarkdown } from '@/config/templates'
+import { welcomeMarkdown } from '@/config/templates'
 import AppHeader from '@/components/AppHeader.vue'
 import PreviewPane from '@/components/PreviewPane.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
@@ -66,11 +66,9 @@ function handleGlobalKeydown(event: KeyboardEvent) {
 }
 
 onMounted(() => {
-  draftStore.loadDrafts()
-  if (draftStore.activeDraft) {
-    editorStore.setContent(draftStore.activeDraft.content)
-  } else if (editorStore.content.trim()) {
-    draftStore.updateActiveDraft(editorStore.content)
+  const initialContent = draftStore.initializeWorkspace(editorStore.content, welcomeMarkdown)
+  if (initialContent !== editorStore.content) {
+    editorStore.setContent(initialContent)
   }
   document.addEventListener('keydown', handleGlobalKeydown)
 })
@@ -96,8 +94,8 @@ const preflightCounts = computed(() => ({
 }))
 
 function loadSample() {
-  editorStore.setContent(sampleMarkdown)
-  ui.showToast('已加载示例内容')
+  editorStore.setContent(welcomeMarkdown)
+  ui.showToast('已加载欢迎文本')
 }
 
 function handleExport() {
@@ -157,12 +155,13 @@ watch(
       class="flex flex-col min-h-0 w-full max-w-[100vw] overflow-hidden"
       style="height: calc(100dvh - 64px - 48px)"
     >
-      <EditorPane
-        v-show="mobileTab === 'editor'"
-        v-model="content"
-        class="flex-1 min-h-0 w-full min-w-0"
-        @load-sample="loadSample"
-      />
+      <div v-show="mobileTab === 'editor'" class="flex-1 min-h-0 w-full min-w-0">
+        <EditorPane
+          v-model="content"
+          class="h-full min-h-0 w-full min-w-0"
+          @load-sample="loadSample"
+        />
+      </div>
       <PreviewPane
         v-show="mobileTab === 'preview'"
         :html="renderedHtml"

@@ -59,6 +59,23 @@ npm run verify
 
 `build:web` 会生成 GitHub Pages 使用的 `docs/` 目录。
 
+## 无界面渲染
+
+自动发布流程可直接调用与网页预览相同的渲染核心，无需 API 密钥：
+
+```powershell
+npm run --silent render -- `
+  --input article.md `
+  --output article.html `
+  --theme qiuhe `
+  --font-family wenkai `
+  --font-size 16 `
+  --line-height 1.7 `
+  --format fragment
+```
+
+省略 `--input` 时从 stdin 读取，省略 `--output` 时写入 stdout。`--format json` 会同时返回内联 HTML、微信兼容门禁结果和最终生效的渲染参数，适合接入自动发布任务。需要解析 stdout 时请保留 `--silent`，避免 npm 日志混入 JSON。运行 `npm run --silent render -- --help` 查看完整参数。
+
 ## 辅助排版配置
 
 Electron 从当前进程或 Windows User 环境读取 MiMo 配置：
@@ -75,3 +92,5 @@ MIMO_API_URL=https://api.xiaomimimo.com/v1/chat/completions
 ## 技术栈
 
 Vue 3 + TypeScript + Vite + Tailwind CSS v4 + CodeMirror 6 + Electron
+
+网页界面使用霞鹜文楷 WebFont，字体遵循 SIL Open Font License 1.1；WebFont 封装遵循 MIT License。许可证随构建产物保存在 `licenses/lxgw-wenkai-webfont.txt`。

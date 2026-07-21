@@ -2,7 +2,8 @@ import { computed } from 'vue'
 import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
 import { themes, codeThemes, CODE_THEME_KEY } from '@/config/themes'
-import { useSettingsStore, FONT_FAMILIES } from '@/stores/settings'
+import { FONT_FAMILIES } from '@/config/typography'
+import { useSettingsStore } from '@/stores/settings'
 import type { Theme, CodeTheme, ThemeBase } from '@/types'
 
 export const useThemeStore = defineStore('theme', () => {

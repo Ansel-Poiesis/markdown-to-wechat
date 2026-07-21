@@ -57,9 +57,11 @@ export const useDraftStore = defineStore('drafts', () => {
   )
 
   const sortedDrafts = computed(() =>
-    [...drafts.value].sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-    ),
+    [...drafts.value].sort((a, b) => {
+      if (a.id === activeDraftId.value) return -1
+      if (b.id === activeDraftId.value) return 1
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    }),
   )
 
   function loadDrafts() {
@@ -105,8 +107,9 @@ export const useDraftStore = defineStore('drafts', () => {
 
   function createDraft(content = '', name?: string) {
     const now = new Date().toISOString()
+    const latestId = drafts.value.reduce((max, draft) => Math.max(max, draft.id), 0)
     const draft: Draft = {
-      id: Date.now(),
+      id: Math.max(Date.now(), latestId + 1),
       name: name || inferDraftName(content),
       content,
       createdAt: now,
@@ -120,6 +123,15 @@ export const useDraftStore = defineStore('drafts', () => {
 
   function saveCurrentAsDraft(content: string) {
     return createDraft(content, inferDraftName(content))
+  }
+
+  function initializeWorkspace(editorContent: string, welcomeContent: string) {
+    loadDrafts()
+    if (activeDraft.value) return activeDraft.value.content
+
+    const initialContent = editorContent.trim() ? editorContent : welcomeContent
+    if (initialContent.trim()) updateActiveDraft(initialContent)
+    return initialContent
   }
 
   function setActiveDraft(id: number | null) {
@@ -182,6 +194,7 @@ export const useDraftStore = defineStore('drafts', () => {
     saveDrafts,
     createDraft,
     saveCurrentAsDraft,
+    initializeWorkspace,
     setActiveDraft,
     updateActiveDraft,
     updateDraft,

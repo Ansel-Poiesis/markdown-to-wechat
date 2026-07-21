@@ -144,8 +144,7 @@ export function safeUrl(url: string): string {
   if (!url) return ''
   const allowed = ['http:', 'https:', 'mailto:']
   try {
-    const baseUrl = typeof window === 'undefined' ? 'https://localhost/' : window.location.href
-    const parsed = new URL(url, baseUrl)
+    const parsed = new URL(url, 'https://localhost/')
     if (parsed.protocol === 'data:') {
       return /^data:image\/(?:png|jpe?g|gif|webp);base64,[a-z0-9+/=\s]+$/i.test(url) ? url : ''
     }

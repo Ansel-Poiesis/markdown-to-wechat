@@ -339,7 +339,7 @@ watch(
                 class="text-xs text-accent hover:underline pointer-events-auto"
                 @click="emit('loadSample')"
               >
-                加载示例内容
+                加载欢迎文本
               </button>
             </div>
           </div>

@@ -108,7 +108,7 @@ export interface ArticleDocument {
   hasTables: boolean
 }
 
-export type FontFamilyKey = 'sans' | 'serif' | 'mono'
+export type FontFamilyKey = 'wenkai' | 'sans' | 'serif' | 'mono'
 export type HeadingMode = 'bar' | 'chip' | 'plain' | 'marker' | 'dash'
 export type QuoteMode = 'bar' | 'panel' | 'soft' | 'outline' | 'note'
 export type QuoteMode2 = 'bar' | 'panel' | 'fade'

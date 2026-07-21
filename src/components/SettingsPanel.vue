@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useThemeStore } from '@/stores/theme'
-import { useSettingsStore, FONT_FAMILIES, STYLE_PRESETS } from '@/stores/settings'
+import { FONT_FAMILIES } from '@/config/typography'
+import { useSettingsStore, STYLE_PRESETS } from '@/stores/settings'
 import { codeThemes } from '@/config/themes'
 import { designThemes } from '@/config/designThemes'
 import type { BoldMode, FontFamilyKey, UnderlineMode } from '@/types'
@@ -246,15 +247,6 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
     '--theme-text': preset.settings.textColor,
   }
 }
-
-function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
-  const design = designThemes[key]
-  return [
-    optionLabel(coverComponentOptions, design.cover),
-    optionLabel(sectionComponentOptions, design.section),
-    optionLabel(quoteComponentOptions, design.quote),
-  ].join(' · ')
-}
 </script>
 
 <template>
@@ -321,7 +313,6 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
             <span class="theme-card__copy">
               <strong>{{ preset.label }}</strong>
               <small>{{ preset.description }}</small>
-              <span class="theme-card__signature">{{ themeSignature(preset.key) }}</span>
             </span>
           </button>
         </div>
@@ -520,7 +511,7 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
             <div v-show="isOpen('h1')" class="accordion-body">
               <div class="choice-row">
                 <span class="control-label">封面结构</span>
-                <div class="segmented segmented--wrap segmented--components">
+                <div class="segmented segmented--grid" style="--segment-columns: 5">
                   <button
                     v-for="opt in coverComponentOptions"
                     :key="opt.key"
@@ -535,7 +526,7 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
               </div>
               <div class="choice-row">
                 <span class="control-label">标题装饰</span>
-                <div class="segmented segmented--wrap">
+                <div class="segmented segmented--grid" style="--segment-columns: 6">
                   <button
                     v-for="opt in h1ModeOptions"
                     :key="opt.key"
@@ -571,7 +562,7 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
             <div v-show="isOpen('h2')" class="accordion-body">
               <div class="choice-row">
                 <span class="control-label">章节结构</span>
-                <div class="segmented segmented--single-line">
+                <div class="segmented segmented--grid" style="--segment-columns: 6">
                   <button
                     v-for="opt in sectionComponentOptions"
                     :key="opt.key"
@@ -588,7 +579,7 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
               </div>
               <div class="choice-row">
                 <span class="control-label">标题装饰</span>
-                <div class="segmented segmented--wrap">
+                <div class="segmented segmented--grid" style="--segment-columns: 5">
                   <button
                     v-for="opt in headingModeOptions"
                     :key="opt.key"
@@ -624,7 +615,7 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
             <div v-show="isOpen('h3')" class="accordion-body">
               <div class="choice-row">
                 <span class="control-label">标题装饰</span>
-                <div class="segmented segmented--wrap">
+                <div class="segmented segmented--grid" style="--segment-columns: 5">
                   <button
                     v-for="opt in headingModeOptions"
                     :key="opt.key"
@@ -660,7 +651,7 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
             <div v-show="isOpen('h4')" class="accordion-body">
               <div class="choice-row">
                 <span class="control-label">标题装饰</span>
-                <div class="segmented segmented--wrap">
+                <div class="segmented segmented--grid" style="--segment-columns: 5">
                   <button
                     v-for="opt in headingModeOptions"
                     :key="opt.key"
@@ -762,7 +753,7 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
             <div v-show="isOpen('quote')" class="accordion-body">
               <div class="choice-row">
                 <span class="control-label">引用结构</span>
-                <div class="segmented segmented--wrap">
+                <div class="segmented segmented--grid" style="--segment-columns: 3">
                   <button
                     v-for="opt in quoteComponentOptions"
                     :key="opt.key"
@@ -798,7 +789,7 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
             <div v-show="isOpen('lists')" class="accordion-body">
               <div class="choice-row">
                 <span class="control-label">无序列表</span>
-                <div class="segmented segmented--wrap">
+                <div class="segmented segmented--grid" style="--segment-columns: 5">
                   <button
                     v-for="opt in listComponentOptions"
                     :key="opt.key"
@@ -818,7 +809,7 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
               </div>
               <div class="choice-row">
                 <span class="control-label">有序列表</span>
-                <div class="segmented segmented--wrap">
+                <div class="segmented segmented--grid" style="--segment-columns: 5">
                   <button
                     v-for="opt in listComponentOptions"
                     :key="opt.key"
@@ -838,7 +829,7 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
               </div>
               <div class="choice-row">
                 <span class="control-label">表格</span>
-                <div class="segmented segmented--wrap">
+                <div class="segmented segmented--grid" style="--segment-columns: 4">
                   <button
                     v-for="opt in tableComponentOptions"
                     :key="opt.key"
@@ -1078,7 +1069,7 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
 
 .theme-card {
   min-width: 0;
-  min-height: 108px;
+  min-height: 96px;
   padding: 9px;
   border-radius: 8px;
   display: grid;
@@ -1114,7 +1105,7 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
 
 .theme-card__preview {
   min-width: 0;
-  min-height: 84px;
+  min-height: 72px;
   border-radius: 6px;
   padding: 8px;
   display: flex;
@@ -1126,7 +1117,7 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
 }
 
 .theme-paper {
-  min-height: 50px;
+  min-height: 42px;
   padding: 8px;
   border-radius: 6px;
   display: flex;
@@ -1239,7 +1230,7 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 5px;
+  gap: 7px;
 }
 
 .theme-card__copy strong {
@@ -1254,13 +1245,6 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
   font-size: 11px;
   line-height: 1.55;
   font-weight: 550;
-}
-
-.theme-card__signature {
-  color: var(--theme-color, var(--color-text-secondary));
-  font-size: 10px;
-  line-height: 1.35;
-  font-weight: 680;
 }
 
 .section-heading h3 {
@@ -1351,22 +1335,13 @@ function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
   gap: 2px;
 }
 
-.segmented--wrap {
+.segmented--grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(66px, 1fr));
-}
-
-.segmented--components {
-  grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
-}
-
-.segmented--single-line {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--segment-columns), minmax(0, 1fr));
   gap: 2px;
 }
 
-.segmented--single-line .segmented-button {
+.segmented--grid .segmented-button {
   padding: 0 2px;
   font-size: 10px;
 }

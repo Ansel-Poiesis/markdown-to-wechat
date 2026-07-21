@@ -95,21 +95,6 @@ export const DEFAULT_COLOR_PRESETS: Record<ColorPresetKind, string[]> = {
   ],
 }
 
-export const FONT_FAMILIES: Record<FontFamilyKey, { label: string; css: string }> = {
-  sans: {
-    label: '无衬线',
-    css: "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif",
-  },
-  serif: {
-    label: '衬线',
-    css: "'Optima', 'Songti SC', 'STSong', 'Noto Serif CJK SC', 'PingFang SC', 'Microsoft YaHei', serif",
-  },
-  mono: {
-    label: '等宽',
-    css: "'Menlo', 'Monaco', 'Courier New', 'PingFang SC', 'Microsoft YaHei', monospace",
-  },
-}
-
 export type StylePresetKey = DesignThemeKey
 
 export const STYLE_PRESETS: Array<{
@@ -153,7 +138,7 @@ export const STYLE_PRESETS: Array<{
   {
     key: 'qiuhe',
     label: '秋河',
-    description: '锈红定调、河青收束，适合叙事、随笔与慢节奏长文。',
+    description: '温润锈红与河青，留白舒展，适合叙事随笔和慢节奏长文。',
     color: '#a94f32',
     settings: {
       fontFamilyKey: 'serif',
@@ -191,7 +176,7 @@ export const STYLE_PRESETS: Array<{
   {
     key: 'zhujian',
     label: '朱简',
-    description: '朱砂提纲、灰墨正文，适合心理、人文与关系议题。',
+    description: '朱砂题眼与灰墨正文，层级利落，适合心理、人文和关系议题。',
     color: '#9d2f2f',
     settings: {
       fontFamilyKey: 'sans',
@@ -229,7 +214,7 @@ export const STYLE_PRESETS: Array<{
   {
     key: 'songyan',
     label: '松烟',
-    description: '炭黑骨架、灰绿层级，适合观点、报告与硬分析。',
+    description: '炭黑骨架与灰绿层次，克制清醒，适合观点文章和分析报告。',
     color: '#33443d',
     settings: {
       fontFamilyKey: 'serif',
@@ -267,7 +252,7 @@ export const STYLE_PRESETS: Array<{
   {
     key: 'yuebai',
     label: '月白',
-    description: '月白纸面、青灰索引，适合解释型与高信息密度稿件。',
+    description: '月白纸面与青灰索引，信息清晰，适合解释文章和知识密集稿件。',
     color: '#416d78',
     settings: {
       fontFamilyKey: 'sans',
@@ -305,7 +290,7 @@ export const STYLE_PRESETS: Array<{
   {
     key: 'qingdai',
     label: '青黛',
-    description: '青黛主笔、陶红点睛，适合生活观察与自然感说明。',
+    description: '青黛主笔与陶红点睛，轻盈自然，适合生活观察和说明文章。',
     color: '#2d6a58',
     settings: {
       fontFamilyKey: 'sans',
@@ -343,7 +328,7 @@ export const STYLE_PRESETS: Array<{
   {
     key: 'zhuzhi',
     label: '竹青纸本',
-    description: '竹青定锚、胭脂钤印，适合纸本长文与研究札记。',
+    description: '竹青定锚与胭脂钤印，纸本气息浓，适合研究札记和沉静长文。',
     color: '#56734f',
     settings: {
       fontFamilyKey: 'serif',
@@ -381,7 +366,7 @@ export const STYLE_PRESETS: Array<{
   {
     key: 'haitang',
     label: '海棠',
-    description: '海棠胭脂、灰粉留白，适合审美、情绪与人物表达。',
+    description: '海棠胭脂与灰粉留白，柔和细腻，适合人物、审美和情绪表达。',
     color: '#a5405b',
     settings: {
       fontFamilyKey: 'serif',
@@ -419,7 +404,7 @@ export const STYLE_PRESETS: Array<{
   {
     key: 'shupian',
     label: '薯片纸袋',
-    description: '纸袋橙、茶青题眼，适合文化观察与带锋芒的评论。',
+    description: '纸袋橙与茶青题眼，松弛有锋芒，适合文化观察和评论文章。',
     color: '#b76524',
     settings: {
       fontFamilyKey: 'serif',
@@ -457,7 +442,7 @@ export const STYLE_PRESETS: Array<{
   {
     key: 'liujin',
     label: '流金',
-    description: '古金强调、深褐收束，适合教程、清单与轻商业内容。',
+    description: '古金强调与深褐收束，重点醒目，适合教程、清单和轻商业内容。',
     color: '#936b1f',
     settings: {
       fontFamilyKey: 'sans',
