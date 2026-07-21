@@ -47,6 +47,41 @@ describe('draft store', () => {
     expect(restoredStore.activeDraft?.content).toContain('已经保存。')
   })
 
+  it('migrates the former welcome heading without replacing edited body content', () => {
+    const id = 7
+    localStorage.setItem(
+      'wechat-md-drafts',
+      JSON.stringify([
+        {
+          id,
+          name: '欢迎仪式：把 Markdown 变成公众号文章',
+          content: '# 欢迎仪式：把 Markdown 变成公众号文章\n\n保留这段已经编辑的正文。',
+          createdAt: '2026-07-20T00:00:00.000Z',
+          updatedAt: '2026-07-21T00:00:00.000Z',
+        },
+      ]),
+    )
+    localStorage.setItem('wechat-md-active-draft-id', String(id))
+
+    const store = useDraftStore()
+    const restored = store.initializeWorkspace('', '# 新欢迎稿')
+
+    expect(restored).toBe('# 把 Markdown 变成公众号文章\n\n保留这段已经编辑的正文。')
+    expect(store.activeDraft?.name).toBe('把 Markdown 变成公众号文章')
+    expect(JSON.parse(localStorage.getItem('wechat-md-drafts') || '[]')[0].content).toBe(restored)
+  })
+
+  it('migrates the legacy editor workspace before saving it as a draft', () => {
+    const store = useDraftStore()
+    const restored = store.initializeWorkspace(
+      '# 欢迎仪式：把 Markdown 变成公众号文章\n\n旧编辑区正文。',
+      '# 新欢迎稿',
+    )
+
+    expect(restored).toBe('# 把 Markdown 变成公众号文章\n\n旧编辑区正文。')
+    expect(store.activeDraft?.content).toBe(restored)
+  })
+
   it('promotes an existing editor workspace to a normal draft without replacing it', () => {
     const store = useDraftStore()
     const existing = '# 旧工作区文章\n\n继续写作。'

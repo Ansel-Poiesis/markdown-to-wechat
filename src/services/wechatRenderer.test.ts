@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { welcomeMarkdown } from '@/config/templates'
-import { renderWechatMarkdown, resolveRenderWechatOptions, toHtmlDocument } from './wechatRenderer'
+import {
+  renderWechatMarkdown,
+  resolveRenderWechatOptions,
+  toHtmlDocument,
+  type RenderWechatOptions,
+} from './wechatRenderer'
 
 describe('wechatRenderer', () => {
   it('renders a valid inline-style fragment with resolved defaults', () => {
@@ -13,11 +18,12 @@ describe('wechatRenderer', () => {
     expect(result.options.codeTheme).toBe('paper')
   })
 
-  it('renders the first-open welcome ritual as a valid feature sample', () => {
+  it('renders the first-open sample as a valid feature sample', () => {
     const result = renderWechatMarkdown(welcomeMarkdown)
 
     expect(result.valid).toBe(true)
-    expect(result.html).toContain('欢迎仪式')
+    expect(result.html).toContain('把 Markdown 变成公众号文章')
+    expect(result.html).not.toContain('欢迎仪式')
     expect(result.html).toContain('排版提示')
     expect(result.html).toContain('<table')
     expect(result.html).toContain('wechat-inline-html')
@@ -27,7 +33,7 @@ describe('wechatRenderer', () => {
   it('applies basic typography and component parameters', () => {
     const result = renderWechatMarkdown('# 参数测试\n\n## 章节\n\n正文', {
       theme: 'songyan',
-      fontFamily: 'wenkai',
+      fontFamily: 'serif',
       fontSize: 18,
       lineHeight: 2,
       pageMargin: 28,
@@ -40,7 +46,7 @@ describe('wechatRenderer', () => {
     })
 
     expect(result.valid).toBe(true)
-    expect(result.html).toContain("font-family:'LXGW WenKai'")
+    expect(result.html).toContain("font-family:'Optima'")
     expect(result.html).toContain('font-size:18px')
     expect(result.html).toContain('padding:18px 28px')
     expect(result.html).toContain('完成测试')
@@ -50,6 +56,9 @@ describe('wechatRenderer', () => {
   it('rejects unsupported values before rendering', () => {
     expect(() => resolveRenderWechatOptions({ accent: 'red' })).toThrow('#RRGGBB')
     expect(() => resolveRenderWechatOptions({ lineHeight: 4 })).toThrow('lineHeight')
+    expect(() =>
+      resolveRenderWechatOptions({ fontFamily: 'wenkai' as RenderWechatOptions['fontFamily'] }),
+    ).toThrow('未知字体')
   })
 
   it('wraps fragments as standalone documents when requested', () => {

@@ -68,7 +68,7 @@ npm run --silent render -- `
   --input article.md `
   --output article.html `
   --theme qiuhe `
-  --font-family wenkai `
+  --font-family serif `
   --font-size 16 `
   --line-height 1.7 `
   --format fragment

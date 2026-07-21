@@ -6,6 +6,8 @@ const STORAGE_KEY = 'wechat-md-drafts'
 const ACTIVE_DRAFT_KEY = 'wechat-md-active-draft-id'
 const AUTO_DRAFT_NAME = '自动草稿'
 const UNTITLED_DRAFT_NAME = '未命名草稿'
+const LEGACY_WELCOME_HEADING = '# 欢迎仪式：把 Markdown 变成公众号文章'
+const WELCOME_HEADING = '# 把 Markdown 变成公众号文章'
 
 function stripMarkdownInline(value: string): string {
   return value
@@ -45,6 +47,13 @@ function shouldAutoRenameDraft(draft: Draft): boolean {
   )
 }
 
+function migrateLegacyWelcomeHeading(content: string): string {
+  if (!content.startsWith(LEGACY_WELCOME_HEADING)) return content
+  const boundary = content.charAt(LEGACY_WELCOME_HEADING.length)
+  if (boundary && boundary !== '\n' && boundary !== '\r') return content
+  return `${WELCOME_HEADING}${content.slice(LEGACY_WELCOME_HEADING.length)}`
+}
+
 export const useDraftStore = defineStore('drafts', () => {
   const drafts = ref<Draft[]>([])
   const activeDraftId = ref<number | null>(null)
@@ -70,6 +79,17 @@ export const useDraftStore = defineStore('drafts', () => {
       const stored = localStorage.getItem(STORAGE_KEY)
       const parsed = stored ? JSON.parse(stored) : []
       drafts.value = Array.isArray(parsed) ? parsed.filter(isDraft) : []
+
+      let migrated = false
+      for (const draft of drafts.value) {
+        const content = migrateLegacyWelcomeHeading(draft.content)
+        if (content === draft.content) continue
+        const autoRename = shouldAutoRenameDraft(draft)
+        draft.content = content
+        if (autoRename) draft.name = inferDraftName(content)
+        migrated = true
+      }
+      if (migrated) saveDrafts()
 
       const storedActive = Number(localStorage.getItem(ACTIVE_DRAFT_KEY))
       activeDraftId.value =
@@ -129,7 +149,8 @@ export const useDraftStore = defineStore('drafts', () => {
     loadDrafts()
     if (activeDraft.value) return activeDraft.value.content
 
-    const initialContent = editorContent.trim() ? editorContent : welcomeContent
+    const migratedEditorContent = migrateLegacyWelcomeHeading(editorContent)
+    const initialContent = migratedEditorContent.trim() ? migratedEditorContent : welcomeContent
     if (initialContent.trim()) updateActiveDraft(initialContent)
     return initialContent
   }

@@ -23,7 +23,7 @@ const HELP = `公众号 Markdown 渲染器
   -o, --output <path>         输出文件；省略时写入 stdout
       --theme <name>          qiuhe|zhujian|songyan|yuebai|qingdai|zhuzhi|haitang|shupian|liujin
       --code-theme <name>     paper|light|dark
-      --font-family <name>    wenkai|sans|serif|mono
+      --font-family <name>    sans|serif|mono
       --font-size <number>    10-32
       --line-height <number>  1-3
       --page-margin <number>  0-48

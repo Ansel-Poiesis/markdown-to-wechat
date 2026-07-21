@@ -19,6 +19,8 @@ import {
 import AppIcon from '@/components/ui/AppIcon.vue'
 import AiFormatConfirmModal from '@/components/modals/AiFormatConfirmModal.vue'
 
+defineOptions({ inheritAttrs: false })
+
 const props = defineProps<{ modelValue: string }>()
 const emit = defineEmits<{
   'update:modelValue': [value: string]
@@ -246,7 +248,11 @@ watch(
 </script>
 
 <template>
-  <section class="workspace-panel animate-panel-1" aria-label="Markdown 编辑区">
+  <section
+    v-bind="$attrs"
+    class="workspace-panel animate-panel-1"
+    aria-label="Markdown 编辑区"
+  >
     <div class="panel-toolbar">
       <div class="panel-heading">
         <span class="panel-heading__icon"><AppIcon name="pen" :size="14" /></span>

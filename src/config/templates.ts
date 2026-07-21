@@ -1,6 +1,6 @@
 import type { Template } from '@/types'
 
-export const welcomeMarkdown = `# 欢迎仪式：把 Markdown 变成公众号文章
+export const welcomeMarkdown = `# 把 Markdown 变成公众号文章
 
 ::: lead 这张工作台处理一件具体的事
 左侧保留 Markdown 原稿，中间调整主题和组件，右侧生成公众号可直接粘贴的内联 HTML。草稿保存在当前浏览器；页面刷新后，会继续打开最近编辑的那一份。

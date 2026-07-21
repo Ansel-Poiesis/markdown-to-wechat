@@ -2,6 +2,7 @@ import { computed } from 'vue'
 import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
 import { MAGAZINE_DEFAULTS } from '@/config/themes'
+import { isFontFamilyKey } from '@/config/typography'
 import type {
   BoldMode,
   FontFamilyKey,
@@ -552,6 +553,11 @@ export const useSettingsStore = defineStore('settings', () => {
   )
 
   if (!activeStylePreset.value) activeStylePreset.value = 'qiuhe'
+
+  // Older builds exposed a WebFont that cannot survive WeChat paste output.
+  if (!isFontFamilyKey(fontFamilyKey.value)) {
+    fontFamilyKey.value = MAGAZINE_DEFAULTS.fontFamilyKey
+  }
 
   if (!VALID_FONT_SIZES.includes(Number(fontSize.value)))
     fontSize.value = MAGAZINE_DEFAULTS.fontSize
