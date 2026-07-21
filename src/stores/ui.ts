@@ -1,8 +1,10 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import { useStorage } from '@vueuse/core'
 import type { ToastItem, ToastType } from '@/types'
 
 export const useUiStore = defineStore('ui', () => {
+  const colorMode = useStorage<'light' | 'dark'>('wechat-md-color-mode', 'light')
   const toasts = ref<ToastItem[]>([])
   const showSettings = ref(false)
   const activeModals = ref<Record<string, boolean>>({
@@ -39,13 +41,19 @@ export const useUiStore = defineStore('ui', () => {
     showSettings.value = !showSettings.value
   }
 
+  const toggleColorMode = () => {
+    colorMode.value = colorMode.value === 'dark' ? 'light' : 'dark'
+  }
+
   return {
     toasts,
+    colorMode,
     showSettings,
     activeModals,
     showToast,
     openModal,
     closeModal,
     toggleSettings,
+    toggleColorMode,
   }
 })

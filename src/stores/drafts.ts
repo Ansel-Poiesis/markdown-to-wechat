@@ -127,8 +127,8 @@ export const useDraftStore = defineStore('drafts', () => {
   }
 
   function updateActiveDraft(content: string) {
-    if (!content.trim()) return
     if (activeDraftId.value === null) {
+      if (!content.trim()) return
       createDraft(content, inferDraftName(content))
       return
     }

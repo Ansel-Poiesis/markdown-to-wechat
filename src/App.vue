@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useEditorStore } from '@/stores/editor'
 import { useThemeStore } from '@/stores/theme'
 import { useUiStore } from '@/stores/ui'
 import { useDraftStore } from '@/stores/drafts'
 import { renderMarkdown } from '@/utils/markdownRenderer'
+import { validateWechatHtml } from '@/utils/wechatHtml'
 import { useMarkdownAnalyzer } from '@/composables/useMarkdownAnalyzer'
 import { useMarkdownWarnings } from '@/composables/useMarkdownWarnings'
 import { useClipboard } from '@/composables/useClipboard'
@@ -13,10 +14,12 @@ import { useExport } from '@/composables/useExport'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { sampleMarkdown } from '@/config/templates'
 import AppHeader from '@/components/AppHeader.vue'
-import EditorPane from '@/components/EditorPane.vue'
 import PreviewPane from '@/components/PreviewPane.vue'
-import SettingsPanel from '@/components/SettingsPanel.vue'
-import PreflightModal from '@/components/modals/PreflightModal.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
+
+const EditorPane = defineAsyncComponent(() => import('@/components/EditorPane.vue'))
+const SettingsPanel = defineAsyncComponent(() => import('@/components/SettingsPanel.vue'))
+const PreflightModal = defineAsyncComponent(() => import('@/components/modals/PreflightModal.vue'))
 
 const editorStore = useEditorStore()
 const themeStore = useThemeStore()
@@ -26,6 +29,15 @@ const { isMobile } = useBreakpoint()
 const { copyRenderedHtml } = useClipboard()
 const { formatMarkdown } = useSmartFormat()
 const { exportHtml } = useExport()
+
+watch(
+  () => ui.colorMode,
+  (mode) => {
+    document.documentElement.classList.toggle('dark', mode === 'dark')
+    document.documentElement.style.colorScheme = mode
+  },
+  { immediate: true },
+)
 
 // Mobile tab state: 'editor' | 'preview' | 'inspector'
 const mobileTab = ref<'editor' | 'preview' | 'inspector'>('editor')
@@ -68,16 +80,20 @@ onUnmounted(() => {
 })
 
 const { stats } = useMarkdownAnalyzer(content)
-const { warnings, preflightCounts } = useMarkdownWarnings(content)
+const { warnings: markdownWarnings } = useMarkdownWarnings(content)
 const scrollRatio = ref<number>()
 
 const renderedHtml = computed(() => {
-  return renderMarkdown(
-    content.value,
-    themeStore.themeBase,
-    themeStore.currentCodeTheme,
-  )
+  return renderMarkdown(content.value, themeStore.themeBase, themeStore.currentCodeTheme)
 })
+
+const htmlValidation = computed(() => validateWechatHtml(renderedHtml.value))
+const warnings = computed(() => [...markdownWarnings.value, ...htmlValidation.value.issues])
+const preflightCounts = computed(() => ({
+  danger: warnings.value.filter((warning) => warning.level === 'danger').length,
+  warn: warnings.value.filter((warning) => warning.level === 'warn').length,
+  info: warnings.value.filter((warning) => warning.level === 'info').length,
+}))
 
 function loadSample() {
   editorStore.setContent(sampleMarkdown)
@@ -130,11 +146,7 @@ watch(
         @load-sample="loadSample"
         @scroll="(r: number) => (scrollRatio = r)"
       />
-      <SettingsPanel
-        :stats="stats"
-        :warnings="warnings"
-        class="min-h-0 min-w-0"
-      />
+      <SettingsPanel :stats="stats" :warnings="warnings" class="min-h-0 min-w-0" />
       <PreviewPane :html="renderedHtml" :scroll-ratio="scrollRatio" class="min-h-0 min-w-0" />
     </main>
   </template>

@@ -151,9 +151,9 @@ function updatePreset(event: Event) {
   aspect-ratio: 1;
   justify-self: center;
   border-radius: 999px;
-  border: 1px solid rgb(24 24 27 / 0.06);
+  border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
   box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.42),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-control-thumb) 42%, transparent),
     0 1px 2px rgb(0 0 0 / 0.1);
   transition:
     transform 0.16s ease,
@@ -170,7 +170,7 @@ function updatePreset(event: Event) {
 }
 
 .color-swatch--active {
-  border-color: rgb(24 24 27 / 0.28);
+  border-color: color-mix(in srgb, var(--color-text) 30%, transparent);
   box-shadow:
     inset 0 0 0 2px var(--color-surface),
     inset 0 0 0 3px currentColor,

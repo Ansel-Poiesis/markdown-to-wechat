@@ -10,6 +10,14 @@ import type {
   QuoteMode2,
   H1Mode,
   UnderlineMode,
+  DesignThemeKey,
+  CoverVariant,
+  SectionVariant,
+  QuoteVariant,
+  ListVariant,
+  TableVariant,
+  TocMode,
+  EndMarkMode,
 } from '@/types'
 
 const PREVIEW_ZOOM_KEY = 'wechat-md-preview-zoom'
@@ -53,6 +61,15 @@ const CANVAS_COLOR_KEY = 'wechat-md-canvas-color'
 const CUSTOM_COLOR_HISTORY_KEY = 'wechat-md-color-history'
 const COLOR_PRESETS_KEY = 'wechat-md-color-presets'
 const STYLE_PRESET_KEY = 'wechat-md-style-preset'
+const COMPONENT_COVER_KEY = 'wechat-md-component-cover'
+const COMPONENT_SECTION_KEY = 'wechat-md-component-section'
+const COMPONENT_QUOTE_KEY = 'wechat-md-component-quote'
+const COMPONENT_UNORDERED_LIST_KEY = 'wechat-md-component-unordered-list'
+const COMPONENT_ORDERED_LIST_KEY = 'wechat-md-component-ordered-list'
+const COMPONENT_TABLE_KEY = 'wechat-md-component-table'
+const COMPONENT_TOC_KEY = 'wechat-md-component-toc'
+const COMPONENT_END_MARK_KEY = 'wechat-md-component-end-mark'
+const COMPONENT_END_MARK_TEXT_KEY = 'wechat-md-component-end-mark-text'
 
 const VALID_FONT_SIZES = [12, 14, 16, 18, 20]
 const VALID_LINE_HEIGHTS = [1, 1.6, 2, 2.6, 3]
@@ -66,7 +83,16 @@ export type ColorPresetKind = 'text' | 'accent' | 'background'
 export const DEFAULT_COLOR_PRESETS: Record<ColorPresetKind, string[]> = {
   text: ['#18181b', '#27272a', '#334155', '#1f2937', '#3f3a33', '#20251f', '#24352b', '#0f172a'],
   accent: ['#789262', '#057748', '#20a162', '#9d2933', '#2563eb', '#0f766e', '#c2410c', '#b42318'],
-  background: ['#ffffff', '#fafafa', '#fffbf0', '#f5f8ef', '#d6ecf0', '#fff7ed', '#f8f5f0', '#f5fbf8'],
+  background: [
+    '#ffffff',
+    '#fafafa',
+    '#fffbf0',
+    '#f5f8ef',
+    '#d6ecf0',
+    '#fff7ed',
+    '#f8f5f0',
+    '#f5fbf8',
+  ],
 }
 
 export const FONT_FAMILIES: Record<FontFamilyKey, { label: string; css: string }> = {
@@ -84,14 +110,7 @@ export const FONT_FAMILIES: Record<FontFamilyKey, { label: string; css: string }
   },
 }
 
-export type StylePresetKey =
-  | 'qiuhe'
-  | 'songyan'
-  | 'yuebai'
-  | 'qingdai'
-  | 'zhuzhi'
-  | 'haitang'
-  | 'liujin'
+export type StylePresetKey = DesignThemeKey
 
 export const STYLE_PRESETS: Array<{
   key: StylePresetKey
@@ -134,18 +153,18 @@ export const STYLE_PRESETS: Array<{
   {
     key: 'qiuhe',
     label: '秋河',
-    description: '暖纸、陶土、深墨，适合叙事和慢节奏长文。',
-    color: '#c45f38',
+    description: '锈红定调、河青收束，适合叙事、随笔与慢节奏长文。',
+    color: '#a94f32',
     settings: {
       fontFamilyKey: 'serif',
       lineHeight: 1.6,
       pageMargin: 20,
-      textColor: '#2f2822',
-      mutedColor: '#76675a',
-      borderColor: '#ead8c6',
-      bgSoftColor: '#fff3e7',
-      quoteBgColor: '#fff1e4',
-      accentColor: '#c45f38',
+      textColor: '#28241f',
+      mutedColor: '#746b60',
+      borderColor: '#e6ded3',
+      bgSoftColor: '#f3eee7',
+      quoteBgColor: '#f0e9df',
+      accentColor: '#a94f32',
       h1Mode: 'center',
       h2Mode: 'plain',
       h3Mode: 'bar',
@@ -154,36 +173,74 @@ export const STYLE_PRESETS: Array<{
       quoteMode2: 'fade',
       textIndent: 0,
       textJustify: false,
-      h1Color: '#332b24',
-      h2Color: '#332b24',
-      h3Color: '#332b24',
-      h4Color: '#5f554d',
-      headingAccent: '#c45f38',
-      quoteAccent: '#c45f38',
+      h1Color: '#28241f',
+      h2Color: '#28241f',
+      h3Color: '#2f6258',
+      h4Color: '#746b60',
+      headingAccent: '#a94f32',
+      quoteAccent: '#2f6258',
       letterSpacing: '',
       paragraphSpacing: 1,
-      boldColor: '#c45f38',
+      boldColor: '#a94f32',
       boldMode: 'default',
-      underlineColor: '#c45f38',
+      underlineColor: '#2f6258',
       underlineMode: 'solid',
-      canvasColor: '#fffaf4',
+      canvasColor: '#fffdf9',
+    },
+  },
+  {
+    key: 'zhujian',
+    label: '朱简',
+    description: '朱砂提纲、灰墨正文，适合心理、人文与关系议题。',
+    color: '#9d2f2f',
+    settings: {
+      fontFamilyKey: 'sans',
+      lineHeight: 2,
+      pageMargin: 12,
+      textColor: '#292729',
+      mutedColor: '#777174',
+      borderColor: '#e7e1df',
+      bgSoftColor: '#f7f3f2',
+      quoteBgColor: '#fbf4f1',
+      accentColor: '#9d2f2f',
+      h1Mode: 'plain',
+      h2Mode: 'chip',
+      h3Mode: 'plain',
+      h4Mode: 'plain',
+      quoteMode: 'panel',
+      quoteMode2: 'fade',
+      textIndent: 0,
+      textJustify: true,
+      h1Color: '#292729',
+      h2Color: '#7d3034',
+      h3Color: '#292729',
+      h4Color: '#777174',
+      headingAccent: '#9d2f2f',
+      quoteAccent: '#6f3f46',
+      letterSpacing: '',
+      paragraphSpacing: 1,
+      boldColor: '#7d3034',
+      boldMode: 'color',
+      underlineColor: '#9d2f2f',
+      underlineMode: 'solid',
+      canvasColor: '#ffffff',
     },
   },
   {
     key: 'songyan',
     label: '松烟',
-    description: '冷灰层级、黑白主导，适合观点、报告和硬分析。',
-    color: '#27272a',
+    description: '炭黑骨架、灰绿层级，适合观点、报告与硬分析。',
+    color: '#33443d',
     settings: {
       fontFamilyKey: 'serif',
       lineHeight: 1.6,
       pageMargin: 20,
-      textColor: '#18181b',
-      mutedColor: '#71717a',
-      borderColor: '#e4e4e7',
-      bgSoftColor: '#f4f4f5',
-      quoteBgColor: '#f4f4f5',
-      accentColor: '#27272a',
+      textColor: '#161a19',
+      mutedColor: '#646b68',
+      borderColor: '#d9dedb',
+      bgSoftColor: '#eef1ef',
+      quoteBgColor: '#edf0ee',
+      accentColor: '#33443d',
       h1Mode: 'underline',
       h2Mode: 'plain',
       h3Mode: 'plain',
@@ -192,36 +249,36 @@ export const STYLE_PRESETS: Array<{
       quoteMode2: 'bar',
       textIndent: 0,
       textJustify: true,
-      h1Color: '#18181b',
-      h2Color: '#18181b',
-      h3Color: '#332b24',
-      h4Color: '#5f554d',
-      headingAccent: '#27272a',
-      quoteAccent: '#52525b',
+      h1Color: '#161a19',
+      h2Color: '#161a19',
+      h3Color: '#33443d',
+      h4Color: '#646b68',
+      headingAccent: '#33443d',
+      quoteAccent: '#52635c',
       letterSpacing: '',
       paragraphSpacing: 1,
-      boldColor: '#18181b',
+      boldColor: '#161a19',
       boldMode: 'color',
-      underlineColor: '#18181b',
+      underlineColor: '#33443d',
       underlineMode: 'solid',
-      canvasColor: '#fcfcfb',
+      canvasColor: '#fdfefd',
     },
   },
   {
     key: 'yuebai',
     label: '月白',
-    description: '月白底、蓝灰层，适合现代解释和信息密度高的稿件。',
-    color: '#315f9c',
+    description: '月白纸面、青灰索引，适合解释型与高信息密度稿件。',
+    color: '#416d78',
     settings: {
       fontFamilyKey: 'sans',
       lineHeight: 1.6,
       pageMargin: 20,
-      textColor: '#172033',
-      mutedColor: '#5f6f86',
-      borderColor: '#dbe6f3',
-      bgSoftColor: '#eef5ff',
-      quoteBgColor: '#edf6ff',
-      accentColor: '#315f9c',
+      textColor: '#1d2930',
+      mutedColor: '#657681',
+      borderColor: '#d6e1e5',
+      bgSoftColor: '#eef4f5',
+      quoteBgColor: '#edf5f7',
+      accentColor: '#416d78',
       h1Mode: 'dash',
       h2Mode: 'bar',
       h3Mode: 'dash',
@@ -230,36 +287,36 @@ export const STYLE_PRESETS: Array<{
       quoteMode2: 'panel',
       textIndent: 0,
       textJustify: false,
-      h1Color: '#172033',
-      h2Color: '#1f3f68',
-      h3Color: '#1f3f68',
-      h4Color: '#5f6f86',
-      headingAccent: '#315f9c',
-      quoteAccent: '#315f9c',
+      h1Color: '#1d2930',
+      h2Color: '#284e59',
+      h3Color: '#284e59',
+      h4Color: '#657681',
+      headingAccent: '#416d78',
+      quoteAccent: '#416d78',
       letterSpacing: '',
       paragraphSpacing: 1,
-      boldColor: '#315f9c',
+      boldColor: '#284e59',
       boldMode: 'underline',
-      underlineColor: '#315f9c',
+      underlineColor: '#416d78',
       underlineMode: 'double',
-      canvasColor: '#f8fbff',
+      canvasColor: '#fbfdfd',
     },
   },
   {
     key: 'qingdai',
     label: '青黛',
-    description: '青绿、浅雾、低对比，适合生活观察和自然感说明。',
-    color: '#2f7667',
+    description: '青黛主笔、陶红点睛，适合生活观察与自然感说明。',
+    color: '#2d6a58',
     settings: {
       fontFamilyKey: 'sans',
       lineHeight: 1.6,
       pageMargin: 20,
-      textColor: '#1f332d',
-      mutedColor: '#61756d',
-      borderColor: '#d8e8df',
-      bgSoftColor: '#eef8f2',
-      quoteBgColor: '#edf7f1',
-      accentColor: '#2f7667',
+      textColor: '#1c2b27',
+      mutedColor: '#65736d',
+      borderColor: '#d6e1dc',
+      bgSoftColor: '#edf4ef',
+      quoteBgColor: '#eaf2ed',
+      accentColor: '#2d6a58',
       h1Mode: 'marker',
       h2Mode: 'bar',
       h3Mode: 'plain',
@@ -268,36 +325,36 @@ export const STYLE_PRESETS: Array<{
       quoteMode2: 'fade',
       textIndent: 0,
       textJustify: false,
-      h1Color: '#1f332d',
-      h2Color: '#1f332d',
-      h3Color: '#2f4a3d',
-      h4Color: '#61756d',
-      headingAccent: '#2f7667',
-      quoteAccent: '#2f7667',
+      h1Color: '#1c2b27',
+      h2Color: '#1c2b27',
+      h3Color: '#365b4f',
+      h4Color: '#65736d',
+      headingAccent: '#2d6a58',
+      quoteAccent: '#9a563d',
       letterSpacing: '',
       paragraphSpacing: 1.5,
-      boldColor: '#2f7667',
+      boldColor: '#2d6a58',
       boldMode: 'marker',
-      underlineColor: '#2f7667',
+      underlineColor: '#9a563d',
       underlineMode: 'dashed',
-      canvasColor: '#f8fcf9',
+      canvasColor: '#fbfdfb',
     },
   },
   {
     key: 'zhuzhi',
     label: '竹青纸本',
-    description: '竹青主色、松花绿定锚、胭脂点睛，适合纸本长文和研究札记。',
-    color: '#789262',
+    description: '竹青定锚、胭脂钤印，适合纸本长文与研究札记。',
+    color: '#56734f',
     settings: {
       fontFamilyKey: 'serif',
       lineHeight: 2,
       pageMargin: 28,
-      textColor: '#20251f',
-      mutedColor: '#60675d',
-      borderColor: '#d9e2d0',
-      bgSoftColor: '#f5f8ef',
-      quoteBgColor: '#f4f8ee',
-      accentColor: '#789262',
+      textColor: '#202823',
+      mutedColor: '#657067',
+      borderColor: '#d7ddd6',
+      bgSoftColor: '#f0f3ed',
+      quoteBgColor: '#edf2eb',
+      accentColor: '#56734f',
       h1Mode: 'center',
       h2Mode: 'bar',
       h3Mode: 'plain',
@@ -306,36 +363,36 @@ export const STYLE_PRESETS: Array<{
       quoteMode2: 'fade',
       textIndent: 0,
       textJustify: false,
-      h1Color: '#20251f',
-      h2Color: '#057748',
-      h3Color: '#426666',
-      h4Color: '#60675d',
-      headingAccent: '#057748',
-      quoteAccent: '#9d2933',
+      h1Color: '#202823',
+      h2Color: '#295c4c',
+      h3Color: '#3f6258',
+      h4Color: '#657067',
+      headingAccent: '#295c4c',
+      quoteAccent: '#a14d3e',
       letterSpacing: '',
       paragraphSpacing: 1.5,
-      boldColor: '#057748',
+      boldColor: '#295c4c',
       boldMode: 'color',
-      underlineColor: '#20a162',
+      underlineColor: '#a14d3e',
       underlineMode: 'marker',
-      canvasColor: '#fffbf0',
+      canvasColor: '#fffdf8',
     },
   },
   {
     key: 'haitang',
     label: '海棠',
-    description: '玫红只作点睛，适合审美、情绪和带温度的表达。',
-    color: '#b94662',
+    description: '海棠胭脂、灰粉留白，适合审美、情绪与人物表达。',
+    color: '#a5405b',
     settings: {
       fontFamilyKey: 'serif',
       lineHeight: 1.6,
       pageMargin: 20,
-      textColor: '#422932',
-      mutedColor: '#7a5f68',
-      borderColor: '#efd7de',
-      bgSoftColor: '#fff1f4',
-      quoteBgColor: '#fff0f4',
-      accentColor: '#b94662',
+      textColor: '#36272d',
+      mutedColor: '#806e75',
+      borderColor: '#eadde1',
+      bgSoftColor: '#f8f0f2',
+      quoteBgColor: '#f6edef',
+      accentColor: '#a5405b',
       h1Mode: 'center',
       h2Mode: 'chip',
       h3Mode: 'plain',
@@ -344,36 +401,74 @@ export const STYLE_PRESETS: Array<{
       quoteMode2: 'fade',
       textIndent: 0,
       textJustify: false,
-      h1Color: '#422932',
-      h2Color: '#422932',
+      h1Color: '#36272d',
+      h2Color: '#7b3047',
       h3Color: '#5f3b46',
-      h4Color: '#7a5f68',
-      headingAccent: '#b94662',
-      quoteAccent: '#b94662',
+      h4Color: '#806e75',
+      headingAccent: '#a5405b',
+      quoteAccent: '#a5405b',
       letterSpacing: '',
       paragraphSpacing: 1.5,
-      boldColor: '#b94662',
+      boldColor: '#7b3047',
       boldMode: 'color',
-      underlineColor: '#b94662',
+      underlineColor: '#a5405b',
       underlineMode: 'marker',
-      canvasColor: '#fff9fa',
+      canvasColor: '#fffdfd',
+    },
+  },
+  {
+    key: 'shupian',
+    label: '薯片纸袋',
+    description: '纸袋橙、茶青题眼，适合文化观察与带锋芒的评论。',
+    color: '#b76524',
+    settings: {
+      fontFamilyKey: 'serif',
+      lineHeight: 2,
+      pageMargin: 28,
+      textColor: '#25251f',
+      mutedColor: '#706e62',
+      borderColor: '#ded9ca',
+      bgSoftColor: '#f4f0e3',
+      quoteBgColor: '#f8f1df',
+      accentColor: '#b76524',
+      h1Mode: 'plain',
+      h2Mode: 'bar',
+      h3Mode: 'plain',
+      h4Mode: 'plain',
+      quoteMode: 'bar',
+      quoteMode2: 'fade',
+      textIndent: 0,
+      textJustify: true,
+      h1Color: '#25251f',
+      h2Color: '#2d675c',
+      h3Color: '#25251f',
+      h4Color: '#706e62',
+      headingAccent: '#2d675c',
+      quoteAccent: '#b76524',
+      letterSpacing: '',
+      paragraphSpacing: 1,
+      boldColor: '#2d675c',
+      boldMode: 'color',
+      underlineColor: '#c8952f',
+      underlineMode: 'marker',
+      canvasColor: '#fffdf7',
     },
   },
   {
     key: 'liujin',
     label: '流金',
-    description: '琥珀明亮但克制，适合教程、清单和轻商业内容。',
-    color: '#a16207',
+    description: '古金强调、深褐收束，适合教程、清单与轻商业内容。',
+    color: '#936b1f',
     settings: {
       fontFamilyKey: 'sans',
       lineHeight: 1.6,
       pageMargin: 20,
-      textColor: '#3c3322',
-      mutedColor: '#746854',
-      borderColor: '#eadcb8',
-      bgSoftColor: '#fff6db',
-      quoteBgColor: '#fff2c9',
-      accentColor: '#a16207',
+      textColor: '#2c291f',
+      mutedColor: '#756e5d',
+      borderColor: '#e2dccb',
+      bgSoftColor: '#f6f2e6',
+      quoteBgColor: '#f7eed8',
+      accentColor: '#936b1f',
       h1Mode: 'panel',
       h2Mode: 'chip',
       h3Mode: 'marker',
@@ -382,19 +477,19 @@ export const STYLE_PRESETS: Array<{
       quoteMode2: 'panel',
       textIndent: 0,
       textJustify: false,
-      h1Color: '#3c3322',
-      h2Color: '#3c3322',
-      h3Color: '#6b4b18',
-      h4Color: '#746854',
-      headingAccent: '#a16207',
-      quoteAccent: '#a16207',
+      h1Color: '#2c291f',
+      h2Color: '#5b4b2c',
+      h3Color: '#6b5423',
+      h4Color: '#756e5d',
+      headingAccent: '#936b1f',
+      quoteAccent: '#936b1f',
       letterSpacing: '',
       paragraphSpacing: 1.5,
-      boldColor: '#a16207',
+      boldColor: '#6b5423',
       boldMode: 'marker',
-      underlineColor: '#a16207',
+      underlineColor: '#936b1f',
       underlineMode: 'marker',
-      canvasColor: '#fffaf0',
+      canvasColor: '#fffdf8',
     },
   },
 ]
@@ -456,13 +551,25 @@ export const useSettingsStore = defineStore('settings', () => {
   )
   const canvasColor = useStorage(CANVAS_COLOR_KEY, MAGAZINE_DEFAULTS.canvasColor)
   const colorHistory = useStorage<string[]>(CUSTOM_COLOR_HISTORY_KEY, [])
-  const activeStylePreset = useStorage<StylePresetKey | ''>(STYLE_PRESET_KEY, '')
+  const activeStylePreset = useStorage<StylePresetKey | ''>(STYLE_PRESET_KEY, 'qiuhe')
+  const componentCover = useStorage<CoverVariant | ''>(COMPONENT_COVER_KEY, '')
+  const componentSection = useStorage<SectionVariant | ''>(COMPONENT_SECTION_KEY, '')
+  const componentQuote = useStorage<QuoteVariant | ''>(COMPONENT_QUOTE_KEY, '')
+  const componentUnorderedList = useStorage<ListVariant | ''>(COMPONENT_UNORDERED_LIST_KEY, '')
+  const componentOrderedList = useStorage<ListVariant | ''>(COMPONENT_ORDERED_LIST_KEY, '')
+  const componentTable = useStorage<TableVariant | ''>(COMPONENT_TABLE_KEY, '')
+  const componentTocMode = useStorage<TocMode>(COMPONENT_TOC_KEY, 'theme')
+  const componentEndMarkMode = useStorage<EndMarkMode>(COMPONENT_END_MARK_KEY, 'theme')
+  const componentEndMarkText = useStorage(COMPONENT_END_MARK_TEXT_KEY, '')
   const colorPresets = useStorage<Record<ColorPresetKind, string[]>>(
     COLOR_PRESETS_KEY,
     DEFAULT_COLOR_PRESETS,
   )
 
-  if (!VALID_FONT_SIZES.includes(Number(fontSize.value))) fontSize.value = MAGAZINE_DEFAULTS.fontSize
+  if (!activeStylePreset.value) activeStylePreset.value = 'qiuhe'
+
+  if (!VALID_FONT_SIZES.includes(Number(fontSize.value)))
+    fontSize.value = MAGAZINE_DEFAULTS.fontSize
   if (!VALID_LINE_HEIGHTS.includes(Number(lineHeight.value))) {
     lineHeight.value = MAGAZINE_DEFAULTS.lineHeight
   }
@@ -485,7 +592,10 @@ export const useSettingsStore = defineStore('settings', () => {
   colorPresets.value = {
     text: normalizePresetList(colorPresets.value.text, DEFAULT_COLOR_PRESETS.text),
     accent: normalizePresetList(colorPresets.value.accent, DEFAULT_COLOR_PRESETS.accent),
-    background: normalizePresetList(colorPresets.value.background, DEFAULT_COLOR_PRESETS.background),
+    background: normalizePresetList(
+      colorPresets.value.background,
+      DEFAULT_COLOR_PRESETS.background,
+    ),
   }
 
   const previewZoomComputed = computed({
@@ -551,6 +661,27 @@ export const useSettingsStore = defineStore('settings', () => {
     underlineMode.value = next.underlineMode
     canvasColor.value = next.canvasColor
     activeStylePreset.value = key
+    componentCover.value = ''
+    componentSection.value = ''
+    componentQuote.value = ''
+    componentUnorderedList.value = ''
+    componentOrderedList.value = ''
+    componentTable.value = ''
+    componentTocMode.value = 'theme'
+    componentEndMarkMode.value = 'theme'
+    componentEndMarkText.value = ''
+  }
+
+  const resetComponentOverrides = () => {
+    componentCover.value = ''
+    componentSection.value = ''
+    componentQuote.value = ''
+    componentUnorderedList.value = ''
+    componentOrderedList.value = ''
+    componentTable.value = ''
+    componentTocMode.value = 'theme'
+    componentEndMarkMode.value = 'theme'
+    componentEndMarkText.value = ''
   }
 
   return {
@@ -558,6 +689,7 @@ export const useSettingsStore = defineStore('settings', () => {
     rememberColor,
     updateColorPreset,
     applyStylePreset,
+    resetComponentOverrides,
     fontFamilyKey,
     fontSize,
     lineHeight,
@@ -596,6 +728,15 @@ export const useSettingsStore = defineStore('settings', () => {
     colorHistory,
     colorPresets,
     activeStylePreset,
+    componentCover,
+    componentSection,
+    componentQuote,
+    componentUnorderedList,
+    componentOrderedList,
+    componentTable,
+    componentTocMode,
+    componentEndMarkMode,
+    componentEndMarkText,
   }
 })
 
@@ -606,5 +747,7 @@ function normalizeHexColor(color: string) {
 
 function normalizePresetList(value: string[] | undefined, fallback: string[]) {
   const source = Array.isArray(value) ? value : []
-  return fallback.map((fallbackColor, index) => normalizeHexColor(source[index] || '') || fallbackColor)
+  return fallback.map(
+    (fallbackColor, index) => normalizeHexColor(source[index] || '') || fallbackColor,
+  )
 }

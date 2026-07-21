@@ -30,6 +30,8 @@ defineProps<{
     | 'warning'
     | 'save'
     | 'eye'
+    | 'eyeOff'
+    | 'undo'
     | 'externalLink'
   size?: number
 }>()
@@ -200,6 +202,15 @@ defineProps<{
     <template v-else-if="name === 'eye'">
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
       <circle cx="12" cy="12" r="3" />
+    </template>
+    <template v-else-if="name === 'eyeOff'">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </template>
+    <template v-else-if="name === 'undo'">
+      <path d="M9 14 4 9l5-5" />
+      <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
     </template>
     <template v-else-if="name === 'externalLink'">
       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />

@@ -23,7 +23,7 @@ export interface MimoModel {
   tags: string[]
 }
 
-const BASE_URL = import.meta.env.VITE_MIMO_API_URL?.replace('/chat/completions', '') || 'https://api.xiaomimimo.com/v1'
+const BASE_URL = 'https://api.xiaomimimo.com/v1'
 
 export const MIMO_MODELS: MimoModel[] = [
   {

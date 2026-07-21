@@ -2,7 +2,9 @@ import type { Template } from '@/types'
 
 export const sampleMarkdown = `# Markdown 排版演示
 
-这是一段专为微信公众号优化的 **Markdown 渲染** 演示。工具会将内容转换成带 *内联样式* 的 HTML，复制后可直接粘贴到公众号后台。
+::: lead 导语
+这是一段专为微信公众号优化的 **Markdown 渲染** 演示。现在每套主题都有独立的封面、目录、章节、引用、列表、表格与结尾表达。
+:::
 
 ## 文本格式与列表
 
@@ -32,7 +34,7 @@ function render(article: Article): string {
 
 | 特性 | 状态 | 说明 |
 |------|------|------|
-| 主题系统 | 已支持 | 6 套内置主题 + 自定义 |
+| 主题系统 | 已支持 | 9 套组件化主题 |
 | 代码高亮 | 已支持 | 浅色 / 深色 / 纸张 |
 | 智能排版 | 已支持 | 自动优化 CJK 间距 |
 
@@ -43,6 +45,10 @@ function render(article: Article): string {
 ---
 
 感谢体验！如果觉得有用，欢迎分享给你的朋友。
+
+::: signature 排版工具
+所有输出都经过微信公众号 HTML 合规检查。
+:::
 `
 
 export const templates: Record<string, Template> = {

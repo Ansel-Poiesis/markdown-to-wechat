@@ -27,6 +27,12 @@ npm run build
 # Type check only
 npm run type-check
 
+# Unit and regression tests
+npm test
+
+# Full local quality gate
+npm run verify
+
 # Lint and auto-fix (runs oxlint + eslint sequentially)
 npm run lint
 
@@ -34,7 +40,7 @@ npm run lint
 npm run format
 ```
 
-There are no tests in this project.
+Vitest covers renderer themes, WeChat HTML compliance, SSE completeness, warning classification, article structure, and draft persistence. UI, Electron, and real WeChat paste checks still require smoke testing.
 
 ## Architecture
 
@@ -55,6 +61,13 @@ Key behaviors of the renderer:
 - `themeStore` — Active theme and code theme (persisted). Supports built-in themes plus a user-defined "custom" theme. The `night` theme is the only dark canvas theme.
 - `settingsStore` — Preview zoom level and WeChat appendix elements (follow/read-more).
 - `uiStore` — Modal states, toast notifications, settings panel visibility.
+
+### AI Formatting
+
+- Browser builds require a user-provided MiMo key for the current session.
+- Electron reads `MIMO_API_KEY` in the main process and proxies requests over a narrow IPC bridge.
+- Formatting is transactional: the editor changes only after a complete response, and the last result can be undone while the document is unchanged.
+- Never introduce a `VITE_*` secret. Vite variables are public bundle data.
 
 ### Theme System
 
@@ -93,7 +106,7 @@ Blocking warnings (level `danger`) prevent one-click copy; the preflight modal o
 
 ## Important Notes
 
-- `vite.config.ts` sets `base: './'` and `outDir: 'docs'` so the build works on GitHub Pages.
+- `vite.config.ts` sets `base: './'`; `build:web` writes to `docs/` for GitHub Pages, while the default build writes to `dist/` for Electron.
 - `tsconfig.app.json` has `noUncheckedIndexedAccess: true` enabled for extra safety.
 - The project does not use a traditional Markdown parser library; changes to Markdown support must be made in `src/utils/markdownRenderer.ts`.
 - All `localStorage` keys are prefixed with `wechat-md-`.
