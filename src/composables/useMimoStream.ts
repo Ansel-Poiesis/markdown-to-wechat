@@ -54,35 +54,31 @@ const SYSTEM_PROMPT = `你是一个 Markdown 排版专家。对用户提供的�
 - 不要添加"以下是排版后的文本"等前言
 - 不要添加任何 HTML 标签`
 
-interface StreamOptions {
+export interface StreamOptions {
   onChunk: (text: string) => void
   signal?: AbortSignal
   /** 模型 ID，默认使用 mimo-v2.5 */
   modelId?: string
+  /** Browser-only credential. Electron reads MIMO_API_KEY in the main process. */
+  apiKey?: string
 }
 
 /**
  * 获取 MiMo API 配置
  * 优先使用环境变量，回退到模型配置中的 endpoint
  */
-function getApiConfig(model: MimoModel) {
-  const envUrl = import.meta.env.VITE_MIMO_API_URL as string
-  const apiKey = import.meta.env.VITE_MIMO_API_KEY as string
-
+function getBrowserApiConfig(model: MimoModel, apiKey = '') {
   if (!apiKey) {
-    throw new Error('未配置 MiMo API Key (VITE_MIMO_API_KEY)')
+    throw new Error('请先输入 MiMo API Key')
   }
-
-  // 环境变量中的 URL 仅用于 chat completions 端点
-  const endpoint = model.capability === 'chat' && envUrl ? envUrl : model.endpoint
-
-  return { endpoint, apiKey }
+  return { endpoint: model.endpoint, apiKey: apiKey.trim() }
 }
 
 export async function mimoFormatStream(
   content: string,
-  { onChunk, signal, modelId }: StreamOptions,
+  options: StreamOptions,
 ): Promise<string> {
+  const { onChunk, signal, modelId, apiKey } = options
   const id = modelId || DEFAULT_CHAT_MODEL
   const model = getModelById(id)
 
@@ -94,13 +90,41 @@ export async function mimoFormatStream(
     throw new Error(`模型 ${model.name} 不支持文本生成（当前能力: ${model.capability}）`)
   }
 
-  const { endpoint, apiKey } = getApiConfig(model)
+  const electronApi = typeof window !== 'undefined' ? window.electronAPI : undefined
+  if (electronApi?.formatMimo) {
+    const requestId = crypto.randomUUID()
+    const cancel = () => electronApi.cancelMimo(requestId)
+    signal?.addEventListener('abort', cancel, { once: true })
+    try {
+      return await electronApi.formatMimo(
+        {
+          requestId,
+          content,
+          model: model.id,
+          endpoint: model.endpoint,
+          systemPrompt: SYSTEM_PROMPT,
+          maxCompletionTokens: model.defaults?.max_completion_tokens ?? 4000,
+          temperature: model.defaults?.temperature ?? 0.2,
+          reasoningEffort: model.defaults?.reasoning_effort ?? 'low',
+        },
+        onChunk,
+      )
+    } catch (error) {
+      if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
+      throw error
+    } finally {
+      signal?.removeEventListener('abort', cancel)
+    }
+  }
+
+  const browserConfig = getBrowserApiConfig(model, apiKey)
+  const { endpoint } = browserConfig
 
   const res = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'api-key': apiKey,
+      'api-key': browserConfig.apiKey,
     },
     body: JSON.stringify({
       model: model.id,
@@ -126,6 +150,7 @@ export async function mimoFormatStream(
   const decoder = new TextDecoder()
   let buffer = ''
   let full = ''
+  let completed = false
 
   while (true) {
     const { done, value } = await reader.read()
@@ -136,27 +161,62 @@ export async function mimoFormatStream(
     buffer = lines.pop()! // keep incomplete line
 
     for (const line of lines) {
+      const event = parseSSEEvent(line)
+      if (event.done) completed = true
+      if (event.finishReason === 'length') {
+        throw new Error('辅助排版输出被模型截断，原文未被替换')
+      }
       const prev = full
-      full = parseSSELine(line, full)
+      full = event.token ? full + event.token : full
       if (full !== prev) onChunk(full)
     }
   }
 
+  if (buffer.trim()) {
+    const event = parseSSEEvent(buffer)
+    if (event.done || event.finishReason === 'stop') completed = true
+    if (event.finishReason === 'length') {
+      throw new Error('辅助排版输出被模型截断，原文未被替换')
+    }
+    if (event.token) {
+      full += event.token
+      onChunk(full)
+    }
+  }
+
+  if (!completed) {
+    throw new Error('辅助排版响应未完整结束，原文未被替换')
+  }
+  if (!full.trim()) throw new Error('辅助排版没有返回有效内容')
+
   return full.trim()
 }
 
-function parseSSELine(line: string, acc: string): string {
+export function parseSSELine(line: string, acc: string): string {
+  const event = parseSSEEvent(line)
+  return event.token ? acc + event.token : acc
+}
+
+export function parseSSEEvent(line: string): {
+  token: string
+  done: boolean
+  finishReason?: string
+} {
   const trimmed = line.trim()
-  if (!trimmed?.startsWith('data:')) return acc
+  if (!trimmed?.startsWith('data:')) return { token: '', done: false }
   const payload = trimmed.slice(5).trim()
-  if (payload === '[DONE]') return acc
+  if (payload === '[DONE]') return { token: '', done: true }
   try {
     const chunk = JSON.parse(payload) as {
-      choices?: { delta?: { content?: string } }[]
+      choices?: { delta?: { content?: string }; finish_reason?: string | null }[]
     }
-    const token = chunk.choices?.[0]?.delta?.content
-    return token ? acc + token : acc
+    const choice = chunk.choices?.[0]
+    return {
+      token: choice?.delta?.content || '',
+      done: choice?.finish_reason === 'stop',
+      finishReason: choice?.finish_reason || undefined,
+    }
   } catch {
-    return acc
+    return { token: '', done: false }
   }
 }

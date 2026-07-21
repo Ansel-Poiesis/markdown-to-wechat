@@ -17,16 +17,10 @@ const ui = useUiStore()
 const { copyRenderedHtml } = useClipboard()
 
 const hasBlockingWarnings = computed(() => props.warnings.some((w) => w.level === 'danger'))
-const hasWarnings = computed(() => props.warnings.length > 0)
 
 async function handleCopy() {
   if (hasBlockingWarnings.value) {
     ui.openModal('preflight')
-    return
-  }
-  if (hasWarnings.value) {
-    await copyRenderedHtml(props.renderedHtml)
-    ui.showToast('已复制（存在提醒项，请检查预检提示）', 'error')
     return
   }
   await copyRenderedHtml(props.renderedHtml)
@@ -41,9 +35,7 @@ function handleExport() {
   <header class="app-header">
     <div class="app-header__inner">
       <div class="app-header__brand">
-        <h1 class="app-header__title">
-          公众号排版渲染
-        </h1>
+        <h1 class="app-header__title">公众号排版渲染</h1>
       </div>
 
       <div class="app-header__stats hidden md:flex">
@@ -71,7 +63,16 @@ function handleExport() {
       <div class="app-header__actions">
         <button
           type="button"
-          class="h-9 w-9 sm:w-auto sm:px-3 rounded-xl text-[13px] font-medium bg-surface text-text border border-border hover:bg-surface-hover active:scale-[0.96] transition-all inline-flex items-center justify-center gap-1.5"
+          class="header-icon-button"
+          :title="ui.colorMode === 'dark' ? '切换到日间模式' : '切换到夜间模式'"
+          :aria-label="ui.colorMode === 'dark' ? '切换到日间模式' : '切换到夜间模式'"
+          @click="ui.toggleColorMode()"
+        >
+          <AppIcon :name="ui.colorMode === 'dark' ? 'sun' : 'moon'" :size="15" />
+        </button>
+        <button
+          type="button"
+          class="header-secondary-button"
           title="导出 HTML"
           @click="handleExport"
         >
@@ -80,8 +81,7 @@ function handleExport() {
         </button>
         <button
           type="button"
-          class="h-9 w-10 sm:w-auto sm:px-4 rounded-xl text-[13px] font-semibold bg-[#18181b] !text-white border border-[#18181b] hover:bg-[#27272a] hover:border-[#27272a] active:scale-[0.96] transition-all inline-flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
-          style="color: #ffffff"
+          class="header-primary-button"
           title="复制到公众号"
           @click="handleCopy"
         >
@@ -103,7 +103,7 @@ function handleExport() {
   height: 64px;
   overflow: hidden;
   border-bottom: 1px solid var(--color-border-subtle);
-  background: rgb(255 255 255 / 0.88);
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.04);
   backdrop-filter: blur(18px);
 }
@@ -141,7 +141,7 @@ function handleExport() {
   gap: 4px;
   justify-self: center;
   color: var(--color-text-tertiary);
-  background: rgb(244 244 245 / 0.72);
+  background: color-mix(in srgb, var(--color-surface-hover) 88%, transparent);
   border: 1px solid var(--color-border-subtle);
   border-radius: 14px;
   padding: 8px 14px;
@@ -154,6 +154,66 @@ function handleExport() {
   justify-content: flex-end;
   align-items: center;
   gap: 10px;
+}
+
+.header-icon-button,
+.header-secondary-button,
+.header-primary-button {
+  height: 36px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.header-icon-button {
+  width: 36px;
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.header-secondary-button {
+  min-width: 36px;
+  padding: 0 12px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  font-weight: 620;
+}
+
+.header-primary-button {
+  min-width: 40px;
+  padding: 0 15px;
+  color: var(--color-accent-contrast);
+  background: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  font-weight: 680;
+}
+
+.header-icon-button:hover,
+.header-secondary-button:hover {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+.header-primary-button:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+.header-icon-button:active,
+.header-secondary-button:active,
+.header-primary-button:active {
+  transform: scale(0.96);
 }
 
 @media (max-width: 767px) {
@@ -169,6 +229,11 @@ function handleExport() {
 
   .app-header__actions {
     gap: 6px;
+  }
+
+  .header-secondary-button,
+  .header-primary-button {
+    padding: 0 10px;
   }
 }
 </style>

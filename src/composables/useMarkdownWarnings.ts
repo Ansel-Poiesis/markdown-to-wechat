@@ -5,7 +5,8 @@ export function useMarkdownWarnings(markdownRef: { value: string }) {
   const warnings = computed<WarningItem[]>(() => {
     const markdown = markdownRef.value || ''
     const result: WarningItem[] = []
-    const localImages = markdown.match(/!\[[^\]]*]\((?!https?:\/\/)[^)]+\)/gi) || []
+    const localImages = markdown.match(/!\[[^\]]*]\((?!https?:\/\/|data:image\/)[^)]+\)/gi) || []
+    const embeddedImages = markdown.match(/!\[[^\]]*]\(data:image\/[^)]+\)/gi) || []
     const links = markdown.match(/\[[^\]]+\]\((https?:\/\/[^)]+)\)/gi) || []
     const tables = markdown.match(/^\s*\|.+\|\s*$/gm) || []
     const longLines = markdown.split('\n').filter((line) => line.length > 120)
@@ -33,6 +34,13 @@ export function useMarkdownWarnings(markdownRef: { value: string }) {
         level: 'danger',
         text: '检测到本地或相对路径图片。公众号后台通常需要可访问的线上图片地址。',
         type: 'localImage',
+      })
+    }
+    if (embeddedImages.length) {
+      result.push({
+        level: 'warn',
+        text: '检测到内嵌图片。复制到公众号后请检查图片是否保留，正式发布建议使用线上图片。',
+        type: 'embeddedImage',
       })
     }
     if (emptyLinks.length) {

@@ -76,7 +76,7 @@ async function confirmCopy() {
             <button type="button" class="h-9 px-3.5 rounded-lg text-[13px] font-medium bg-surface text-text border border-border hover:bg-surface-hover transition-all" @click="close">取消</button>
             <button
               type="button"
-              class="h-9 px-3.5 rounded-lg text-[13px] font-medium bg-[#18181b] text-white border border-[#18181b] hover:bg-[#27272a] hover:border-[#27272a] transition-all inline-flex items-center justify-center gap-2"
+              class="h-9 px-3.5 rounded-lg text-[13px] font-medium bg-accent text-accent-contrast border border-accent hover:bg-accent-hover hover:border-accent-hover transition-all inline-flex items-center justify-center gap-2"
               @click="confirmCopy"
             >
               {{ counts.danger ? '仍然复制' : '继续复制' }}

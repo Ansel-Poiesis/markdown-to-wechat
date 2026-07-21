@@ -65,6 +65,18 @@ export const useThemeStore = defineStore('theme', () => {
       underlineColor: settings.underlineColor || undefined,
       underlineMode: settings.underlineMode || undefined,
       canvas: settings.canvasColor || undefined,
+      designKey: settings.activeStylePreset || 'qiuhe',
+      componentOverrides: {
+        cover: settings.componentCover || undefined,
+        section: settings.componentSection || undefined,
+        quote: settings.componentQuote || undefined,
+        unorderedList: settings.componentUnorderedList || undefined,
+        orderedList: settings.componentOrderedList || undefined,
+        table: settings.componentTable || undefined,
+        tocMode: settings.componentTocMode,
+        endMarkMode: settings.componentEndMarkMode,
+        endMarkText: settings.componentEndMarkText.trim() || undefined,
+      },
     }
   })
 

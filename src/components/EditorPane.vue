@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from 'vue'
 import { EditorView, basicSetup } from 'codemirror'
+import { Compartment } from '@codemirror/state'
 import { markdown } from '@codemirror/lang-markdown'
 import { keymap } from '@codemirror/view'
+import { oneDark } from '@codemirror/theme-one-dark'
 import { markdownCommandsKeymap } from '@/composables/useMarkdownCommands'
-import { mimoFormatStream } from '@/composables/useMimoStream'
+import { useAiFormatting } from '@/composables/useAiFormatting'
 import { useEditorStore } from '@/stores/editor'
 import { useSettingsStore } from '@/stores/settings'
 import { useUiStore } from '@/stores/ui'
@@ -15,6 +17,7 @@ import {
   formatFileSize,
 } from '@/composables/useImageUpload'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import AiFormatConfirmModal from '@/components/modals/AiFormatConfirmModal.vue'
 
 const props = defineProps<{ modelValue: string }>()
 const emit = defineEmits<{
@@ -28,15 +31,39 @@ const editorStore = useEditorStore()
 const settings = useSettingsStore()
 const ui = useUiStore()
 let view: EditorView | null = null
+const colorModeCompartment = new Compartment()
 const editorStyle = computed(() => ({
   fontSize: `${Number(settings.fontSize) || 16}px`,
 }))
 
 // Track which format mode is active for toggle styling
 const formatMode = ref<'none' | 'pure' | 'format'>('none')
-const formatLoading = ref(false)
 let formatJustApplied = false
-let formatAbort: AbortController | null = null
+const modelValue = computed(() => props.modelValue)
+
+const {
+  confirmOpen,
+  formatLoading,
+  requiresApiKey,
+  canUndo,
+  requestFormat,
+  closeConfirm,
+  confirmFormat,
+  cancelFormat,
+  undoFormat,
+} = useAiFormatting({
+  content: modelValue,
+  applyContent: (value) => {
+    formatJustApplied = true
+    emit('update:modelValue', value)
+  },
+  onApplied: () => {
+    formatMode.value = 'format'
+  },
+  onUndone: () => {
+    formatMode.value = 'none'
+  },
+})
 
 function stripMarkdown(input: string): string {
   return input
@@ -65,37 +92,12 @@ function handlePure() {
   ui.showToast('已清除格式', 'info')
 }
 
-async function handleAutoFormat() {
+function handleAutoFormat() {
   if (formatLoading.value) {
-    // Cancel ongoing request
-    formatAbort?.abort()
-    formatLoading.value = false
+    cancelFormat()
     return
   }
-  formatLoading.value = true
-  formatAbort = new AbortController()
-  try {
-    await mimoFormatStream(props.modelValue, {
-      signal: formatAbort.signal,
-      onChunk: (text) => {
-        // Progressive update — user sees results streaming in
-        formatJustApplied = true
-        emit('update:modelValue', text)
-      },
-    })
-    formatMode.value = 'format'
-    ui.showToast('已自动排版', 'success')
-  } catch (e: unknown) {
-    if (e instanceof DOMException && e.name === 'AbortError') {
-      ui.showToast('已取消排版', 'info')
-      return
-    }
-    const msg = e instanceof Error ? e.message : '排版服务异常'
-    ui.showToast(msg, 'error')
-  } finally {
-    formatLoading.value = false
-    formatAbort = null
-  }
+  requestFormat()
 }
 
 const saveLabel = ref('已自动保存')
@@ -149,6 +151,7 @@ onMounted(() => {
       markdownCommandsKeymap(),
       formatKeymap,
       EditorView.lineWrapping,
+      colorModeCompartment.of(ui.colorMode === 'dark' ? oneDark : []),
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           emit('update:modelValue', update.state.doc.toString())
@@ -231,11 +234,20 @@ watch(
     }
   },
 )
+
+watch(
+  () => ui.colorMode,
+  (mode) => {
+    view?.dispatch({
+      effects: colorModeCompartment.reconfigure(mode === 'dark' ? oneDark : []),
+    })
+  },
+)
 </script>
 
 <template>
   <section
-    class="animate-panel-1 flex flex-col min-h-0 rounded-2xl bg-surface shadow-sm overflow-hidden border border-border-subtle dark:border dark:border-border"
+    class="animate-panel-1 flex flex-col min-h-0 rounded-lg bg-surface shadow-sm overflow-hidden border border-border"
     aria-label="Markdown 编辑区"
   >
     <div
@@ -255,6 +267,16 @@ watch(
         </Transition>
       </strong>
       <div class="editor-actions">
+        <button
+          v-if="canUndo"
+          type="button"
+          class="editor-action-button text-text-tertiary hover:text-text"
+          title="撤销最近一次辅助排版"
+          aria-label="撤销辅助排版"
+          @click="undoFormat"
+        >
+          <AppIcon name="undo" :size="13" />
+        </button>
         <button
           type="button"
           class="editor-action-button"
@@ -277,7 +299,6 @@ watch(
               : 'text-text-tertiary hover:text-text',
             formatLoading && 'opacity-60 cursor-wait',
           ]"
-          :disabled="formatLoading"
           title="通过 AI 自动识别标题、加粗、引用等并写入 Markdown 语法（流式输出，再次点击取消）"
           @click="handleAutoFormat"
         >
@@ -298,7 +319,11 @@ watch(
     </div>
     <div class="editor-scroll">
       <div class="editor-canvas">
-        <div ref="editorHost" class="editor-host font-mono leading-relaxed" :style="editorStyle"></div>
+        <div
+          ref="editorHost"
+          class="editor-host font-mono leading-relaxed"
+          :style="editorStyle"
+        ></div>
         <Transition name="fade">
           <div
             v-if="!modelValue"
@@ -322,6 +347,13 @@ watch(
       </div>
     </div>
   </section>
+
+  <AiFormatConfirmModal
+    :open="confirmOpen"
+    :requires-api-key="requiresApiKey"
+    @cancel="closeConfirm"
+    @confirm="confirmFormat"
+  />
 </template>
 
 <style scoped>
@@ -329,7 +361,7 @@ watch(
   flex: 1;
   min-height: 0;
   padding: 32px 24px 8px;
-  background: #ececec;
+  background: var(--color-workspace);
   overflow: auto;
   display: flex;
   align-items: flex-start;
@@ -343,9 +375,7 @@ watch(
   background: var(--color-surface);
   border-radius: 2px;
   overflow: hidden;
-  box-shadow:
-    0 0 0 1px rgb(0 0 0 / 0.06),
-    0 10px 28px rgb(0 0 0 / 0.08);
+  box-shadow: var(--shadow-canvas);
 }
 
 .editor-host {
@@ -356,7 +386,11 @@ watch(
 div :deep(.cm-editor) {
   height: 100%;
   background: var(--color-surface);
+  color: var(--color-text);
   font-size: inherit;
+}
+div :deep(.cm-editor.cm-focused) {
+  outline: none;
 }
 div :deep(.cm-content) {
   font-size: inherit;
@@ -371,10 +405,6 @@ div :deep(.cm-gutters) {
 div :deep(.cm-lineNumbers) {
   color: var(--color-text-tertiary);
   font-size: 12px;
-}
-
-:global(.dark) .editor-scroll {
-  background: #2a2a2a;
 }
 
 .editor-actions {

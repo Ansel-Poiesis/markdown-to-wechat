@@ -4,6 +4,8 @@ node_modules_old/
 *.tsbuildinfo
 .eslintcache
 .env
+.env.local
+.env.*.local
 .DS_Store
 Thumbs.db
 desktop.ini

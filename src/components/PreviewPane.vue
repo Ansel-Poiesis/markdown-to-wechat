@@ -17,7 +17,6 @@ let resizeObserver: ResizeObserver | null = null
 
 // Desktop / Mobile preview toggle
 const previewDevice = ref<'desktop' | 'mobile'>('mobile')
-settingsStore.previewZoom = '1.25'
 
 const WECHAT_DESKTOP_ARTICLE_WIDTH = 677
 const WECHAT_MOBILE_ARTICLE_WIDTH = 375
@@ -88,9 +87,13 @@ watch(
   },
 )
 
-watch([previewDevice, () => settingsStore.previewZoom, () => props.html, effectiveZoom], centerPreview, {
-  flush: 'post',
-})
+watch(
+  [previewDevice, () => settingsStore.previewZoom, () => props.html, effectiveZoom],
+  centerPreview,
+  {
+    flush: 'post',
+  },
+)
 
 onMounted(() => {
   resizeObserver = new ResizeObserver((entries) => {
@@ -114,7 +117,7 @@ defineExpose({ scrollHost })
 
 <template>
   <section
-    class="animate-panel-2 flex flex-col min-h-0 rounded-2xl bg-surface shadow-sm overflow-hidden border border-border-subtle dark:border dark:border-border"
+    class="animate-panel-2 flex flex-col min-h-0 rounded-lg bg-surface shadow-sm overflow-hidden border border-border"
     aria-label="预览区"
   >
     <div
@@ -173,7 +176,7 @@ defineExpose({ scrollHost })
   flex: 1;
   min-height: 0;
   overflow: auto;
-  background: #ececec;
+  background: var(--color-workspace);
   display: grid;
 }
 
@@ -194,15 +197,10 @@ defineExpose({ scrollHost })
   overflow: hidden;
   overflow-wrap: break-word;
   border-radius: 2px;
-  box-shadow:
-    0 0 0 1px rgb(0 0 0 / 0.06),
-    0 10px 28px rgb(0 0 0 / 0.08);
+  box-shadow: var(--shadow-canvas);
   transition:
     width 0.2s ease,
     box-shadow 0.2s ease;
 }
 
-:global(.dark) .preview-scroll {
-  background: #2a2a2a;
-}
 </style>

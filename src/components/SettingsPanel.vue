@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useThemeStore } from '@/stores/theme'
 import { useSettingsStore, FONT_FAMILIES, STYLE_PRESETS } from '@/stores/settings'
 import { codeThemes } from '@/config/themes'
+import { designThemes } from '@/config/designThemes'
 import type { BoldMode, FontFamilyKey, UnderlineMode } from '@/types'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import DraftPanel from '@/components/DraftPanel.vue'
@@ -20,6 +21,8 @@ type ComponentSection =
   | 'bold'
   | 'code'
   | 'background'
+  | 'lists'
+  | 'structure'
 
 const themeStore = useThemeStore()
 const settings = useSettingsStore()
@@ -35,6 +38,8 @@ const openSections = ref<Record<ComponentSection, boolean>>({
   underline: false,
   bold: false,
   code: false,
+  lists: false,
+  structure: false,
 })
 
 const tabs: Array<{ key: SettingsTab; label: string; icon: IconName }> = [
@@ -99,20 +104,6 @@ const headingModeOptions = [
   { key: 'dash', label: '虚线' },
 ]
 
-const quoteModeOptions = [
-  { key: 'bar', label: '左边线' },
-  { key: 'panel', label: '卡片' },
-  { key: 'soft', label: '柔光' },
-  { key: 'outline', label: '虚线框' },
-  { key: 'note', label: '笔记' },
-]
-
-const quoteMode2Options = [
-  { key: 'bar', label: '虚线' },
-  { key: 'panel', label: '边框' },
-  { key: 'fade', label: '淡化' },
-]
-
 const underlineModeOptions: Array<{ key: UnderlineMode; label: string }> = [
   { key: 'solid', label: '实线' },
   { key: 'dashed', label: '虚线' },
@@ -128,9 +119,98 @@ const boldModeOptions: Array<{ key: BoldMode; label: string }> = [
   { key: 'underline', label: '底线' },
 ]
 
+const coverComponentOptions = [
+  { key: '', label: '跟随主题' },
+  { key: 'editorial', label: '编辑部' },
+  { key: 'cinnabar', label: '朱砂刊头' },
+  { key: 'minimal', label: '黑白极简' },
+  { key: 'index', label: '索引封面' },
+  { key: 'botanical', label: '自然留白' },
+  { key: 'paper', label: '纸本封面' },
+  { key: 'soft', label: '柔光封面' },
+  { key: 'ticket', label: '票据封面' },
+  { key: 'guide', label: '指南封面' },
+]
+
+const sectionComponentOptions = [
+  { key: '', label: '主题', title: '跟随主题' },
+  { key: 'numbered', label: '编号', title: '大号编号' },
+  { key: 'rule', label: '底线', title: '底线标题' },
+  { key: 'label', label: '侧标', title: '侧标标题' },
+  { key: 'marker', label: '标记', title: '标记标题' },
+  { key: 'stamp', label: '印章', title: '印章标题' },
+]
+
+const quoteComponentOptions = [
+  { key: '', label: '跟随主题' },
+  { key: 'pull', label: '金句引用' },
+  { key: 'panel', label: '面板引用' },
+  { key: 'bar', label: '边线引用' },
+  { key: 'note', label: '笔记引用' },
+  { key: 'outline', label: '描边引用' },
+]
+
+const listComponentOptions = [
+  { key: '', label: '跟随主题' },
+  { key: 'plain', label: '简洁列表' },
+  { key: 'cards', label: '卡片列表' },
+  { key: 'steps', label: '步骤列表' },
+  { key: 'ledger', label: '清单列表' },
+]
+
+const tableComponentOptions = [
+  { key: '', label: '跟随主题' },
+  { key: 'grid', label: '网格表格' },
+  { key: 'striped', label: '浅底表格' },
+  { key: 'ledger', label: '账页表格' },
+]
+
+const visibilityOptions = [
+  { key: 'theme', label: '跟随主题' },
+  { key: 'show', label: '显示' },
+  { key: 'hide', label: '隐藏' },
+]
+
 const typographySummary = computed(() => {
   const family = FONT_FAMILIES[settings.fontFamilyKey]?.label ?? '字体'
   return `${family} · ${settings.fontSize}px · ${settings.lineHeight.toFixed(1)}`
+})
+
+const activeThemeEndMark = computed(
+  () => designThemes[settings.activeStylePreset || 'qiuhe'].endMark,
+)
+
+const hasComponentOverrides = computed(
+  () =>
+    Boolean(settings.componentCover) ||
+    Boolean(settings.componentSection) ||
+    Boolean(settings.componentQuote) ||
+    Boolean(settings.componentUnorderedList) ||
+    Boolean(settings.componentOrderedList) ||
+    Boolean(settings.componentTable) ||
+    settings.componentTocMode !== 'theme' ||
+    settings.componentEndMarkMode !== 'theme' ||
+    Boolean(settings.componentEndMarkText.trim()),
+)
+
+const listTableSummary = computed(() =>
+  settings.componentUnorderedList || settings.componentOrderedList || settings.componentTable
+    ? '已单独设置'
+    : '跟随主题',
+)
+
+const structureSummary = computed(() => {
+  if (settings.componentEndMarkText.trim()) return '结尾已编辑'
+  if (settings.componentTocMode === 'theme' && settings.componentEndMarkMode === 'theme') {
+    return '跟随主题'
+  }
+  if (settings.componentTocMode === 'show' && settings.componentEndMarkMode === 'show') {
+    return '全部显示'
+  }
+  if (settings.componentTocMode === 'hide' && settings.componentEndMarkMode === 'hide') {
+    return '全部隐藏'
+  }
+  return '已单独设置'
 })
 
 function optionLabel(options: Array<{ key: string; label: string }>, key: string) {
@@ -166,11 +246,20 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
     '--theme-text': preset.settings.textColor,
   }
 }
+
+function themeSignature(key: (typeof STYLE_PRESETS)[number]['key']) {
+  const design = designThemes[key]
+  return [
+    optionLabel(coverComponentOptions, design.cover),
+    optionLabel(sectionComponentOptions, design.section),
+    optionLabel(quoteComponentOptions, design.quote),
+  ].join(' · ')
+}
 </script>
 
 <template>
   <aside
-    class="flex flex-col min-h-0 rounded-2xl bg-surface overflow-hidden border border-border-subtle shadow-sm"
+    class="flex flex-col min-h-0 rounded-lg bg-surface overflow-hidden border border-border shadow-sm"
     aria-label="设置"
   >
     <header class="settings-header">
@@ -206,15 +295,21 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
             :key="preset.key"
             type="button"
             class="theme-card"
-            :class="settings.activeStylePreset === preset.key ? 'theme-card--active' : ''"
+            :class="[
+              `theme-card--${preset.key}`,
+              settings.activeStylePreset === preset.key ? 'theme-card--active' : '',
+            ]"
             :style="themeCardStyle(preset)"
+            :aria-pressed="settings.activeStylePreset === preset.key"
             @click="settings.applyStylePreset(preset.key)"
           >
             <span class="theme-card__preview" aria-hidden="true">
               <span class="theme-paper">
+                <span class="theme-paper__eyebrow" />
                 <span class="theme-paper__title" />
                 <span class="theme-paper__line theme-paper__line--long" />
                 <span class="theme-paper__line" />
+                <span class="theme-paper__accent" />
               </span>
               <span class="theme-card__swatches">
                 <span :style="{ background: preset.settings.canvasColor }" />
@@ -226,6 +321,7 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
             <span class="theme-card__copy">
               <strong>{{ preset.label }}</strong>
               <small>{{ preset.description }}</small>
+              <span class="theme-card__signature">{{ themeSignature(preset.key) }}</span>
             </span>
           </button>
         </div>
@@ -247,11 +343,19 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
             </button>
           </div>
         </div>
-        <div class="section-heading">
+        <div class="section-heading section-heading--action">
           <div>
             <h3>正文样式</h3>
             <p>{{ typographySummary }}</p>
           </div>
+          <button
+            type="button"
+            class="reset-command"
+            :disabled="!hasComponentOverrides"
+            @click="settings.resetComponentOverrides()"
+          >
+            组件跟随主题
+          </button>
         </div>
 
         <div class="setting-group setting-group--plain">
@@ -414,17 +518,35 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
               />
             </button>
             <div v-show="isOpen('h1')" class="accordion-body">
-              <div class="segmented">
-                <button
-                  v-for="opt in h1ModeOptions"
-                  :key="opt.key"
-                  type="button"
-                  class="segmented-button"
-                  :class="settings.h1Mode === opt.key ? 'segmented-button--active' : ''"
-                  @click="settings.h1Mode = opt.key as typeof settings.h1Mode"
-                >
-                  {{ opt.label }}
-                </button>
+              <div class="choice-row">
+                <span class="control-label">封面结构</span>
+                <div class="segmented segmented--wrap segmented--components">
+                  <button
+                    v-for="opt in coverComponentOptions"
+                    :key="opt.key"
+                    type="button"
+                    class="segmented-button"
+                    :class="settings.componentCover === opt.key ? 'segmented-button--active' : ''"
+                    @click="settings.componentCover = opt.key as typeof settings.componentCover"
+                  >
+                    {{ opt.label }}
+                  </button>
+                </div>
+              </div>
+              <div class="choice-row">
+                <span class="control-label">标题装饰</span>
+                <div class="segmented segmented--wrap">
+                  <button
+                    v-for="opt in h1ModeOptions"
+                    :key="opt.key"
+                    type="button"
+                    class="segmented-button"
+                    :class="settings.h1Mode === opt.key ? 'segmented-button--active' : ''"
+                    @click="settings.h1Mode = opt.key as typeof settings.h1Mode"
+                  >
+                    {{ opt.label }}
+                  </button>
+                </div>
               </div>
               <ColorPresetControl
                 kind="text"
@@ -447,17 +569,37 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
               />
             </button>
             <div v-show="isOpen('h2')" class="accordion-body">
-              <div class="segmented">
-                <button
-                  v-for="opt in headingModeOptions"
-                  :key="opt.key"
-                  type="button"
-                  class="segmented-button"
-                  :class="settings.h2Mode === opt.key ? 'segmented-button--active' : ''"
-                  @click="settings.h2Mode = opt.key as typeof settings.h2Mode"
-                >
-                  {{ opt.label }}
-                </button>
+              <div class="choice-row">
+                <span class="control-label">章节结构</span>
+                <div class="segmented segmented--single-line">
+                  <button
+                    v-for="opt in sectionComponentOptions"
+                    :key="opt.key"
+                    type="button"
+                    class="segmented-button"
+                    :class="settings.componentSection === opt.key ? 'segmented-button--active' : ''"
+                    :title="opt.title"
+                    :aria-label="opt.title"
+                    @click="settings.componentSection = opt.key as typeof settings.componentSection"
+                  >
+                    {{ opt.label }}
+                  </button>
+                </div>
+              </div>
+              <div class="choice-row">
+                <span class="control-label">标题装饰</span>
+                <div class="segmented segmented--wrap">
+                  <button
+                    v-for="opt in headingModeOptions"
+                    :key="opt.key"
+                    type="button"
+                    class="segmented-button"
+                    :class="settings.h2Mode === opt.key ? 'segmented-button--active' : ''"
+                    @click="settings.h2Mode = opt.key as typeof settings.h2Mode"
+                  >
+                    {{ opt.label }}
+                  </button>
+                </div>
               </div>
               <ColorPresetControl
                 kind="text"
@@ -480,17 +622,20 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
               />
             </button>
             <div v-show="isOpen('h3')" class="accordion-body">
-              <div class="segmented">
-                <button
-                  v-for="opt in headingModeOptions"
-                  :key="opt.key"
-                  type="button"
-                  class="segmented-button"
-                  :class="settings.h3Mode === opt.key ? 'segmented-button--active' : ''"
-                  @click="settings.h3Mode = opt.key as typeof settings.h3Mode"
-                >
-                  {{ opt.label }}
-                </button>
+              <div class="choice-row">
+                <span class="control-label">标题装饰</span>
+                <div class="segmented segmented--wrap">
+                  <button
+                    v-for="opt in headingModeOptions"
+                    :key="opt.key"
+                    type="button"
+                    class="segmented-button"
+                    :class="settings.h3Mode === opt.key ? 'segmented-button--active' : ''"
+                    @click="settings.h3Mode = opt.key as typeof settings.h3Mode"
+                  >
+                    {{ opt.label }}
+                  </button>
+                </div>
               </div>
               <ColorPresetControl
                 kind="text"
@@ -513,17 +658,20 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
               />
             </button>
             <div v-show="isOpen('h4')" class="accordion-body">
-              <div class="segmented">
-                <button
-                  v-for="opt in headingModeOptions"
-                  :key="opt.key"
-                  type="button"
-                  class="segmented-button"
-                  :class="settings.h4Mode === opt.key ? 'segmented-button--active' : ''"
-                  @click="settings.h4Mode = opt.key as typeof settings.h4Mode"
-                >
-                  {{ opt.label }}
-                </button>
+              <div class="choice-row">
+                <span class="control-label">标题装饰</span>
+                <div class="segmented segmented--wrap">
+                  <button
+                    v-for="opt in headingModeOptions"
+                    :key="opt.key"
+                    type="button"
+                    class="segmented-button"
+                    :class="settings.h4Mode === opt.key ? 'segmented-button--active' : ''"
+                    @click="settings.h4Mode = opt.key as typeof settings.h4Mode"
+                  >
+                    {{ opt.label }}
+                  </button>
+                </div>
               </div>
               <ColorPresetControl
                 kind="text"
@@ -603,7 +751,7 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
           <article class="accordion-item">
             <button type="button" class="accordion-button" @click="toggleSection('quote')">
               <span>引用</span>
-              <strong>{{ optionLabel(quoteModeOptions, settings.quoteMode) }}</strong>
+              <strong>{{ optionLabel(quoteComponentOptions, settings.componentQuote) }}</strong>
               <AppIcon
                 name="chevronDown"
                 :size="14"
@@ -612,31 +760,16 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
               />
             </button>
             <div v-show="isOpen('quote')" class="accordion-body">
-              <div class="setting-row">
-                <span class="control-label">一级</span>
-                <div class="segmented">
+              <div class="choice-row">
+                <span class="control-label">引用结构</span>
+                <div class="segmented segmented--wrap">
                   <button
-                    v-for="opt in quoteModeOptions"
+                    v-for="opt in quoteComponentOptions"
                     :key="opt.key"
                     type="button"
                     class="segmented-button"
-                    :class="settings.quoteMode === opt.key ? 'segmented-button--active' : ''"
-                    @click="settings.quoteMode = opt.key as typeof settings.quoteMode"
-                  >
-                    {{ opt.label }}
-                  </button>
-                </div>
-              </div>
-              <div class="setting-row">
-                <span class="control-label">二级</span>
-                <div class="segmented">
-                  <button
-                    v-for="opt in quoteMode2Options"
-                    :key="opt.key"
-                    type="button"
-                    class="segmented-button"
-                    :class="settings.quoteMode2 === opt.key ? 'segmented-button--active' : ''"
-                    @click="settings.quoteMode2 = opt.key as typeof settings.quoteMode2"
+                    :class="settings.componentQuote === opt.key ? 'segmented-button--active' : ''"
+                    @click="settings.componentQuote = opt.key as typeof settings.componentQuote"
                   >
                     {{ opt.label }}
                   </button>
@@ -648,6 +781,148 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
                 :fallback="settings.accentColor"
                 @change="(color) => applyColor('quoteAccent', color)"
               />
+            </div>
+          </article>
+
+          <article class="accordion-item">
+            <button type="button" class="accordion-button" @click="toggleSection('lists')">
+              <span>列表与表格</span>
+              <strong>{{ listTableSummary }}</strong>
+              <AppIcon
+                name="chevronDown"
+                :size="14"
+                class="accordion-chevron"
+                :class="isOpen('lists') ? '' : '-rotate-90'"
+              />
+            </button>
+            <div v-show="isOpen('lists')" class="accordion-body">
+              <div class="choice-row">
+                <span class="control-label">无序列表</span>
+                <div class="segmented segmented--wrap">
+                  <button
+                    v-for="opt in listComponentOptions"
+                    :key="opt.key"
+                    type="button"
+                    class="segmented-button"
+                    :class="
+                      settings.componentUnorderedList === opt.key ? 'segmented-button--active' : ''
+                    "
+                    @click="
+                      settings.componentUnorderedList =
+                        opt.key as typeof settings.componentUnorderedList
+                    "
+                  >
+                    {{ opt.label }}
+                  </button>
+                </div>
+              </div>
+              <div class="choice-row">
+                <span class="control-label">有序列表</span>
+                <div class="segmented segmented--wrap">
+                  <button
+                    v-for="opt in listComponentOptions"
+                    :key="opt.key"
+                    type="button"
+                    class="segmented-button"
+                    :class="
+                      settings.componentOrderedList === opt.key ? 'segmented-button--active' : ''
+                    "
+                    @click="
+                      settings.componentOrderedList =
+                        opt.key as typeof settings.componentOrderedList
+                    "
+                  >
+                    {{ opt.label }}
+                  </button>
+                </div>
+              </div>
+              <div class="choice-row">
+                <span class="control-label">表格</span>
+                <div class="segmented segmented--wrap">
+                  <button
+                    v-for="opt in tableComponentOptions"
+                    :key="opt.key"
+                    type="button"
+                    class="segmented-button"
+                    :class="settings.componentTable === opt.key ? 'segmented-button--active' : ''"
+                    @click="settings.componentTable = opt.key as typeof settings.componentTable"
+                  >
+                    {{ opt.label }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="accordion-item">
+            <button type="button" class="accordion-button" @click="toggleSection('structure')">
+              <span>目录与结尾</span>
+              <strong>{{ structureSummary }}</strong>
+              <AppIcon
+                name="chevronDown"
+                :size="14"
+                class="accordion-chevron"
+                :class="isOpen('structure') ? '' : '-rotate-90'"
+              />
+            </button>
+            <div v-show="isOpen('structure')" class="accordion-body">
+              <div class="choice-row">
+                <span class="control-label">文章目录</span>
+                <div class="segmented">
+                  <button
+                    v-for="opt in visibilityOptions"
+                    :key="opt.key"
+                    type="button"
+                    class="segmented-button"
+                    :class="settings.componentTocMode === opt.key ? 'segmented-button--active' : ''"
+                    @click="settings.componentTocMode = opt.key as typeof settings.componentTocMode"
+                  >
+                    {{ opt.label }}
+                  </button>
+                </div>
+              </div>
+              <div class="choice-row">
+                <span class="control-label">结尾显示</span>
+                <div class="segmented">
+                  <button
+                    v-for="opt in visibilityOptions"
+                    :key="opt.key"
+                    type="button"
+                    class="segmented-button"
+                    :class="
+                      settings.componentEndMarkMode === opt.key ? 'segmented-button--active' : ''
+                    "
+                    @click="
+                      settings.componentEndMarkMode =
+                        opt.key as typeof settings.componentEndMarkMode
+                    "
+                  >
+                    {{ opt.label }}
+                  </button>
+                </div>
+              </div>
+              <label class="text-field">
+                <span class="control-label">结尾文字</span>
+                <span class="text-field__control">
+                  <input
+                    v-model="settings.componentEndMarkText"
+                    class="setting-input"
+                    type="text"
+                    maxlength="32"
+                    :placeholder="`跟随主题：${activeThemeEndMark}`"
+                    @input="settings.componentEndMarkMode = 'show'"
+                  />
+                  <button
+                    type="button"
+                    class="field-reset"
+                    :disabled="!settings.componentEndMarkText"
+                    title="恢复主题结尾文字"
+                    @click="settings.componentEndMarkText = ''"
+                  >
+                    恢复
+                  </button>
+                </span>
+              </label>
             </div>
           </article>
 
@@ -699,7 +974,6 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
               </div>
             </div>
           </article>
-
         </div>
       </section>
 
@@ -799,26 +1073,25 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 .theme-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
+  gap: 8px;
 }
 
 .theme-card {
   min-width: 0;
-  min-height: 104px;
-  padding: 10px;
-  border-radius: 10px;
+  min-height: 108px;
+  padding: 9px;
+  border-radius: 8px;
   display: grid;
-  grid-template-columns: 78px minmax(0, 1fr);
+  grid-template-columns: 82px minmax(0, 1fr);
   align-items: stretch;
-  gap: 11px;
+  gap: 12px;
   color: var(--color-text);
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--theme-soft, #f4f4f5) 72%, white), white 58%),
-    var(--color-surface);
-  border: 1px solid color-mix(in srgb, var(--theme-border, var(--color-border-subtle)) 72%, transparent);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   font-size: 12px;
   font-weight: 700;
   text-align: left;
+  position: relative;
   transition:
     transform 0.16s ease,
     border-color 0.16s ease,
@@ -826,31 +1099,30 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 }
 
 .theme-card:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--theme-color, var(--color-accent)) 46%, var(--color-border));
-  box-shadow:
-    0 10px 22px rgb(24 24 27 / 0.06),
-    0 0 0 1px color-mix(in srgb, var(--theme-color, var(--color-accent)) 16%, transparent);
+  border-color: color-mix(
+    in srgb,
+    var(--theme-color, var(--color-accent)) 54%,
+    var(--color-border)
+  );
+  background: var(--color-surface-hover);
 }
 
 .theme-card--active {
-  border-color: color-mix(in srgb, var(--theme-color, var(--color-accent)) 62%, var(--color-border));
-  box-shadow:
-    0 10px 22px rgb(24 24 27 / 0.07),
-    inset 0 0 0 1px color-mix(in srgb, var(--theme-color, var(--color-accent)) 22%, transparent);
+  border-color: var(--theme-color, var(--color-accent));
+  box-shadow: inset 3px 0 0 var(--theme-color, var(--color-accent));
 }
 
 .theme-card__preview {
   min-width: 0;
   min-height: 84px;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 8px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   background: var(--theme-canvas, #ffffff);
   border: 1px solid color-mix(in srgb, var(--theme-border, #e4e4e7) 72%, transparent);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.56);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.04);
 }
 
 .theme-paper {
@@ -861,6 +1133,12 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   flex-direction: column;
   gap: 5px;
   background: color-mix(in srgb, var(--theme-soft, #f4f4f5) 68%, white);
+}
+
+.theme-paper__eyebrow {
+  width: 18px;
+  height: 2px;
+  background: color-mix(in srgb, var(--theme-color) 62%, transparent);
 }
 
 .theme-paper__title {
@@ -881,6 +1159,69 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   width: 43px;
 }
 
+.theme-paper__accent {
+  width: 100%;
+  height: 1px;
+  margin-top: auto;
+  background: color-mix(in srgb, var(--theme-color) 46%, transparent);
+}
+
+.theme-card--zhujian .theme-paper {
+  border-top: 4px solid var(--theme-color);
+  border-radius: 2px;
+}
+
+.theme-card--songyan .theme-paper {
+  border-radius: 0;
+  border-left: 4px solid var(--theme-text);
+  background: var(--theme-canvas);
+}
+
+.theme-card--songyan .theme-paper__title {
+  width: 46px;
+  background: var(--theme-text);
+}
+
+.theme-card--yuebai .theme-paper__eyebrow {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid var(--theme-color);
+}
+
+.theme-card--qingdai .theme-paper {
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-card--qingdai .theme-paper__line {
+  width: 36px;
+}
+
+.theme-card--zhuzhi .theme-paper {
+  border-radius: 0;
+  box-shadow: inset 0 0 0 1px var(--theme-color);
+}
+
+.theme-card--haitang .theme-paper {
+  border-radius: 10px;
+}
+
+.theme-card--haitang .theme-paper__title {
+  width: 38px;
+  border-radius: 999px;
+}
+
+.theme-card--shupian .theme-paper {
+  border-radius: 0;
+  border-left: 7px solid var(--theme-color);
+}
+
+.theme-card--liujin .theme-paper {
+  border-bottom: 5px solid var(--theme-color);
+}
+
 .theme-card__swatches {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -898,7 +1239,7 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 7px;
+  gap: 5px;
 }
 
 .theme-card__copy strong {
@@ -915,6 +1256,13 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   font-weight: 550;
 }
 
+.theme-card__signature {
+  color: var(--theme-color, var(--color-text-secondary));
+  font-size: 10px;
+  line-height: 1.35;
+  font-weight: 680;
+}
+
 .section-heading h3 {
   margin: 0;
   color: var(--color-text);
@@ -928,6 +1276,29 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   color: var(--color-text-tertiary);
   font-size: 12px;
   line-height: 1.35;
+}
+
+.section-heading--action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.reset-command {
+  min-height: 30px;
+  padding: 0 9px;
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-subtle);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.reset-command:disabled {
+  cursor: default;
+  opacity: 0.45;
 }
 
 .setting-group {
@@ -958,6 +1329,14 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   color: var(--color-text-tertiary);
 }
 
+.choice-row,
+.text-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
 .segmented {
   min-width: 0;
   display: flex;
@@ -970,6 +1349,26 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 
 .segmented--compact {
   gap: 2px;
+}
+
+.segmented--wrap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(66px, 1fr));
+}
+
+.segmented--components {
+  grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
+}
+
+.segmented--single-line {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.segmented--single-line .segmented-button {
+  padding: 0 2px;
+  font-size: 10px;
 }
 
 .segmented-button {
@@ -999,7 +1398,9 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 .segmented-button--active {
   color: var(--color-text);
   background: var(--color-surface);
-  box-shadow: var(--shadow-xs);
+  box-shadow:
+    var(--shadow-xs),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 20%, transparent);
 }
 
 .switch-grid {
@@ -1035,7 +1436,7 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 .switch-card--active {
   color: var(--color-text);
   background: var(--color-surface);
-  border-color: rgb(24 24 27 / 0.22);
+  border-color: color-mix(in srgb, var(--color-accent) 38%, var(--color-border));
 }
 
 .switch-dot {
@@ -1056,7 +1457,7 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   width: 12px;
   height: 12px;
   border-radius: 999px;
-  background: white;
+  background: var(--color-control-thumb);
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
   transition: transform 0.18s ease;
 }
@@ -1076,9 +1477,9 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 }
 
 .accordion-item {
-  border-radius: 10px;
-  border: 1px solid var(--color-border-subtle);
-  background: var(--color-bg);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
   overflow: hidden;
 }
 
@@ -1113,7 +1514,7 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 }
 
 .accordion-body {
-  padding: 0 10px 12px;
+  padding: 2px 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1138,7 +1539,31 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 .setting-input:focus {
   outline: none;
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgb(24 24 27 / 0.08);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+.text-field__control {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.field-reset {
+  min-width: 48px;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.field-reset:disabled {
+  cursor: default;
+  opacity: 0.42;
 }
 
 @media (max-width: 767px) {

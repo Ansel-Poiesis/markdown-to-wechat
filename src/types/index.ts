@@ -47,6 +47,65 @@ export interface ThemeBase {
   underlineColor?: string
   /** 正文分割线样式 */
   underlineMode?: string
+  /** 当前文章使用的组件化设计主题。 */
+  designKey?: DesignThemeKey
+  /** 独立于主题的组件样式覆盖。空值表示跟随主题。 */
+  componentOverrides?: ComponentStyleOverrides
+}
+
+export type DesignThemeKey =
+  | 'qiuhe'
+  | 'zhujian'
+  | 'songyan'
+  | 'yuebai'
+  | 'qingdai'
+  | 'zhuzhi'
+  | 'haitang'
+  | 'shupian'
+  | 'liujin'
+
+export type CoverVariant =
+  | 'editorial'
+  | 'cinnabar'
+  | 'minimal'
+  | 'index'
+  | 'botanical'
+  | 'paper'
+  | 'soft'
+  | 'ticket'
+  | 'guide'
+export type SectionVariant = 'numbered' | 'rule' | 'label' | 'marker' | 'stamp'
+export type QuoteVariant = 'pull' | 'panel' | 'bar' | 'note' | 'outline'
+export type ListVariant = 'plain' | 'cards' | 'steps' | 'ledger'
+export type TableVariant = 'grid' | 'striped' | 'ledger'
+export type TocMode = 'theme' | 'show' | 'hide'
+export type EndMarkMode = 'theme' | 'show' | 'hide'
+
+export interface ComponentStyleOverrides {
+  cover?: CoverVariant
+  section?: SectionVariant
+  quote?: QuoteVariant
+  unorderedList?: ListVariant
+  orderedList?: ListVariant
+  table?: TableVariant
+  tocMode?: TocMode
+  endMarkMode?: EndMarkMode
+  endMarkText?: string
+}
+
+export interface ArticleHeading {
+  level: number
+  text: string
+  sectionIndex?: number
+}
+
+export interface ArticleDocument {
+  title: string
+  headings: ArticleHeading[]
+  sectionCount: number
+  hasCode: boolean
+  hasImages: boolean
+  hasTables: boolean
 }
 
 export type FontFamilyKey = 'sans' | 'serif' | 'mono'
@@ -110,6 +169,7 @@ export interface WarningItem {
   text: string
   type?:
     | 'localImage'
+    | 'embeddedImage'
     | 'emptyLink'
     | 'unclosedCode'
     | 'multiH1'
@@ -120,6 +180,7 @@ export interface WarningItem {
     | 'longCode'
     | 'fewHeadings'
     | 'noHeading'
+    | 'htmlCompatibility'
 }
 
 export interface MarkdownStats {
