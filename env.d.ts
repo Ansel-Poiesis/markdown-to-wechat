@@ -17,5 +17,6 @@ interface Window {
     getMimoStatus: () => Promise<{ configured: boolean }>
     formatMimo: (request: MimoFormatRequest, onChunk: (text: string) => void) => Promise<string>
     cancelMimo: (requestId: string) => void
+    openFeedbackEmail: (mailto: string) => Promise<void>
   }
 }

@@ -95,6 +95,20 @@ MIMO_API_URL=https://api.xiaomimimo.com/v1/chat/completions
 
 `npm run check:secrets` 会扫描源码和网页构建产物中的长格式凭据。
 
+## 用户反馈
+
+页头的反馈入口会整理反馈类型、具体说明、可选联系方式和基础诊断信息。诊断信息只包含版本、运行环境、视口、主题、字数和预检统计，不包含文章正文、草稿内容或剪贴板数据。
+
+默认发送到 AI 邮箱 `callansel@agent.qq.com`。静态网页会打开用户的系统邮件客户端，由用户确认发送；Electron 通过受限 IPC 打开同一封结构化邮件，并校验固定收件地址。
+
+需要站内直接提交时，可在构建环境配置公开的 HTTPS 转发地址：
+
+```text
+VITE_FEEDBACK_ENDPOINT=https://feedback.example.com/v1/submit
+```
+
+网页会向该地址发送 JSON。转发服务负责 CORS、限流、反垃圾和邮件投递，并在服务端保存邮件凭据。`VITE_FEEDBACK_ENDPOINT` 只放公开 URL，不能包含 API Key、访问令牌或邮箱密码。
+
 ## 验证与打包
 
 ```powershell

@@ -13,6 +13,7 @@ import { useSmartFormat } from '@/composables/useSmartFormat'
 import { useExport } from '@/composables/useExport'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { welcomeMarkdown } from '@/config/templates'
+import packageInfo from '../package.json'
 import AppHeader from '@/components/AppHeader.vue'
 import PreviewPane from '@/components/PreviewPane.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
@@ -20,6 +21,7 @@ import AppIcon from '@/components/ui/AppIcon.vue'
 const EditorPane = defineAsyncComponent(() => import('@/components/EditorPane.vue'))
 const SettingsPanel = defineAsyncComponent(() => import('@/components/SettingsPanel.vue'))
 const PreflightModal = defineAsyncComponent(() => import('@/components/modals/PreflightModal.vue'))
+const FeedbackModal = defineAsyncComponent(() => import('@/components/modals/FeedbackModal.vue'))
 
 const editorStore = useEditorStore()
 const themeStore = useThemeStore()
@@ -49,6 +51,10 @@ const content = computed({
 
 function handleGlobalKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
+    if (ui.activeModals.feedback) {
+      ui.closeModal('feedback')
+      return
+    }
     if (ui.activeModals.preflight) {
       ui.closeModal('preflight')
     }
@@ -92,6 +98,16 @@ const preflightCounts = computed(() => ({
   warn: warnings.value.filter((warning) => warning.level === 'warn').length,
   info: warnings.value.filter((warning) => warning.level === 'info').length,
 }))
+const feedbackDiagnostics = computed(() => ({
+  appVersion: packageInfo.version,
+  runtime: window.electronAPI ? 'Electron' : 'Web',
+  platform: window.electronAPI?.platform || navigator.platform || 'unknown',
+  viewport: `${window.innerWidth}x${window.innerHeight}`,
+  theme: themeStore.themeBase.designKey || 'qiuhe',
+  articleStats: `${stats.value.wordCount} 字，${stats.value.headings} 个标题，${stats.value.images} 张图片`,
+  warnings: `${preflightCounts.value.danger} 严重，${preflightCounts.value.warn} 提醒，${preflightCounts.value.info} 信息`,
+  pageUrl: window.location.href,
+}))
 
 function loadSample() {
   editorStore.setContent(welcomeMarkdown)
@@ -130,6 +146,7 @@ watch(
     :warnings="warnings"
     :stats="stats"
     @export-html="handleExport"
+    @feedback="ui.openModal('feedback')"
   />
 
   <!-- Desktop layout: Editor | Settings | Preview -->
@@ -220,6 +237,11 @@ watch(
   </Teleport>
 
   <PreflightModal :warnings="warnings" :counts="preflightCounts" :html="renderedHtml" />
+  <FeedbackModal
+    :open="Boolean(ui.activeModals.feedback)"
+    :diagnostics="feedbackDiagnostics"
+    @close="ui.closeModal('feedback')"
+  />
 </template>
 
 <style scoped>

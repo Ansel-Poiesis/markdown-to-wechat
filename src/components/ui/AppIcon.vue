@@ -33,6 +33,8 @@ defineProps<{
     | 'eyeOff'
     | 'undo'
     | 'externalLink'
+    | 'messageSquare'
+    | 'send'
   size?: number
 }>()
 </script>
@@ -216,6 +218,15 @@ defineProps<{
       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
       <polyline points="15 3 21 3 21 9" />
       <line x1="10" y1="14" x2="21" y2="3" />
+    </template>
+    <template v-else-if="name === 'messageSquare'">
+      <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+      <path d="M8 9h8" />
+      <path d="M8 13h5" />
+    </template>
+    <template v-else-if="name === 'send'">
+      <path d="m22 2-7 20-4-9-9-4Z" />
+      <path d="M22 2 11 13" />
     </template>
   </svg>
 </template>

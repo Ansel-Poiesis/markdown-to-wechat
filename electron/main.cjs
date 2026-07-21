@@ -114,6 +114,17 @@ ipcMain.on('mimo:cancel', (_event, requestId) => {
   activeMimoRequests.get(requestId)?.abort()
 })
 
+ipcMain.handle('feedback:open-email', async (_event, mailto) => {
+  if (typeof mailto !== 'string' || mailto.length > 20_000) {
+    throw new Error('反馈邮件内容无效')
+  }
+  const url = new URL(mailto)
+  if (url.protocol !== 'mailto:' || url.pathname.toLowerCase() !== 'callansel@agent.qq.com') {
+    throw new Error('反馈收件地址无效')
+  }
+  await shell.openExternal(url.toString())
+})
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,

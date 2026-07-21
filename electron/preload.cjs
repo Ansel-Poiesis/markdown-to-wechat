@@ -15,4 +15,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
     }
   },
   cancelMimo: (requestId) => ipcRenderer.send('mimo:cancel', requestId),
+  openFeedbackEmail: (mailto) => ipcRenderer.invoke('feedback:open-email', mailto),
 })

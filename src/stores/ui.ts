@@ -9,6 +9,7 @@ export const useUiStore = defineStore('ui', () => {
   const showSettings = ref(false)
   const activeModals = ref<Record<string, boolean>>({
     draft: false,
+    feedback: false,
     preflight: false,
     themeEditor: false,
     shortcut: false,

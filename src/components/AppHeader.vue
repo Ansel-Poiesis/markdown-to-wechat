@@ -11,7 +11,7 @@ const props = defineProps<{
   stats: MarkdownStats
 }>()
 
-const emit = defineEmits<{ exportHtml: [] }>()
+const emit = defineEmits<{ exportHtml: []; feedback: [] }>()
 
 const ui = useUiStore()
 const { copyRenderedHtml } = useClipboard()
@@ -62,6 +62,15 @@ function handleExport() {
       </div>
 
       <div class="app-header__actions">
+        <button
+          type="button"
+          class="header-icon-button"
+          title="提交反馈"
+          aria-label="提交反馈"
+          @click="emit('feedback')"
+        >
+          <AppIcon name="messageSquare" :size="15" />
+        </button>
         <button
           type="button"
           class="header-icon-button"
