@@ -246,26 +246,24 @@ watch(
 </script>
 
 <template>
-  <section
-    class="animate-panel-1 flex flex-col min-h-0 rounded-lg bg-surface shadow-sm overflow-hidden border border-border"
-    aria-label="Markdown 编辑区"
-  >
-    <div
-      class="flex items-center justify-between gap-3 h-11 px-4 shrink-0 text-[11px] font-semibold tracking-widest uppercase text-text-tertiary border-b border-border-subtle dark:border-border"
-    >
-      <strong class="text-text-secondary font-semibold flex items-center gap-1.5">
-        文本
-        <Transition name="fade">
-          <span
-            v-show="saveVisible"
-            class="inline-flex items-center gap-0.5 text-[10px] text-text-tertiary"
-          >
-            <AppIcon v-if="saveLabel === '保存中...'" name="save" :size="11" />
-            <AppIcon v-else name="checkCircle" :size="11" />
-            {{ saveLabel }}
-          </span>
-        </Transition>
-      </strong>
+  <section class="workspace-panel animate-panel-1" aria-label="Markdown 编辑区">
+    <div class="panel-toolbar">
+      <div class="panel-heading">
+        <span class="panel-heading__icon"><AppIcon name="pen" :size="14" /></span>
+        <strong class="panel-heading__label flex items-center gap-1.5">
+          原稿
+          <Transition name="fade">
+            <span
+              v-show="saveVisible"
+              class="inline-flex items-center gap-0.5 text-[10px] text-text-tertiary"
+            >
+              <AppIcon v-if="saveLabel === '保存中...'" name="save" :size="11" />
+              <AppIcon v-else name="checkCircle" :size="11" />
+              {{ saveLabel }}
+            </span>
+          </Transition>
+        </strong>
+      </div>
       <div class="editor-actions">
         <button
           v-if="canUndo"
@@ -417,7 +415,7 @@ div :deep(.cm-lineNumbers) {
   min-width: 0;
   height: 28px;
   padding: 0 10px;
-  border-radius: 8px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

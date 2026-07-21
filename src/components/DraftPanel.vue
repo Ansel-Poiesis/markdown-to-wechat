@@ -117,7 +117,10 @@ defineExpose({ saveCurrentAsDraft, createDraft })
       </div>
     </div>
 
-    <div v-if="!draftStore.sortedDrafts.length" class="text-center py-6 text-text-tertiary text-[12px]">
+    <div
+      v-if="!draftStore.sortedDrafts.length"
+      class="text-center py-6 text-text-tertiary text-[12px]"
+    >
       <AppIcon name="fileText" :size="24" class="opacity-30 mb-2" />
       <p>输入内容后会自动保存草稿</p>
     </div>
@@ -126,12 +129,8 @@ defineExpose({ saveCurrentAsDraft, createDraft })
       <div
         v-for="draft in draftStore.sortedDrafts"
         :key="draft.id"
-        class="group relative flex flex-col p-2.5 rounded-xl border transition-all cursor-pointer"
-        :class="
-          draftStore.activeDraftId === draft.id
-            ? 'border-accent/30 bg-accent/[0.04]'
-            : 'border-transparent hover:border-border-subtle hover:bg-surface-hover'
-        "
+        class="draft-card group"
+        :class="draftStore.activeDraftId === draft.id ? 'draft-card--active' : ''"
         @click="loadDraft(draft.id)"
       >
         <div class="flex items-center gap-2 mb-1">
@@ -163,9 +162,7 @@ defineExpose({ saveCurrentAsDraft, createDraft })
         <p class="text-[11px] text-text-tertiary leading-relaxed line-clamp-2">
           {{ getPreview(draft.content) }}
         </p>
-        <div
-          class="flex items-center gap-1 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-        >
+        <div class="draft-card__actions">
           <button
             type="button"
             title="保存当前内容到此草稿"
@@ -205,3 +202,51 @@ defineExpose({ saveCurrentAsDraft, createDraft })
     </div>
   </div>
 </template>
+
+<style scoped>
+.draft-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease;
+}
+
+.draft-card:hover,
+.draft-card:focus-within {
+  border-color: var(--color-border-subtle);
+  background: var(--color-surface-hover);
+}
+
+.draft-card--active {
+  border-color: color-mix(in srgb, var(--color-accent) 30%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
+}
+
+.draft-card__actions {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.16s ease;
+}
+
+.draft-card:hover .draft-card__actions,
+.draft-card:focus-within .draft-card__actions,
+.draft-card--active .draft-card__actions {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .draft-card__actions {
+    opacity: 1;
+  }
+}
+</style>

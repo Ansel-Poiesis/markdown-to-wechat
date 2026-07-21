@@ -35,7 +35,8 @@ function handleExport() {
   <header class="app-header">
     <div class="app-header__inner">
       <div class="app-header__brand">
-        <h1 class="app-header__title">公众号排版渲染</h1>
+        <h1 class="app-header__title">微信 Markdown 排版</h1>
+        <p class="app-header__description">生成公众号可粘贴的内联 HTML</p>
       </div>
 
       <div class="app-header__stats hidden md:flex">
@@ -127,10 +128,21 @@ function handleExport() {
 .app-header__title {
   margin: 0;
   color: var(--color-text);
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.15;
   font-weight: 760;
   letter-spacing: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-header__description {
+  margin: 3px 0 0;
+  color: var(--color-text-tertiary);
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 560;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -216,6 +228,18 @@ function handleExport() {
   transform: scale(0.96);
 }
 
+.header-icon-button:focus,
+.header-secondary-button:focus,
+.header-primary-button:focus {
+  outline: none;
+}
+
+.header-icon-button:focus-visible,
+.header-secondary-button:focus-visible,
+.header-primary-button:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
 @media (max-width: 767px) {
   .app-header__inner {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -225,6 +249,10 @@ function handleExport() {
 
   .app-header__title {
     font-size: 16px;
+  }
+
+  .app-header__description {
+    display: none;
   }
 
   .app-header__actions {

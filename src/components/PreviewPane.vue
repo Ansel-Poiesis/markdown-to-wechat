@@ -116,20 +116,18 @@ defineExpose({ scrollHost })
 </script>
 
 <template>
-  <section
-    class="animate-panel-2 flex flex-col min-h-0 rounded-lg bg-surface shadow-sm overflow-hidden border border-border"
-    aria-label="预览区"
-  >
-    <div
-      class="flex items-center justify-between gap-3 h-11 px-4 shrink-0 text-[11px] font-semibold tracking-widest uppercase text-text-tertiary border-b border-border-subtle dark:border-border"
-    >
-      <strong class="text-text-secondary font-semibold">预览</strong>
+  <section class="workspace-panel animate-panel-2" aria-label="预览区">
+    <div class="panel-toolbar">
+      <div class="panel-heading">
+        <span class="panel-heading__icon"><AppIcon name="eye" :size="14" /></span>
+        <strong class="panel-heading__label">输出预览</strong>
+      </div>
       <div class="flex items-center gap-2">
         <!-- Device toggle -->
-        <div class="flex gap-0.5 bg-bg rounded-lg p-0.5">
+        <div class="flex gap-0.5 bg-bg rounded-md p-0.5 border border-border-subtle">
           <button
             type="button"
-            class="flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-medium transition-all active:scale-95"
+            class="flex items-center gap-1 h-6 px-2 rounded-sm text-[10px] font-medium transition-all active:scale-95"
             :class="
               previewDevice === 'mobile'
                 ? 'bg-surface text-text shadow-sm font-semibold'
@@ -143,7 +141,7 @@ defineExpose({ scrollHost })
           </button>
           <button
             type="button"
-            class="flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-medium transition-all active:scale-95"
+            class="flex items-center gap-1 h-6 px-2 rounded-sm text-[10px] font-medium transition-all active:scale-95"
             :class="
               previewDevice === 'desktop'
                 ? 'bg-surface text-text shadow-sm font-semibold'
@@ -202,5 +200,4 @@ defineExpose({ scrollHost })
     width 0.2s ease,
     box-shadow 0.2s ease;
 }
-
 </style>

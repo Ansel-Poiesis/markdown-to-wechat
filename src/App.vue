@@ -177,15 +177,13 @@ watch(
     </main>
 
     <!-- Mobile tab bar -->
-    <nav
-      class="fixed bottom-0 left-0 right-0 z-50 h-12 w-full max-w-[100vw] overflow-hidden bg-surface border-t border-border-subtle flex items-center justify-around safe-area-bottom"
-    >
+    <nav class="mobile-nav safe-area-bottom">
       <button
         v-for="tab in ['editor', 'preview', 'inspector'] as const"
         :key="tab"
         type="button"
-        class="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors"
-        :class="mobileTab === tab ? 'text-accent' : 'text-text-tertiary'"
+        class="mobile-nav__button"
+        :class="mobileTab === tab ? 'mobile-nav__button--active' : ''"
         @click="mobileTab = tab"
       >
         <AppIcon
@@ -246,5 +244,65 @@ watch(
 
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.mobile-nav {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 50;
+  width: 100%;
+  max-width: 100vw;
+  height: 48px;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  border-top: 1px solid var(--color-border-subtle);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+  box-shadow: 0 -4px 14px rgb(0 0 0 / 0.04);
+  backdrop-filter: blur(14px);
+}
+
+.mobile-nav__button {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--color-text-tertiary);
+  transition:
+    color 0.16s ease,
+    background 0.16s ease;
+}
+
+.mobile-nav__button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 30px;
+  height: 2px;
+  background: transparent;
+  transform: translateX(-50%);
+}
+
+.mobile-nav__button--active {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+}
+
+.mobile-nav__button--active::before {
+  background: var(--color-accent);
+}
+
+.mobile-nav__button:focus {
+  outline: none;
+}
+
+.mobile-nav__button:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--color-focus-ring);
 }
 </style>

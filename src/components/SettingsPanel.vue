@@ -250,18 +250,13 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 </script>
 
 <template>
-  <aside
-    class="flex flex-col min-h-0 rounded-lg bg-surface overflow-hidden border border-border shadow-sm"
-    aria-label="设置"
-  >
-    <header class="settings-header">
-      <div class="flex items-center gap-3 min-w-0">
-        <span class="settings-header__icon">
-          <AppIcon name="settings" :size="15" />
+  <aside class="workspace-panel" aria-label="设置">
+    <header class="panel-toolbar">
+      <div class="panel-heading">
+        <span class="panel-heading__icon">
+          <AppIcon name="settings" :size="14" />
         </span>
-        <div class="min-w-0">
-          <h2 class="settings-title">设置</h2>
-        </div>
+        <h2 class="panel-heading__label">排版设置</h2>
       </div>
     </header>
 
@@ -313,6 +308,13 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
             <span class="theme-card__copy">
               <strong>{{ preset.label }}</strong>
               <small>{{ preset.description }}</small>
+            </span>
+            <span
+              v-if="settings.activeStylePreset === preset.key"
+              class="theme-card__state"
+              aria-hidden="true"
+            >
+              <AppIcon name="check" :size="12" />
             </span>
           </button>
         </div>
@@ -981,42 +983,11 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 </template>
 
 <style scoped>
-.settings-header {
-  min-height: 58px;
-  padding: 12px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  border-bottom: 1px solid var(--color-border-subtle);
-  flex-shrink: 0;
-}
-
-.settings-header__icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-secondary);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border-subtle);
-}
-
-.settings-title {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.25;
-  font-weight: 700;
-  color: var(--color-text);
-}
-
 .settings-tabs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-  padding: 8px 10px;
+  gap: 0;
+  padding: 0 10px;
   border-bottom: 1px solid var(--color-border-subtle);
   background: var(--color-surface);
   flex-shrink: 0;
@@ -1025,7 +996,7 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 .settings-tab {
   min-width: 0;
   min-height: 42px;
-  border-radius: 8px;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1035,17 +1006,32 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   color: var(--color-text-tertiary);
   transition:
     background 0.16s ease,
-    color 0.16s ease;
+    color 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
-.settings-tab:hover,
-.settings-tab--active {
+.settings-tab:hover {
   color: var(--color-text);
-  background: var(--color-bg);
+  background: color-mix(in srgb, var(--color-bg) 72%, transparent);
 }
 
 .settings-tab--active {
-  box-shadow: inset 0 0 0 1px var(--color-border-subtle);
+  color: var(--color-accent);
+  box-shadow: inset 0 -2px 0 var(--color-accent);
+}
+
+.settings-tab:focus {
+  outline: none;
+}
+
+.settings-tab:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--color-focus-ring);
+}
+
+.settings-tab--active:focus-visible {
+  box-shadow:
+    inset 0 -2px 0 var(--color-accent),
+    inset 0 0 0 2px var(--color-focus-ring);
 }
 
 .settings-body {
@@ -1070,7 +1056,7 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 .theme-card {
   min-width: 0;
   min-height: 96px;
-  padding: 9px;
+  padding: 9px 36px 9px 9px;
   border-radius: 8px;
   display: grid;
   grid-template-columns: 82px minmax(0, 1fr);
@@ -1089,6 +1075,20 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
     box-shadow 0.16s ease;
 }
 
+.theme-card__state {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--color-accent-contrast);
+  background: var(--theme-color, var(--color-accent));
+}
+
 .theme-card:hover {
   border-color: color-mix(
     in srgb,
@@ -1100,7 +1100,9 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 
 .theme-card--active {
   border-color: var(--theme-color, var(--color-accent));
-  box-shadow: inset 3px 0 0 var(--theme-color, var(--color-accent));
+  box-shadow:
+    inset 3px 0 0 var(--theme-color, var(--color-accent)),
+    var(--shadow-xs);
 }
 
 .theme-card__preview {
