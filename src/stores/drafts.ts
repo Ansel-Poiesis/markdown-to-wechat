@@ -58,6 +58,7 @@ export const useDraftStore = defineStore('drafts', () => {
   const drafts = ref<Draft[]>([])
   const activeDraftId = ref<number | null>(null)
   const loaded = ref(false)
+  const persistenceError = ref<string | null>(null)
 
   const activeDraft = computed(() =>
     activeDraftId.value === null
@@ -89,7 +90,7 @@ export const useDraftStore = defineStore('drafts', () => {
         if (autoRename) draft.name = inferDraftName(content)
         migrated = true
       }
-      if (migrated) saveDrafts()
+      if (migrated) writeDrafts()
 
       const storedActive = Number(localStorage.getItem(ACTIVE_DRAFT_KEY))
       activeDraftId.value =
@@ -99,33 +100,49 @@ export const useDraftStore = defineStore('drafts', () => {
     } catch {
       drafts.value = []
       activeDraftId.value = null
+      persistenceError.value = '无法读取本地草稿，请检查浏览器存储权限。'
     } finally {
       loaded.value = true
     }
   }
 
-  function saveDrafts() {
+  function writeDrafts(): boolean {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(drafts.value))
+      return true
     } catch {
-      /* ignore */
+      persistenceError.value = '草稿未能写入本地存储，请检查浏览器存储空间或权限。'
+      return false
     }
   }
 
-  function persistActiveDraft(id: number | null) {
-    activeDraftId.value = id
+  function saveDrafts(): boolean {
+    persistenceError.value = null
+    return writeDrafts()
+  }
+
+  function writeActiveDraft(id: number | null): boolean {
     try {
       if (id === null) {
         localStorage.removeItem(ACTIVE_DRAFT_KEY)
       } else {
         localStorage.setItem(ACTIVE_DRAFT_KEY, String(id))
       }
+      return true
     } catch {
-      /* ignore */
+      persistenceError.value = '当前草稿状态未能写入本地存储，请检查浏览器存储权限。'
+      return false
     }
   }
 
+  function persistActiveDraft(id: number | null): boolean {
+    activeDraftId.value = id
+    persistenceError.value = null
+    return writeActiveDraft(id)
+  }
+
   function createDraft(content = '', name?: string) {
+    persistenceError.value = null
     const now = new Date().toISOString()
     const latestId = drafts.value.reduce((max, draft) => Math.max(max, draft.id), 0)
     const draft: Draft = {
@@ -136,8 +153,9 @@ export const useDraftStore = defineStore('drafts', () => {
       updatedAt: now,
     }
     drafts.value.unshift(draft)
-    saveDrafts()
-    persistActiveDraft(draft.id)
+    writeDrafts()
+    activeDraftId.value = draft.id
+    writeActiveDraft(draft.id)
     return draft
   }
 
@@ -159,21 +177,21 @@ export const useDraftStore = defineStore('drafts', () => {
     persistActiveDraft(id)
   }
 
-  function updateActiveDraft(content: string) {
+  function updateActiveDraft(content: string): boolean {
     if (activeDraftId.value === null) {
-      if (!content.trim()) return
+      if (!content.trim()) return true
       createDraft(content, inferDraftName(content))
-      return
+      return persistenceError.value === null
     }
 
     const draft = drafts.value.find((item) => item.id === activeDraftId.value)
-    if (!draft || draft.content === content) return
+    if (!draft || draft.content === content) return true
     if (shouldAutoRenameDraft(draft)) {
       draft.name = inferDraftName(content)
     }
     draft.content = content
     draft.updatedAt = new Date().toISOString()
-    saveDrafts()
+    return saveDrafts()
   }
 
   function updateDraft(id: number, content: string) {
@@ -184,8 +202,10 @@ export const useDraftStore = defineStore('drafts', () => {
     }
     draft.content = content
     draft.updatedAt = new Date().toISOString()
-    saveDrafts()
-    persistActiveDraft(id)
+    persistenceError.value = null
+    writeDrafts()
+    activeDraftId.value = id
+    writeActiveDraft(id)
     return draft
   }
 
@@ -198,10 +218,14 @@ export const useDraftStore = defineStore('drafts', () => {
   }
 
   function deleteDraft(id: number) {
+    persistenceError.value = null
     const deletingActive = activeDraftId.value === id
     drafts.value = drafts.value.filter((draft) => draft.id !== id)
-    if (deletingActive) persistActiveDraft(null)
-    saveDrafts()
+    if (deletingActive) {
+      activeDraftId.value = null
+      writeActiveDraft(null)
+    }
+    writeDrafts()
     return deletingActive
   }
 
@@ -211,6 +235,7 @@ export const useDraftStore = defineStore('drafts', () => {
     activeDraft,
     sortedDrafts,
     loaded,
+    persistenceError,
     loadDrafts,
     saveDrafts,
     createDraft,

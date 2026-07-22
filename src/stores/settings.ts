@@ -580,6 +580,27 @@ export const useSettingsStore = defineStore('settings', () => {
   if (!VALID_LETTER_SPACINGS.includes(letterSpacing.value)) {
     letterSpacing.value = MAGAZINE_DEFAULTS.letterSpacing
   }
+  textColor.value = validHexColorOrFallback(textColor.value, MAGAZINE_DEFAULTS.textColor)
+  mutedColor.value = validHexColorOrFallback(mutedColor.value, MAGAZINE_DEFAULTS.mutedColor)
+  borderColor.value = validHexColorOrFallback(borderColor.value, MAGAZINE_DEFAULTS.borderColor)
+  bgSoftColor.value = validHexColorOrFallback(bgSoftColor.value, MAGAZINE_DEFAULTS.bgSoftColor)
+  quoteBgColor.value = validHexColorOrFallback(quoteBgColor.value, MAGAZINE_DEFAULTS.quoteBgColor)
+  accentColor.value = validHexColorOrFallback(accentColor.value, MAGAZINE_DEFAULTS.accentColor)
+  h1Color.value = validHexColorOrFallback(h1Color.value, MAGAZINE_DEFAULTS.h1Color)
+  h2Color.value = validHexColorOrFallback(h2Color.value, MAGAZINE_DEFAULTS.h2Color)
+  h3Color.value = validHexColorOrFallback(h3Color.value, MAGAZINE_DEFAULTS.h3Color)
+  h4Color.value = validHexColorOrFallback(h4Color.value, MAGAZINE_DEFAULTS.h4Color)
+  headingAccent.value = validHexColorOrFallback(
+    headingAccent.value,
+    MAGAZINE_DEFAULTS.headingAccent,
+  )
+  quoteAccent.value = validHexColorOrFallback(quoteAccent.value, MAGAZINE_DEFAULTS.quoteAccent)
+  boldColor.value = validHexColorOrFallback(boldColor.value, MAGAZINE_DEFAULTS.boldColor)
+  underlineColor.value = validHexColorOrFallback(
+    underlineColor.value,
+    MAGAZINE_DEFAULTS.underlineColor,
+  )
+  canvasColor.value = validHexColorOrFallback(canvasColor.value, MAGAZINE_DEFAULTS.canvasColor)
   colorPresets.value = {
     text: normalizePresetList(colorPresets.value.text, DEFAULT_COLOR_PRESETS.text),
     accent: normalizePresetList(colorPresets.value.accent, DEFAULT_COLOR_PRESETS.accent),
@@ -734,6 +755,10 @@ export const useSettingsStore = defineStore('settings', () => {
 function normalizeHexColor(color: string) {
   const normalized = color.trim().toLowerCase()
   return /^#[0-9a-f]{6}$/.test(normalized) ? normalized : ''
+}
+
+function validHexColorOrFallback(value: unknown, fallback: string) {
+  return (typeof value === 'string' && normalizeHexColor(value)) || fallback
 }
 
 function normalizePresetList(value: string[] | undefined, fallback: string[]) {

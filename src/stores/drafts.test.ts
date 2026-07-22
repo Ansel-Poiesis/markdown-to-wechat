@@ -126,4 +126,18 @@ describe('draft store', () => {
     expect(restoredStore.activeDraftId).toBe(active.id)
     expect(restoredStore.sortedDrafts[0]?.id).toBe(active.id)
   })
+
+  it('reports local storage write failures instead of claiming the draft was saved', () => {
+    const store = useDraftStore()
+    store.loadDrafts()
+    store.createDraft('# 初稿')
+    vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw new DOMException('Quota exceeded', 'QuotaExceededError')
+    })
+
+    const saved = store.updateActiveDraft('# 无法持久化的改动')
+
+    expect(saved).toBe(false)
+    expect(store.persistenceError).toContain('草稿未能写入本地存储')
+  })
 })

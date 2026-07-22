@@ -1,4 +1,5 @@
 import type { WarningItem } from '@/types'
+import { parseFragment, type DefaultTreeAdapterTypes, type ParserError } from 'parse5'
 
 const FORBIDDEN: Array<{ pattern: RegExp; message: string }> = [
   { pattern: /<style[\s>]/i, message: '最终 HTML 含有 style 标签，公众号会过滤。' },
@@ -14,6 +15,31 @@ const FORBIDDEN: Array<{ pattern: RegExp; message: string }> = [
   { pattern: /url\s*\(\s*['"]?https?:\/\/[^)]*\.(woff2?|ttf|otf|eot)/i, message: '最终 HTML 引用了外部字体。' },
   { pattern: /white-space\s*:\s*pre/i, message: '代码块使用 white-space:pre，微信中可能出现异常空白。' },
 ]
+
+const ALLOWED_TAGS = new Set([
+  'section',
+  'p',
+  'span',
+  'strong',
+  'em',
+  'del',
+  'mark',
+  'code',
+  'sup',
+  'blockquote',
+  'figure',
+  'figcaption',
+  'img',
+  'br',
+  'table',
+  'thead',
+  'tbody',
+  'tr',
+  'th',
+  'td',
+])
+const ALLOWED_ATTRIBUTES = new Set(['style', 'leaf', 'src', 'alt', 'colspan', 'rowspan'])
+const SAFE_IMAGE_DATA_URL = /^data:image\/(?:png|jpe?g|gif|webp);base64,[a-z0-9+/=\s]+$/i
 
 export interface WechatHtmlValidation {
   valid: boolean
@@ -57,14 +83,26 @@ export function leafifyHtml(html: string): string {
 
 export function validateWechatHtml(html: string): WechatHtmlValidation {
   const issues: WarningItem[] = []
+  const parseErrors: ParserError[] = []
+  const fragment = parseFragment(html, { onParseError: (error) => parseErrors.push(error) })
+  if (parseErrors.length > 0) {
+    const first = parseErrors[0]
+    issues.push({
+      level: 'danger',
+      text: `最终 HTML 结构异常（${first?.code || 'parse-error'}），请勿复制。`,
+      type: 'htmlCompatibility',
+    })
+  }
   for (const rule of FORBIDDEN) {
     if (rule.pattern.test(html)) issues.push({ level: 'danger', text: rule.message, type: 'htmlCompatibility' })
   }
-  const leafCount = (html.match(/<span\s+leaf(?:="")?/gi) || []).length
+  const structure = inspectTree(fragment)
+  issues.push(...structure.issues)
+  const leafCount = structure.leafCount
   if (/[一-鿿]/.test(html) && leafCount === 0) {
     issues.push({ level: 'danger', text: '最终 HTML 没有 span leaf 包裹，粘贴后样式可能大面积丢失。', type: 'htmlCompatibility' })
   }
-  const unwrappedCount = countUnwrappedCjk(html)
+  const unwrappedCount = structure.unwrappedCjkCount
   if (unwrappedCount > 0) {
     issues.push({
       level: 'danger',
@@ -75,34 +113,94 @@ export function validateWechatHtml(html: string): WechatHtmlValidation {
   return { valid: !issues.some((issue) => issue.level === 'danger'), issues, leafCount }
 }
 
-function countUnwrappedCjk(html: string): number {
-  const tokens = html.split(/(<[^>]+>)/g)
-  const stack: Array<{ tag: string; leaf: boolean }> = []
-  let leafDepth = 0
-  let count = 0
+function inspectTree(fragment: DefaultTreeAdapterTypes.DocumentFragment): {
+  issues: WarningItem[]
+  leafCount: number
+  unwrappedCjkCount: number
+} {
+  const issues: WarningItem[] = []
+  const invalidTags = new Set<string>()
+  const invalidAttributes = new Set<string>()
+  const invalidAttributeValues = new Set<string>()
+  let leafCount = 0
+  let unwrappedCjkCount = 0
 
-  for (const token of tokens) {
-    if (!token) continue
-    if (!token.startsWith('<')) {
-      if (leafDepth === 0 && /[一-鿿]/.test(token)) count += 1
-      continue
-    }
-    if (token.startsWith('</')) {
-      const tagName = token.match(/^<\/\s*([a-z0-9]+)/i)?.[1]?.toLowerCase()
-      for (let index = stack.length - 1; index >= 0; index -= 1) {
-        if (stack[index]?.tag !== tagName) continue
-        const removed = stack.splice(index)
-        leafDepth -= removed.filter((entry) => entry.leaf).length
-        break
+  function visit(node: DefaultTreeAdapterTypes.Node, insideLeaf: boolean) {
+    if (node.nodeName === '#text') {
+      if (!insideLeaf && /[一-鿿]/.test((node as DefaultTreeAdapterTypes.TextNode).value)) {
+        unwrappedCjkCount += 1
       }
-      continue
+      return
     }
-    if (/^<!|^<\?|\/>$/.test(token)) continue
-    const tagName = token.match(/^<\s*([a-z0-9]+)/i)?.[1]?.toLowerCase()
-    if (!tagName || ['img', 'br', 'hr', 'meta', 'link', 'input'].includes(tagName)) continue
-    const leaf = tagName === 'span' && /\sleaf(?:\s*=|[\s>])/.test(token)
-    stack.push({ tag: tagName, leaf })
-    if (leaf) leafDepth += 1
+
+    let nextInsideLeaf = insideLeaf
+    if ('tagName' in node) {
+      const element = node as DefaultTreeAdapterTypes.Element
+      if (!ALLOWED_TAGS.has(element.tagName)) invalidTags.add(element.tagName)
+      const isLeaf = element.tagName === 'span' && element.attrs.some((attr) => attr.name === 'leaf')
+      if (isLeaf) leafCount += 1
+      nextInsideLeaf ||= isLeaf
+      for (const attr of element.attrs) {
+        if (attr.name.startsWith('on') || !ALLOWED_ATTRIBUTES.has(attr.name)) {
+          invalidAttributes.add(attr.name)
+          continue
+        }
+        if (!isAllowedAttributeValue(element.tagName, attr.name, attr.value)) {
+          invalidAttributeValues.add(`${element.tagName}[${attr.name}]`)
+        }
+      }
+    }
+
+    if ('childNodes' in node) {
+      for (const child of node.childNodes) visit(child, nextInsideLeaf)
+    }
   }
-  return count
+
+  for (const child of fragment.childNodes) visit(child, false)
+  if (invalidTags.size > 0) {
+    issues.push({
+      level: 'danger',
+      text: `最终 HTML 含有不允许的标签：${[...invalidTags].join('、')}。`,
+      type: 'htmlCompatibility',
+    })
+  }
+  if (invalidAttributes.size > 0) {
+    issues.push({
+      level: 'danger',
+      text: `最终 HTML 含有不允许的属性：${[...invalidAttributes].join('、')}。`,
+      type: 'htmlCompatibility',
+    })
+  }
+  if (invalidAttributeValues.size > 0) {
+    issues.push({
+      level: 'danger',
+      text: `最终 HTML 含有不安全的属性值：${[...invalidAttributeValues].join('、')}。`,
+      type: 'htmlCompatibility',
+    })
+  }
+
+  return { issues, leafCount, unwrappedCjkCount }
+}
+
+function isAllowedAttributeValue(tagName: string, name: string, value: string): boolean {
+  if (name === 'style') {
+    return !/(?:expression|url)\s*\(|behavior\s*:|-moz-binding/i.test(value)
+  }
+  if (name === 'leaf') return tagName === 'span' && value === ''
+  if (name === 'src') return tagName === 'img' && isSafeImageSource(value)
+  if (name === 'alt') return tagName === 'img'
+  if (name === 'colspan' || name === 'rowspan') {
+    return (tagName === 'th' || tagName === 'td') && /^(?:[1-9]|[1-9]\d|100)$/.test(value)
+  }
+  return false
+}
+
+function isSafeImageSource(value: string): boolean {
+  if (SAFE_IMAGE_DATA_URL.test(value)) return true
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' || url.protocol === 'http:'
+  } catch {
+    return false
+  }
 }

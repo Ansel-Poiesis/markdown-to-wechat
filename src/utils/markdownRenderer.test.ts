@@ -165,4 +165,30 @@ describe('renderMarkdown design system', () => {
     expect(text).toContain('[1] 注释内容')
     expect(text).not.toContain('外链[2]')
   })
+
+  it('keeps HTML source code escaped without corrupting generated highlight spans', () => {
+    const html = renderMarkdown('```html\n<span>1</span>\n```', theme('songyan'), codeTheme)
+
+    expect(html).toContain('&lt;')
+    expect(html).not.toContain('<<span')
+    expect(validateWechatHtml(html).valid).toBe(true)
+  })
+
+  it('escapes custom ending text and table-of-contents titles', () => {
+    const customized = theme('qiuhe')
+    customized.componentOverrides = {
+      tocMode: 'show',
+      endMarkMode: 'show',
+      endMarkText: '<img src=x onerror=alert(1)>',
+    }
+    const html = renderMarkdown(
+      '# 标题\n\n## <script>alert(1)</script>\n\n正文\n\n## 第二节\n\n正文',
+      customized,
+      codeTheme,
+    )
+
+    expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;')
+    expect(html).not.toContain('<img src=x onerror=alert(1)>')
+    expect(validateWechatHtml(html).valid).toBe(true)
+  })
 })

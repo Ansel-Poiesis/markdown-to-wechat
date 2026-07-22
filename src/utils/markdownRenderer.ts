@@ -106,7 +106,6 @@ export function highlightCode(
   lang: string | undefined,
   codeTheme: CodeTheme,
 ): string {
-  const escaped = escapeHtml(code)
   const color = codeTheme.keyword || '#7c3aed'
   const stringColor = codeTheme.string || '#0f766e'
   const commentColor = codeTheme.comment || '#8a8f98'
@@ -126,18 +125,33 @@ export function highlightCode(
     rust: 'as async await break const continue crate else enum extern false fn for if impl in let loop match mod move mut pub ref return self Self static struct super trait true type unsafe use where while',
   }
   const normalized = (lang || 'js').toLowerCase()
-  const keywords = keywordSets[normalized] ?? keywordSets.js ?? ''
-  return escaped
-    .replace(/(&lt;!--[\s\S]*?--&gt;|\/\/.*$|\/\*[\s\S]*?\*\/)/gm, (match) =>
-      inline('span', match, { color: commentColor }),
-    )
-    .replace(/(&quot;.*?&quot;|'.*?'|`.*?`)/g, (match) =>
-      inline('span', match, { color: stringColor }),
-    )
-    .replace(/\b(\d+(?:\.\d+)?)\b/g, (match) => inline('span', match, { color: numberColor }))
-    .replace(new RegExp(`\\b(${keywords.split(' ').join('|')})\\b`, 'g'), (match) =>
-      inline('span', match, { color, fontWeight: '700' }),
-    )
+  const keywords = new Set((keywordSets[normalized] ?? keywordSets.js ?? '').split(' '))
+  const tokenPattern =
+    /<!--[\s\S]*?-->|\/\*[\s\S]*?\*\/|\/\/[^\r\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|\b\d+(?:\.\d+)?\b|\b[A-Za-z_$][\w$-]*\b/g
+  let result = ''
+  let cursor = 0
+
+  for (const match of code.matchAll(tokenPattern)) {
+    const token = match[0]
+    const index = match.index
+    result += escapeHtml(code.slice(cursor, index))
+    const escapedToken = escapeHtml(token)
+
+    if (token.startsWith('<!--') || token.startsWith('//') || token.startsWith('/*')) {
+      result += inline('span', escapedToken, { color: commentColor })
+    } else if (/^["'`]/.test(token)) {
+      result += inline('span', escapedToken, { color: stringColor })
+    } else if (/^\d/.test(token)) {
+      result += inline('span', escapedToken, { color: numberColor })
+    } else if (keywords.has(token)) {
+      result += inline('span', escapedToken, { color, fontWeight: '700' })
+    } else {
+      result += escapedToken
+    }
+    cursor = index + token.length
+  }
+
+  return result + escapeHtml(code.slice(cursor))
 }
 
 export function safeUrl(url: string): string {

@@ -21,7 +21,11 @@ import AiFormatConfirmModal from '@/components/modals/AiFormatConfirmModal.vue'
 
 defineOptions({ inheritAttrs: false })
 
-const props = defineProps<{ modelValue: string }>()
+const props = defineProps<{
+  modelValue: string
+  saveRevision: number
+  saveFailed: boolean
+}>()
 const emit = defineEmits<{
   'update:modelValue': [value: string]
   loadSample: []
@@ -104,20 +108,17 @@ function handleAutoFormat() {
 
 const saveLabel = ref('已自动保存')
 const saveVisible = ref(false)
-let saveTimer: ReturnType<typeof setTimeout> | null = null
 let fadeTimer: ReturnType<typeof setTimeout> | null = null
 
-function showSaveState(label: string) {
+function showSaveState(label: string, keepVisible = false) {
   saveLabel.value = label
   saveVisible.value = true
-  if (saveTimer) clearTimeout(saveTimer)
   if (fadeTimer) clearTimeout(fadeTimer)
-  saveTimer = setTimeout(() => {
-    saveLabel.value = '已保存'
+  if (!keepVisible && label !== '保存中...') {
     fadeTimer = setTimeout(() => {
       saveVisible.value = false
     }, 2000)
-  }, 600)
+  }
 }
 
 function wrapSelection(view: EditorView, before: string, after: string) {
@@ -238,6 +239,11 @@ watch(
 )
 
 watch(
+  () => props.saveRevision,
+  () => showSaveState(props.saveFailed ? '保存失败' : '已保存', props.saveFailed),
+)
+
+watch(
   () => ui.colorMode,
   (mode) => {
     view?.dispatch({
@@ -264,6 +270,7 @@ watch(
               class="inline-flex items-center gap-0.5 text-[10px] text-text-tertiary"
             >
               <AppIcon v-if="saveLabel === '保存中...'" name="save" :size="11" />
+              <AppIcon v-else-if="saveLabel === '保存失败'" name="alertCircle" :size="11" />
               <AppIcon v-else name="checkCircle" :size="11" />
               {{ saveLabel }}
             </span>

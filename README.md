@@ -64,7 +64,7 @@ python -m http.server 5173
 自动发布流程可以调用与网页预览相同的渲染核心，不需要 API 密钥：
 
 ```powershell
-npm run --silent render -- `
+npm run --silent render -- -- `
   --input article.md `
   --output article.html `
   --theme qiuhe `
@@ -79,7 +79,7 @@ npm run --silent render -- `
 运行下面的命令查看完整参数：
 
 ```powershell
-npm run --silent render -- --help
+npm run --silent render -- -- --help
 ```
 
 ## AI 辅助排版与密钥边界
@@ -132,4 +132,4 @@ npm run build:electron
 
 Vue 3、TypeScript、Vite、Tailwind CSS v4、CodeMirror 6、Pinia 与 Electron。
 
-网页界面使用霞鹜文楷 WebFont，字体遵循 SIL Open Font License 1.1；WebFont 封装遵循 MIT License。许可证随构建产物保存在 `licenses/lxgw-wenkai-webfont.txt`。
+网页界面使用系统字体栈，不下载 WebFont；公众号输出仍可在设置中选择无衬线、衬线或等宽字体栈。

@@ -16,10 +16,24 @@ import { welcomeMarkdown } from '@/config/templates'
 import packageInfo from '../package.json'
 import AppHeader from '@/components/AppHeader.vue'
 import PreviewPane from '@/components/PreviewPane.vue'
+import SettingsPanel from '@/components/SettingsPanel.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import AsyncPaneState from '@/components/AsyncPaneState.vue'
 
-const EditorPane = defineAsyncComponent(() => import('@/components/EditorPane.vue'))
-const SettingsPanel = defineAsyncComponent(() => import('@/components/SettingsPanel.vue'))
+const EditorPane = defineAsyncComponent({
+  loader: () => import('@/components/EditorPane.vue'),
+  loadingComponent: AsyncPaneState,
+  errorComponent: AsyncPaneState,
+  delay: 120,
+  timeout: 20_000,
+  onError: (_error, retry, fail, attempts) => {
+    if (attempts <= 2) {
+      window.setTimeout(retry, attempts * 500)
+    } else {
+      fail()
+    }
+  },
+})
 const PreflightModal = defineAsyncComponent(() => import('@/components/modals/PreflightModal.vue'))
 const FeedbackModal = defineAsyncComponent(() => import('@/components/modals/FeedbackModal.vue'))
 
@@ -43,11 +57,18 @@ watch(
 
 // Mobile tab state: 'editor' | 'preview' | 'inspector'
 const mobileTab = ref<'editor' | 'preview' | 'inspector'>('editor')
+const draftSaveRevision = ref(0)
+const draftSaveFailed = ref(false)
 
 const content = computed({
   get: () => editorStore.content,
   set: (v) => editorStore.setContent(v),
 })
+
+function recordDraftSave(saved: boolean) {
+  draftSaveFailed.value = !saved
+  draftSaveRevision.value += 1
+}
 
 function handleGlobalKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
@@ -82,6 +103,13 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('keydown', handleGlobalKeydown)
 })
+
+watch(
+  () => draftStore.persistenceError,
+  (error, previousError) => {
+    if (error && error !== previousError) ui.showToast(error, 'error')
+  },
+)
 
 const { stats } = useMarkdownAnalyzer(content)
 const { warnings: markdownWarnings } = useMarkdownWarnings(content)
@@ -131,11 +159,11 @@ watch(
       const formatted = formatMarkdown(v)
       if (formatted !== v) {
         editorStore.setContent(formatted)
-        draftStore.updateActiveDraft(formatted)
+        recordDraftSave(draftStore.updateActiveDraft(formatted))
         return
       }
     }
-    draftStore.updateActiveDraft(v)
+    recordDraftSave(draftStore.updateActiveDraft(v))
   },
 )
 </script>
@@ -157,6 +185,8 @@ watch(
     >
       <EditorPane
         v-model="content"
+        :save-revision="draftSaveRevision"
+        :save-failed="draftSaveFailed"
         class="min-h-0 min-w-0"
         @load-sample="loadSample"
         @scroll="(r: number) => (scrollRatio = r)"
@@ -175,6 +205,8 @@ watch(
       <div v-show="mobileTab === 'editor'" class="flex-1 min-h-0 w-full min-w-0">
         <EditorPane
           v-model="content"
+          :save-revision="draftSaveRevision"
+          :save-failed="draftSaveFailed"
           class="h-full min-h-0 w-full min-w-0"
           @load-sample="loadSample"
         />

@@ -13,6 +13,10 @@ const editingId = ref<number | null>(null)
 const editName = ref('')
 const showConfirmDelete = ref<number | null>(null)
 
+function showSuccess(message: string) {
+  if (!draftStore.persistenceError) ui.showToast(message)
+}
+
 function getPreview(content: string): string {
   const text = content.replace(/[#*`~[\]()]/g, '').trim()
   return text.length > 60 ? text.slice(0, 60) + '...' : text || '（空白草稿）'
@@ -35,7 +39,7 @@ function createDraft() {
   draftStore.updateActiveDraft(editorStore.content)
   const draft = draftStore.createDraft('')
   editorStore.setContent('')
-  ui.showToast(`已创建「${draft.name}」`)
+  showSuccess(`已创建「${draft.name}」`)
 }
 
 function saveCurrentAsDraft() {
@@ -45,7 +49,7 @@ function saveCurrentAsDraft() {
     return
   }
   const draft = draftStore.saveCurrentAsDraft(content)
-  ui.showToast(`已保存为「${draft.name}」`)
+  showSuccess(`已保存为「${draft.name}」`)
 }
 
 function loadDraft(id: number) {
@@ -54,13 +58,13 @@ function loadDraft(id: number) {
   if (!draft) return
   draftStore.setActiveDraft(id)
   editorStore.setContent(draft.content)
-  ui.showToast(`已加载「${draft.name}」`)
+  showSuccess(`已加载「${draft.name}」`)
 }
 
 function deleteDraft(id: number) {
   const deletingActive = draftStore.deleteDraft(id)
   showConfirmDelete.value = null
-  ui.showToast(deletingActive ? '已删除当前草稿，编辑内容仍保留' : '已删除草稿')
+  showSuccess(deletingActive ? '已删除当前草稿，编辑内容仍保留' : '已删除草稿')
 }
 
 function renameDraft(id: number) {
@@ -81,7 +85,7 @@ function confirmRename() {
 function saveToDraft(id: number) {
   const draft = draftStore.updateDraft(id, editorStore.content)
   if (!draft) return
-  ui.showToast(`已保存到「${draft.name}」`)
+  showSuccess(`已保存到「${draft.name}」`)
 }
 
 onMounted(draftStore.loadDrafts)

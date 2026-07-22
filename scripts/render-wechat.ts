@@ -15,8 +15,8 @@ type OutputFormat = 'fragment' | 'document' | 'json'
 const HELP = `公众号 Markdown 渲染器
 
 用法：
-  npm run render -- --input article.md --output article.html [参数]
-  Get-Content -Raw article.md | npm run render -- --format json
+  npm run --silent render -- -- --input article.md --output article.html [参数]
+  Get-Content -Raw article.md | npm run --silent render -- -- --format json
 
 参数：
   -i, --input <path>          Markdown 文件；省略时读取 stdin
@@ -39,7 +39,10 @@ const HELP = `公众号 Markdown 渲染器
 `
 
 async function main() {
+  const args = process.argv.slice(2)
+  if (args[0] === '--') args.shift()
   const { values } = parseArgs({
+    args,
     options: {
       input: { type: 'string', short: 'i' },
       output: { type: 'string', short: 'o' },

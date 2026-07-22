@@ -1,4 +1,3 @@
-@import 'lxgw-wenkai-webfont/lxgwwenkai-regular.css';
 @import 'tailwindcss';
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -49,7 +48,7 @@
   --radius-xl: 14px;
 
   --font-sans:
-    'LXGW WenKai', '霞鹜文楷', 'KaiTi', 'STKaiti', 'PingFang SC', 'Microsoft YaHei', serif;
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .dark {

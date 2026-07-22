@@ -3,8 +3,8 @@ project: markdown-to-wechat
 type: agent-entry
 status: active
 created: 2026-06-12
-updated: 2026-06-12
-poiesis_work_order: C:\Ansel_Work\10_Projects\00_Core\Poiesis\_00-Control\00-OPC\工作单\WO-20260612-002-公众号渲染器低频维护.md
+updated: 2026-07-22
+poiesis_todo: C:\Ansel_Work\10_Projects\00_Core\Poiesis\05-任务栏\10-TODO\任务单\TODO-markdown渲染器.md
 ---
 
 # AGENTS.md — 公众号渲染器
@@ -17,16 +17,13 @@ poiesis_work_order: C:\Ansel_Work\10_Projects\00_Core\Poiesis\_00-Control\00-OPC
 
 按顺序读取：
 
-1. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\AGENTS.md`
-2. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\_00-Control\00-OPC\README.md`
-3. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\_00-Control\00-OPC\20-任务索引.md`
-4. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\_00-Control\00-OPC\30-日程追踪.md`
-5. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\_00-Control\00-OPC\工作单\WO-20260612-002-公众号渲染器低频维护.md`
-6. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\_60-脚本写作\_40-阿莱是台珍妮机\05-应用工具\02-公众号渲染器\Markdown排版工具\README.md`
-7. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\_60-脚本写作\_40-阿莱是台珍妮机\05-应用工具\02-公众号渲染器\Markdown排版工具\版本维护\README.md`
-8. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\_60-脚本写作\_40-阿莱是台珍妮机\05-应用工具\02-公众号渲染器\Markdown排版工具\版本维护\TODO.md`
+1. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\40-Projects\12-markdown渲染器\README.md`
+2. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\40-Projects\12-markdown渲染器\00-项目文件.md`
+3. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\40-Projects\12-markdown渲染器\09-构建测试发布与运维.md`
+4. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\05-任务栏\10-TODO\任务单\TODO-markdown渲染器.md`
+5. 本仓库的 `README.md` 与 `package.json`。
 
-如果只是修一个很小的代码问题，也至少读取第 5、7、8 项，确认本轮是否属于低频维护、补丁还是下一版本候选。
+如果只是修一个很小的代码问题，也至少读取第 1、3、4 项，确认本轮是否属于低频维护、补丁还是下一版本候选。
 
 ## 当前项目状态
 
@@ -44,13 +41,13 @@ poiesis_work_order: C:\Ansel_Work\10_Projects\00_Core\Poiesis\_00-Control\00-OPC
 
 1. 运行 `git status --short`，确认已有改动。
 2. 保护用户或上一轮 Agent 留下的未提交改动，不要回滚不属于本轮的文件。
-3. 对照 Poiesis 的 `TODO.md`，判断本轮需求属于 `v2.1.0`、月度体检、季度发布判断，还是临时补丁。
+3. 对照 Poiesis 的项目行动清单，判断本轮需求属于月度体检、季度发布判断，还是临时补丁。
 4. 如果涉及预览宽度、复制到公众号、主题样式、颜色系统，优先用真实公众号呈现或浏览器截图验证。
-5. 实现完成后，把下一步、未决问题或发布判断写回 Poiesis 的版本维护目录。
+5. 实现完成后，把下一步、未决问题或发布判断写回 Poiesis 项目档案和行动清单。
 
 ## 发布边界
 
-未经明川确认，不做这些动作：
+未经先生确认，不做这些动作：
 
 - 创建 GitHub Release。
 - 修改对外发布说明。

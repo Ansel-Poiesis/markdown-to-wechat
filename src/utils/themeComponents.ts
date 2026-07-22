@@ -17,6 +17,14 @@ function tag(name: string, content: string, style: Style = {}): string {
   return `<${name}${styleAttr}>${content}</${name}>`
 }
 
+function escapeText(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
 function alpha(hex: string, opacity: number): string {
   const normalized = /^#[0-9a-f]{6}$/i.test(hex) ? hex : '#52525b'
   const red = Number.parseInt(normalized.slice(1, 3), 16)
@@ -294,7 +302,7 @@ export function renderToc(context: ThemeRenderContext): string {
           color: accent,
           fontSize: '11px',
           fontWeight: '700',
-        }) + heading.text,
+        }) + escapeText(heading.text),
         {
           margin: index === sections.length - 1 ? '0' : '0 0 9px',
           color: theme.color,
@@ -615,7 +623,7 @@ export function renderEndMark(context: ThemeRenderContext): string {
       background: theme.border,
       verticalAlign: 'middle',
     }) +
-      tag('span', design.endMark, {
+      tag('span', escapeText(design.endMark), {
         color: theme.muted,
         fontSize: '10px',
         fontWeight: '700',
