@@ -1,74 +1,43 @@
+import {
+  CATEGORY_LABELS,
+  formatFeedbackBody,
+  type FeedbackPayload,
+} from './feedback-protocol'
+
 export const FEEDBACK_EMAIL = 'callansel@agent.qq.com'
 
-export type FeedbackCategory = 'problem' | 'suggestion' | 'experience' | 'other'
-
-export interface FeedbackDiagnostics {
-  appVersion: string
-  runtime: string
-  platform: string
-  viewport: string
-  theme: string
-  articleStats: string
-  warnings: string
-  pageUrl: string
-}
-
-export interface FeedbackPayload {
-  category: FeedbackCategory
-  message: string
-  contact?: string
-  diagnostics?: FeedbackDiagnostics
-  createdAt: string
-}
+export {
+  createFeedbackId,
+  formatFeedbackBody,
+  type FeedbackCategory,
+  type FeedbackDiagnostics,
+  type FeedbackPayload,
+} from './feedback-protocol'
 
 export type FeedbackDelivery = 'endpoint' | 'email'
 
-const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
-  problem: '问题反馈',
-  suggestion: '功能建议',
-  experience: '体验意见',
-  other: '其他反馈',
-}
-
 export function feedbackDeliveryMode(): FeedbackDelivery {
-  return import.meta.env.VITE_FEEDBACK_ENDPOINT?.trim() ? 'endpoint' : 'email'
+  return resolveFeedbackEndpoint() ? 'endpoint' : 'email'
 }
 
 export function buildFeedbackMailto(payload: FeedbackPayload): string {
-  const subject = `[微信 Markdown 排版][${CATEGORY_LABELS[payload.category]}] 用户反馈`
+  const subject = `[微信 Markdown 排版][${payload.feedbackId}][${CATEGORY_LABELS[payload.category]}]`
   const body = formatFeedbackBody(payload)
   return `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
 }
 
-export function formatFeedbackBody(payload: FeedbackPayload): string {
-  const lines = [
-    `反馈类型：${CATEGORY_LABELS[payload.category]}`,
-    '',
-    '反馈内容：',
-    payload.message.trim(),
-    '',
-    `联系方式：${payload.contact?.trim() || '未填写'}`,
-  ]
-
-  if (payload.diagnostics) {
-    const diagnostics = payload.diagnostics
-    lines.push(
-      '',
-      '--- 诊断信息 ---',
-      `提交时间：${payload.createdAt}`,
-      `应用版本：${diagnostics.appVersion}`,
-      `运行环境：${diagnostics.runtime}`,
-      `系统平台：${diagnostics.platform}`,
-      `视口尺寸：${diagnostics.viewport}`,
-      `当前主题：${diagnostics.theme}`,
-      `稿件统计：${diagnostics.articleStats}`,
-      `预检信息：${diagnostics.warnings}`,
-      `页面地址：${diagnostics.pageUrl}`,
-      '隐私说明：未附带文章正文、草稿内容或剪贴板数据。',
-    )
-  }
-
-  return lines.join('\n')
+export function buildFeedbackFormData(payload: FeedbackPayload): FormData {
+  const data = new FormData()
+  data.set('来源', '微信 Markdown 排版')
+  data.set('反馈编号', payload.feedbackId)
+  data.set('反馈类型', CATEGORY_LABELS[payload.category])
+  data.set('提交时间', payload.createdAt)
+  data.set('反馈详情', formatFeedbackBody(payload))
+  data.set('_subject', `[微信 Markdown 排版][${payload.feedbackId}][${CATEGORY_LABELS[payload.category]}]`)
+  data.set('_template', 'table')
+  data.set('_captcha', 'false')
+  data.set('_honey', '')
+  return data
 }
 
 export async function submitFeedback(payload: FeedbackPayload): Promise<FeedbackDelivery> {
@@ -77,14 +46,28 @@ export async function submitFeedback(payload: FeedbackPayload): Promise<Feedback
     const controller = new AbortController()
     const timeout = window.setTimeout(() => controller.abort(), 12_000)
     try {
+      const formSubmit = new URL(endpoint).hostname === 'formsubmit.co'
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product: 'markdown-to-wechat', ...payload }),
+        headers: formSubmit ? { Accept: 'application/json' } : { 'Content-Type': 'application/json' },
+        body: formSubmit
+          ? buildFeedbackFormData(payload)
+          : JSON.stringify({ product: 'markdown-to-wechat', ...payload }),
         credentials: 'omit',
         signal: controller.signal,
       })
-      if (!response.ok) throw new Error(`反馈服务暂时不可用（${response.status}）`)
+      const result = (await response.json().catch(() => null)) as {
+        accepted?: boolean
+        error?: string
+        message?: string
+        success?: boolean | string
+      } | null
+      if (!response.ok) {
+        throw new Error(result?.error || `反馈服务暂时不可用（${response.status}）`)
+      }
+      if (formSubmit && String(result?.success) !== 'true') {
+        throw new Error(result?.message || '反馈服务暂时不可用')
+      }
       return 'endpoint'
     } finally {
       window.clearTimeout(timeout)
@@ -101,6 +84,7 @@ export async function submitFeedback(payload: FeedbackPayload): Promise<Feedback
 }
 
 function resolveFeedbackEndpoint(): string | null {
+  if (window.electronAPI?.openFeedbackEmail) return null
   const configured = import.meta.env.VITE_FEEDBACK_ENDPOINT?.trim()
   if (!configured) return null
 

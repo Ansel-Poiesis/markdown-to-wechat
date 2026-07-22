@@ -13,6 +13,7 @@
     "build:web": "vite build --outDir docs && npm run check:secrets",
     "preview": "vite preview",
     "render": "tsx --tsconfig tsconfig.node.json scripts/render-wechat.ts",
+    "feedback:sync": "tsx --tsconfig tsconfig.node.json scripts/feedback-inbox.ts",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "test": "vitest run",

@@ -1,0 +1,15 @@
+{
+  "messages": [
+    {
+      "message_id": "msg_fixture_feedback_1",
+      "subject": "[微信 Markdown 排版][FB-20260722-TEST01][问题反馈]",
+      "body": "反馈编号：FB-20260722-TEST01\n反馈类型：问题反馈\n\n反馈内容：\n测试反馈任务生成。\n\n联系方式：fixture@example.com\n\n--- TASTELAB_FEEDBACK_V1 ---\n{\"schemaVersion\":1,\"product\":\"markdown-to-wechat\",\"feedbackId\":\"FB-20260722-TEST01\",\"category\":\"problem\",\"message\":\"测试反馈任务生成。\",\"contact\":\"fixture@example.com\",\"createdAt\":\"2026-07-22T08:00:00.000Z\"}\n--- END_TASTELAB_FEEDBACK_V1 ---",
+      "body_format": "TEXT",
+      "created_at": "2026-07-22T08:01:00.000Z",
+      "from": {
+        "email": "fixture@example.com",
+        "name": "Fixture"
+      }
+    }
+  ]
+}

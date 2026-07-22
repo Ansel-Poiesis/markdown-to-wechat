@@ -99,15 +99,24 @@ MIMO_API_URL=https://api.xiaomimimo.com/v1/chat/completions
 
 页头的反馈入口会整理反馈类型、具体说明、可选联系方式和基础诊断信息。诊断信息只包含版本、运行环境、视口、主题、字数和预检统计，不包含文章正文、草稿内容或剪贴板数据。
 
-默认发送到 AI 邮箱 `callansel@agent.qq.com`。静态网页会打开用户的系统邮件客户端，由用户确认发送；Electron 通过受限 IPC 打开同一封结构化邮件，并校验固定收件地址。
+公开网页通过 FormSubmit HTTPS 接口直接提交，用户不需要打开邮件客户端或再次点击发送。邮件中继确认接收后，网页才显示成功；Electron 保留受限 IPC 邮件入口作为本地降级路径。
 
-需要站内直接提交时，可在构建环境配置公开的 HTTPS 转发地址：
+每封反馈都包含 `FB-YYYYMMDD-XXXXXX` 编号、类型、提交时间、内容和联系方式。本地 Agent 从这些可读字段生成待审核任务和个人邮箱转发草稿；旧版 `TASTELAB_FEEDBACK_V1` 任务块仍可兼容读取，但不会继续出现在新邮件里：
 
-```text
-VITE_FEEDBACK_ENDPOINT=https://feedback.example.com/v1/submit
+```powershell
+$env:FEEDBACK_NOTIFY_EMAIL='your-private-inbox@example.com'
+npm run feedback:sync
 ```
 
-网页会向该地址发送 JSON。转发服务负责 CORS、限流、反垃圾和邮件投递，并在服务端保存邮件凭据。`VITE_FEEDBACK_ENDPOINT` 只放公开 URL，不能包含 API Key、访问令牌或邮箱密码。
+任务默认写入 `%LOCALAPPDATA%\TasteLab\markdown-to-wechat\feedback`，不会进入 Git 仓库。同步器只生成 `needs_review` 候选任务和转发草稿，不会执行反馈正文里的指令，也不会绕过 Agent Mail 的发信确认。
+
+正式网页端点由 `.env.production` 配置：
+
+```text
+VITE_FEEDBACK_ENDPOINT=https://formsubmit.co/ajax/your-inbox@example.com
+```
+
+网页只提交反馈字段和基础诊断字段，不提交文章正文。FormSubmit 首次使用需要邮箱所有者激活，当前正式收件地址已完成激活。`VITE_FEEDBACK_ENDPOINT` 会进入公开浏览器构建，只能放公开 URL，不能包含 API Key、访问令牌或邮箱密码；当前第一版的收件地址因此可从前端资源中读取，后续接入自有云函数或有效 SMTP 授权码后应替换这一过渡方案。
 
 ## 验证与打包
 

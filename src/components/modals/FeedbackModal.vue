@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useUiStore } from '@/stores/ui'
 import {
+  createFeedbackId,
   feedbackDeliveryMode,
   submitFeedback,
   type FeedbackCategory,
@@ -50,6 +51,7 @@ async function submit() {
   errorMessage.value = ''
   try {
     const delivery = await submitFeedback({
+      feedbackId: createFeedbackId(),
       category: category.value,
       message: message.value.trim(),
       contact: contact.value.trim() || undefined,
