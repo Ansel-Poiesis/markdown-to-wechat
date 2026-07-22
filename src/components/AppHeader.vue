@@ -35,8 +35,7 @@ function handleExport() {
   <header class="app-header">
     <div class="app-header__inner">
       <div class="app-header__brand">
-        <h1 class="app-header__title">微信 Markdown 排版</h1>
-        <p class="app-header__description">生成公众号可粘贴的内联 HTML</p>
+        <h1 class="app-header__title">Markdown渲染器</h1>
       </div>
 
       <div class="app-header__stats hidden md:flex">
@@ -146,17 +145,6 @@ function handleExport() {
   white-space: nowrap;
 }
 
-.app-header__description {
-  margin: 3px 0 0;
-  color: var(--color-text-tertiary);
-  font-size: 10px;
-  line-height: 1.2;
-  font-weight: 560;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .app-header__stats {
   align-items: center;
   gap: 4px;
@@ -258,10 +246,6 @@ function handleExport() {
 
   .app-header__title {
     font-size: 16px;
-  }
-
-  .app-header__description {
-    display: none;
   }
 
   .app-header__actions {

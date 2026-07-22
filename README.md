@@ -132,4 +132,4 @@ npm run build:electron
 
 Vue 3、TypeScript、Vite、Tailwind CSS v4、CodeMirror 6、Pinia 与 Electron。
 
-网页界面使用系统字体栈，不下载 WebFont；公众号输出仍可在设置中选择无衬线、衬线或等宽字体栈。
+网页界面优先使用本机霞鹜文楷，并回退到系统字体栈，不下载 WebFont；公众号输出仍可在设置中选择无衬线、衬线或等宽字体栈。
