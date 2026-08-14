@@ -33,9 +33,9 @@ poiesis_todo: C:\Ansel_Work\10_Projects\00_Core\Poiesis\05-任务栏\10-TODO\任
 - 本地产品目录：`C:\Ansel_Work\10_Projects\10_Products\markdown-to-wechat`
 - GitHub：<https://github.com/Ansel-Poiesis/markdown-to-wechat>
 - 网页预览：<https://ansel-poiesis.github.io/markdown-to-wechat/>
-- 下一次维护检查：`2026-08-07`
+- 下一次维护检查：`2027-01-22`
 
-维护节奏是低频节奏：每月体检，每季度判断是否发布小版本，不做连续产品冲刺。
+维护节奏是低频节奏：每半年体检一次并判断 no-op / patch / release，不做连续产品冲刺。
 
 ## 继续迭代时先做
 

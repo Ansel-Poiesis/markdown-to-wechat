@@ -14,3 +14,4 @@ pnpm-workspace.yaml
 dist/
 dist-electron/
 release/
+browser-smoke/

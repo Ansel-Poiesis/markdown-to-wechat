@@ -11,6 +11,7 @@
     "build": "npm run type-check && npm run build-only",
     "build:electron": "npm run verify && electron-builder --win",
     "build:web": "vite build --outDir docs && npm run check:secrets",
+    "smoke:browser": "node scripts/browser-smoke.mjs",
     "preview": "vite preview",
     "render": "tsx --tsconfig tsconfig.node.json scripts/render-wechat.ts",
     "feedback:sync": "tsx --tsconfig tsconfig.node.json scripts/feedback-inbox.ts",
