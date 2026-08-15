@@ -192,3 +192,133 @@ describe('renderMarkdown design system', () => {
     expect(validateWechatHtml(html).valid).toBe(true)
   })
 })
+
+describe('renderMarkdown edge cases', () => {
+  it('keeps nested list structure without flattening items', () => {
+    const html = renderMarkdown(
+      `- 一级 A
+  - 二级 A1
+    - 三级 A1a
+  - 二级 A2
+- 一级 B
+
+1. 有序一
+   1. 有序嵌套
+2. 有序二`,
+      theme('qiuhe'),
+      codeTheme,
+    )
+
+    expect(validateWechatHtml(html).valid).toBe(true)
+    const text = html.replace(/<[^>]+>/g, '')
+    const order = ['一级 A', '二级 A1', '三级 A1a', '二级 A2', '一级 B', '有序一', '有序嵌套', '有序二'].map(
+      (item) => text.indexOf(item),
+    )
+    const keepsOrder = order.every((index, i, all) => {
+      const previous = all[i - 1]
+      return index >= 0 && (i === 0 || (previous !== undefined && index > previous))
+    })
+    expect(keepsOrder).toBe(true)
+  })
+
+  it('renders table alignment markers as cell alignment', () => {
+    const html = renderMarkdown(
+      `| 左 | 中 | 右 |
+| :--- | :---: | ---: |
+| a | b | c |`,
+      theme('qiuhe'),
+      codeTheme,
+    )
+
+    expect(validateWechatHtml(html).valid).toBe(true)
+    expect(html).toContain('text-align:left')
+    expect(html).toContain('text-align:center')
+    expect(html).toContain('text-align:right')
+    expect(html).toContain('<table style="width:100%;border-collapse:collapse;table-layout:fixed">')
+  })
+
+  it('parses inline markdown inside table cells', () => {
+    const html = renderMarkdown(
+      `| 名称 | 链接 |
+| --- | --- |
+| 官网 | [访问](https://example.com) |`,
+      theme('qiuhe'),
+      codeTheme,
+    )
+
+    expect(validateWechatHtml(html).valid).toBe(true)
+    const text = html.replace(/<[^>]+>/g, '')
+    expect(text).toContain('访问[1]')
+    expect(text).toContain('[1] 访问：https://example.com')
+  })
+
+  it('contains an unclosed code fence without corrupting output', () => {
+    const html = renderMarkdown('```ts\nconst x = 1\n\n末尾正文', theme('qiuhe'), codeTheme)
+
+    expect(validateWechatHtml(html).valid).toBe(true)
+    const text = html.replace(/<[^>]+>/g, '')
+    expect(text).toContain('const x = 1')
+    expect(text).toContain('末尾正文')
+  })
+
+  it('renders an empty fenced code block without crashing', () => {
+    const html = renderMarkdown('```\n```', theme('qiuhe'), codeTheme)
+
+    expect(validateWechatHtml(html).valid).toBe(true)
+    expect(html).toContain('min-height:1.7em')
+  })
+
+  it('keeps backticks inside fenced code as content, not as inline code', () => {
+    const html = renderMarkdown('```js\nconst s = `tick`\n```', theme('qiuhe'), codeTheme)
+
+    expect(validateWechatHtml(html).valid).toBe(true)
+    const text = html.replace(/<[^>]+>/g, '')
+    expect(text).toContain('const s = `tick`')
+  })
+
+  it('renders inline images with titles, allows safe sources and blocks relative paths at the gate', () => {
+    const html = renderMarkdown(
+      '段内 ![带标题](https://example.com/a.png "备注") 图\n\n![危险](javascript:alert(1))\n\n![相对](../img/a.png)\n\n![本地](data:image/png;base64,iVBORw0KGgo=)',
+      theme('qiuhe'),
+      codeTheme,
+    )
+
+    expect(html).toContain('src="https://example.com/a.png"')
+    expect(html).toContain('alt="带标题"')
+    expect(html).toContain('src="../img/a.png"')
+    expect(html).toContain('src="data:image/png;base64,')
+    expect(html).not.toContain('src="javascript:')
+    expect(html).toContain('![危险](javascript:alert(1))')
+
+    // 门禁边界：绝对 http(s) 与受限 data:image 通过；相对路径渲染但复制预检拦截
+    const safe = renderMarkdown(
+      '![安全](https://example.com/a.png)\n\n![本地](data:image/png;base64,iVBORw0KGgo=)',
+      theme('qiuhe'),
+      codeTheme,
+    )
+    expect(validateWechatHtml(safe).valid).toBe(true)
+
+    const relative = renderMarkdown('![相对](../img/a.png)', theme('qiuhe'), codeTheme)
+    const gate = validateWechatHtml(relative)
+    expect(gate.valid).toBe(false)
+    expect(gate.issues.some((issue) => issue.level === 'danger' && issue.text.includes('img[src]'))).toBe(
+      true,
+    )
+  })
+
+  it('deduplicates external links and keeps unsafe link targets literal', () => {
+    const html = renderMarkdown(
+      '见 [官网](https://example.com "标题") 与 [官网](https://example.com) 和 [邮件](mailto:a@b.com)。[坏](javascript:alert(1))',
+      theme('qiuhe'),
+      codeTheme,
+    )
+
+    expect(validateWechatHtml(html).valid).toBe(true)
+    const text = html.replace(/<[^>]+>/g, '')
+    expect(text).toContain('官网[1]')
+    expect(text).toContain('邮件[2]')
+    expect(html.match(/<span leaf="">\[1\]<\/span><\/sup>/g)?.length).toBe(2)
+    expect(html).not.toContain('<a ')
+    expect(html).toContain('[坏](javascript:alert(1))')
+  })
+})

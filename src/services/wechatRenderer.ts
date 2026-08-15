@@ -14,6 +14,7 @@ import { escapeHtml, renderMarkdown } from '@/utils/markdownRenderer'
 import { validateWechatHtml } from '@/utils/wechatHtml'
 
 export interface RenderWechatOptions {
+  profile?: 'wechat' | 'generic'
   theme?: DesignThemeKey
   codeTheme?: string
   fontFamily?: FontFamilyKey
@@ -29,6 +30,7 @@ export interface RenderWechatOptions {
 }
 
 export interface ResolvedRenderWechatOptions {
+  profile: 'wechat' | 'generic'
   theme: DesignThemeKey
   codeTheme: string
   fontFamily: FontFamilyKey
@@ -51,6 +53,7 @@ export interface RenderWechatResult {
 }
 
 export const DEFAULT_RENDER_WECHAT_OPTIONS: ResolvedRenderWechatOptions = {
+  profile: 'wechat',
   theme: 'qiuhe',
   codeTheme: 'paper',
   fontFamily: 'serif',
@@ -74,8 +77,14 @@ export function renderWechatMarkdown(
     markdown,
     createRenderTheme(resolved),
     codeThemes[resolved.codeTheme] as CodeTheme,
+    resolved.profile === 'generic'
+      ? { linkMode: 'inline', leafify: false }
+      : { linkMode: 'footnote', leafify: true },
   )
-  const validation = validateWechatHtml(html)
+  const validation =
+    resolved.profile === 'generic'
+      ? { valid: true, issues: [], leafCount: 0 }
+      : validateWechatHtml(html)
 
   return {
     html,
@@ -88,6 +97,10 @@ export function renderWechatMarkdown(
 export function resolveRenderWechatOptions(
   options: RenderWechatOptions = {},
 ): ResolvedRenderWechatOptions {
+  const profile = options.profile ?? DEFAULT_RENDER_WECHAT_OPTIONS.profile
+  if (profile !== 'wechat' && profile !== 'generic') {
+    throw new Error('profile 必须是 wechat 或 generic')
+  }
   const theme = options.theme ?? DEFAULT_RENDER_WECHAT_OPTIONS.theme
   const preset = STYLE_PRESETS.find((item) => item.key === theme)
   if (!preset) throw new Error(`未知主题：${theme}`)
@@ -119,6 +132,7 @@ export function resolveRenderWechatOptions(
   }
 
   return {
+    profile,
     theme,
     codeTheme,
     fontFamily,
@@ -134,13 +148,36 @@ export function resolveRenderWechatOptions(
   }
 }
 
-export function toHtmlDocument(html: string, title = '微信公众号排版导出'): string {
+export function toHtmlDocument(
+  html: string,
+  title = '微信公众号排版导出',
+  profile: 'wechat' | 'generic' = 'wechat',
+): string {
+  const style =
+    profile === 'generic'
+      ? `<style>
+:root{color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;padding:48px 20px;background:#f6f5f2;color:#1f2933;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body>section{max-width:760px;margin:0 auto;box-shadow:0 1px 3px rgba(31,41,51,.06),0 12px 32px rgba(31,41,51,.08);
+  border:1px solid rgba(31,41,51,.06)}
+a{color:#176b52;text-decoration:none}
+a:hover{text-decoration:underline}
+pre{overflow-x:auto;-webkit-overflow-scrolling:touch}
+img{max-width:100%}
+@media (max-width:640px){body{padding:0}body>section{border:0;border-radius:0;box-shadow:none}}
+@media print{body{background:#fff;padding:0}body>section{box-shadow:none;border:0}}
+</style>`
+      : ''
   return `<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${escapeHtml(title)}</title>
+    ${style}
   </head>
   <body>
     ${html}

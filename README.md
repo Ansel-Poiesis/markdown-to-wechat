@@ -97,6 +97,16 @@ npm run --silent render -- -- `
 
 省略 `--input` 时从 stdin 读取，省略 `--output` 时写入 stdout。`--format json` 返回内联 HTML、微信兼容门禁结果和最终生效的渲染参数。
 
+默认输出面向微信公众号（外链转为脚注、文本节点补 `span leaf`）。需要通用 HTML 时加 `--profile generic`：保留真实外链、不做微信专属转换，`--format document` 会输出带内置样式表的独立页面，适合网页、文档和富文本嵌入。
+
+```powershell
+npm run --silent render -- -- `
+  --profile generic `
+  --input article.md `
+  --output article.html `
+  --format document
+```
+
 ```powershell
 npm run --silent render -- -- --help
 ```

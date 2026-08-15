@@ -66,4 +66,44 @@ describe('wechatRenderer', () => {
     expect(document).toContain('<!doctype html>')
     expect(document).toContain('<title>标题 &lt;测试&gt;</title>')
   })
+
+  it('keeps real links and skips wechat leafify in generic profile', () => {
+    const result = renderWechatMarkdown('# 通用渲染\n\n[打开项目](https://example.com) 与 **正文**。', {
+      profile: 'generic',
+    })
+
+    expect(result.valid).toBe(true)
+    expect(result.options.profile).toBe('generic')
+    expect(result.html).toContain('<a href="https://example.com">打开项目</a>')
+    expect(result.html).not.toContain('leaf=""')
+    expect(result.html).not.toContain('参考链接')
+    expect(result.html).not.toContain('<sup')
+  })
+
+  it('keeps footnote semantics in generic profile', () => {
+    const result = renderWechatMarkdown(
+      '正文[^1]\n\n[^1]: 这是一个脚注。',
+      { profile: 'generic' },
+    )
+
+    expect(result.valid).toBe(true)
+    expect(result.html).toContain('<sup')
+    expect(result.html).toContain('这是一个脚注')
+  })
+
+  it('embeds the generic document shell only for generic profile', () => {
+    const fragment = '<section>正文</section>'
+    const generic = toHtmlDocument(fragment, '通用文档', 'generic')
+    const wechat = toHtmlDocument(fragment, '公众号文档', 'wechat')
+
+    expect(generic).toContain('<style>')
+    expect(generic).toContain('max-width:760px')
+    expect(wechat).not.toContain('<style>')
+  })
+
+  it('rejects unknown profile values', () => {
+    expect(() =>
+      resolveRenderWechatOptions({ profile: 'email' as RenderWechatOptions['profile'] }),
+    ).toThrow('profile')
+  })
 })

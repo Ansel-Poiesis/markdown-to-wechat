@@ -19,6 +19,7 @@ const HELP = `公众号 Markdown 渲染器
   Get-Content -Raw article.md | npm run --silent render -- -- --format json
 
 参数：
+      --profile <name>       wechat|generic，默认 wechat；generic 保留真实外链并输出通用 HTML
   -i, --input <path>          Markdown 文件；省略时读取 stdin
   -o, --output <path>         输出文件；省略时写入 stdout
       --theme <name>          qiuhe|zhujian|songyan|yuebai|qingdai|zhuzhi|haitang|shupian|liujin
@@ -46,6 +47,7 @@ async function main() {
     options: {
       input: { type: 'string', short: 'i' },
       output: { type: 'string', short: 'o' },
+      profile: { type: 'string' },
       theme: { type: 'string' },
       'code-theme': { type: 'string' },
       'font-family': { type: 'string' },
@@ -74,6 +76,7 @@ async function main() {
     ? await readFile(resolve(values.input), 'utf8')
     : await readStandardInput()
   const options: RenderWechatOptions = {
+    profile: values.profile as 'wechat' | 'generic' | undefined,
     theme: values.theme as DesignThemeKey | undefined,
     codeTheme: values['code-theme'],
     fontFamily: values['font-family'] as FontFamilyKey | undefined,
@@ -93,7 +96,7 @@ async function main() {
     format === 'json'
       ? `${JSON.stringify(result, null, 2)}\n`
       : format === 'document'
-        ? toHtmlDocument(result.html, values.title)
+        ? toHtmlDocument(result.html, values.title, result.options.profile)
         : result.html
 
   if (values.output) {

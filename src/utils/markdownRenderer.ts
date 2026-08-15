@@ -174,18 +174,22 @@ function parseInline(
   text: string,
   links: Array<{ label: string; href: string }>,
   theme?: ThemeBase,
+  linkMode: 'footnote' | 'inline' = 'footnote',
 ): string {
   let value = escapeHtml(text)
 
-  value = value.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, (_, alt, src) => {
+  value = value.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+[^)]*)?\)/g, (_, alt, src) => {
     const safeSrc = safeUrl(src)
     if (!safeSrc) return escapeHtml(`![${alt}](${src})`)
     return imageHtml(alt, safeSrc)
   })
 
-  value = value.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, (_, label, href) => {
+  value = value.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+[^)]*)?\)/g, (_, label, href) => {
     const safeHref = safeUrl(href)
     if (!safeHref) return escapeHtml(`[${label}](${href})`)
+    if (linkMode === 'inline') {
+      return `<a href="${escapeHtml(safeHref)}">${label}</a>`
+    }
     const externalLinks = links.filter((item) => !item.href.startsWith('fn:'))
     const id = externalLinks.findIndex((item) => item.href === safeHref)
     if (id < 0) links.push({ label, href: safeHref })
@@ -324,374 +328,8 @@ function paragraphStyle(theme: ThemeBase): Record<string, string | number> {
   return style
 }
 
-function themeFontSize(theme: ThemeBase, delta = 0): string {
-  return `${(theme.fontSize || 16) + delta}px`
-}
-
 function themeLineHeight(theme: ThemeBase, fallback = 1.85): string {
   return String(theme.lineHeight || fallback)
-}
-
-function headingColorForLevel(theme: ThemeBase, level: number): string {
-  if (level === 1) return theme.h1Color || theme.color
-  if (level === 2) return theme.h2Color || theme.color
-  if (level === 3) return theme.h3Color || theme.color
-  if (level === 4) return theme.h4Color || theme.color
-  return theme.color
-}
-
-function dividerColor(theme: ThemeBase): string {
-  return theme.underlineColor || theme.headingAccent || theme.accent
-}
-
-/** @deprecated Kept for compatibility while theme components replace legacy style helpers. */
-export function dividerStyle(theme: ThemeBase): Record<string, string | number | undefined> {
-  const color = dividerColor(theme)
-  const mode = theme.underlineMode || 'solid'
-  const base = {
-    border: '0',
-    background: 'transparent',
-    margin: '26px 0',
-  }
-
-  if (mode === 'dashed') {
-    return {
-      ...base,
-      height: '0',
-      borderTop: `1.5px dashed ${color}`,
-    }
-  }
-
-  if (mode === 'double') {
-    return {
-      ...base,
-      height: '5px',
-      borderTop: `1px solid ${color}`,
-      borderBottom: `1px solid ${color}`,
-    }
-  }
-
-  if (mode === 'marker') {
-    return {
-      ...base,
-      height: '8px',
-      borderRadius: '999px',
-      background: `linear-gradient(90deg, ${alphaColor(color, '00')} 0%, ${alphaColor(color, '66')} 50%, ${alphaColor(color, '00')} 100%)`,
-    }
-  }
-
-  if (mode === 'wavy') {
-    return {
-      ...base,
-      height: '7px',
-      backgroundImage: `radial-gradient(circle at 4px 3px, ${color} 1.4px, transparent 1.8px)`,
-      backgroundSize: '8px 7px',
-      backgroundRepeat: 'repeat-x',
-    }
-  }
-
-  return {
-    ...base,
-    height: '1.5px',
-    background: color,
-  }
-}
-
-/** @deprecated Kept for compatibility while theme components replace legacy style helpers. */
-export function h1Style(theme: ThemeBase): Record<string, string | number | undefined> {
-  const baseSize = theme.fontSize || 16
-  const base = {
-    margin: '0 0 24px',
-    color: headingColorForLevel(theme, 1),
-    fontSize: `${baseSize + 8}px`,
-    lineHeight: '1.36',
-    fontWeight: '700',
-  }
-
-  if (theme.h1Mode === 'center') {
-    return {
-      ...base,
-      textAlign: 'center',
-      padding: '8px 0 18px',
-      borderBottom: `1px solid ${dividerColor(theme)}`,
-    }
-  }
-
-  if (theme.h1Mode === 'panel') {
-    return {
-      ...base,
-      padding: '18px 18px',
-      border: `1px solid ${theme.border}`,
-      borderRadius: '8px',
-      background: theme.bgSoft,
-    }
-  }
-
-  if (theme.h1Mode === 'plain') {
-    return {
-      ...base,
-      padding: '0 0 4px',
-    }
-  }
-
-  if (theme.h1Mode === 'marker') {
-    return {
-      ...base,
-      padding: '0 0 4px',
-    }
-  }
-
-  if (theme.h1Mode === 'dash') {
-    return {
-      ...base,
-      padding: '0 0 12px',
-      borderBottom: `1.5px dashed ${theme.headingAccent || theme.accent}`,
-    }
-  }
-
-  return {
-    ...base,
-    padding: '0 0 12px',
-    borderBottom: `2px solid ${theme.headingAccent || theme.accent}`,
-  }
-}
-
-function headingContent(content: string, theme: ThemeBase, mode = theme.headingMode): string {
-  const hAccent = theme.headingAccent || theme.accent
-
-  if (mode === 'marker') {
-    return inline('span', content, {
-      display: 'inline',
-      padding: '0 2px',
-      background: `linear-gradient(transparent 58%, ${alphaColor(hAccent, '38')} 0)`,
-    })
-  }
-
-  if (mode === 'dash') {
-    return inline('span', content, {
-      display: 'inline-block',
-      paddingBottom: '4px',
-      borderBottom: `1.5px dashed ${hAccent}`,
-    })
-  }
-
-  if (mode === 'chip') {
-    return inline('span', content, {
-      display: 'inline-block',
-      padding: '5px 10px',
-      borderRadius: '6px',
-      background: theme.bgSoft,
-      color: hAccent,
-    })
-  }
-
-  if (mode === 'plain') {
-    return inline('span', content, {
-      display: 'inline-block',
-      paddingBottom: '3px',
-      borderBottom: `1px solid ${hAccent}`,
-    })
-  }
-
-  return inline('span', content, {
-    display: 'inline-block',
-    paddingLeft: '10px',
-    borderLeft: `4px solid ${hAccent}`,
-  })
-}
-
-/** @deprecated Kept for compatibility while theme components replace legacy style helpers. */
-export function h1Content(content: string, theme: ThemeBase): string {
-  if (theme.h1Mode === 'marker' || theme.h1Mode === 'dash') {
-    return headingContent(content, theme, theme.h1Mode)
-  }
-  return content
-}
-
-function quoteStyle(theme: ThemeBase): Record<string, string | number | undefined> {
-  const qAccent = theme.quoteAccent || theme.accent
-  const base = {
-    margin: '0 0 18px',
-    color: theme.muted,
-    fontSize: themeFontSize(theme, -1),
-    lineHeight: themeLineHeight(theme, 1.8),
-  }
-
-  if (theme.quoteMode === 'panel') {
-    return {
-      ...base,
-      padding: '14px 18px',
-      border: `1.5px solid ${theme.border}`,
-      borderLeft: `5px solid ${qAccent}`,
-      borderRadius: '0 8px 8px 0',
-      background: theme.quoteBg,
-    }
-  }
-
-  if (theme.quoteMode === 'soft') {
-    return {
-      ...base,
-      padding: '13px 18px',
-      borderRadius: '8px',
-      background: theme.quoteBg,
-      borderLeft: `3px solid ${qAccent}`,
-    }
-  }
-
-  if (theme.quoteMode === 'outline') {
-    return {
-      ...base,
-      padding: '13px 16px',
-      border: `1.5px dashed ${qAccent}`,
-      borderRadius: '8px',
-      background: 'transparent',
-    }
-  }
-
-  if (theme.quoteMode === 'note') {
-    return {
-      ...base,
-      padding: '15px 17px',
-      border: `1px solid ${theme.border}`,
-      borderTop: `4px solid ${qAccent}`,
-      borderRadius: '8px',
-      background: theme.quoteBg,
-      boxShadow: '0 6px 18px rgba(60, 44, 30, 0.08)',
-    }
-  }
-
-  // bar (default) — 醒目左边线
-  return {
-    ...base,
-    padding: '12px 16px',
-    borderLeft: `4px solid ${qAccent}`,
-    background: theme.quoteBg,
-  }
-}
-
-function level2QuoteStyle(theme: ThemeBase): Record<string, string | number | undefined> {
-  const qAccent = theme.quoteAccent || theme.accent
-  const base = {
-    margin: '0 0 8px',
-    color: theme.muted,
-    fontSize: themeFontSize(theme, -2),
-  }
-
-  if (theme.quoteMode2 === 'panel') {
-    return {
-      ...base,
-      padding: '10px 14px',
-      border: `1px dashed ${qAccent}`,
-      borderRadius: '6px',
-      background: theme.bgSoft,
-      fontStyle: 'italic',
-    }
-  }
-
-  if (theme.quoteMode2 === 'fade') {
-    return {
-      ...base,
-      padding: '10px 14px',
-      borderLeft: `2px solid ${qAccent}`,
-      borderRadius: '4px',
-      background: theme.bgSoft,
-      opacity: '0.85',
-    }
-  }
-
-  // bar (default) — 与 L1 不同的线型
-  return {
-    ...base,
-    padding: '10px 14px',
-    borderLeft: `2px dashed ${qAccent}`,
-    borderRadius: '4px',
-    background: theme.quoteBg,
-  }
-}
-
-/** @deprecated Kept for compatibility while theme components replace legacy style helpers. */
-export function renderNestedBlockquote(
-  content: string,
-  theme: ThemeBase,
-  links: Array<{ label: string; href: string }>,
-): string {
-  const lines = content.split('\n')
-  let maxDepth = 0
-  const parsed: Array<{ depth: number; text: string }> = []
-
-  for (const rawLine of lines) {
-    let depth = 1
-    let rest = rawLine
-    while (/^>\s?/.test(rest)) {
-      depth++
-      rest = rest.replace(/^>\s?/, '')
-    }
-    if (depth > maxDepth) maxDepth = depth
-    parsed.push({ depth, text: rest })
-  }
-
-  if (maxDepth <= 1) {
-    // Simple single-level blockquote
-    const paragraphs: string[] = []
-    let buf: string[] = []
-    for (const { text } of parsed) {
-      if (!text.trim()) {
-        if (buf.length) {
-          paragraphs.push(buf.join(' '))
-          buf = []
-        }
-      } else {
-        buf.push(text)
-      }
-    }
-    if (buf.length) paragraphs.push(buf.join(' '))
-    const inner = paragraphs
-      .map((p) =>
-        inline('p', parseInline(p, links, theme), { ...paragraphStyle(theme), margin: '0 0 10px' }),
-      )
-      .join('')
-    return inline('blockquote', inner, quoteStyle(theme))
-  }
-
-  // Nested: group lines by depth, render innermost first, wrap with level-2 then level-1
-  const parts: string[] = []
-  let buf: string[] = []
-  let currentDepth = 1
-
-  function flush(depth: number) {
-    if (!buf.length) return
-    const text = buf.join(' ')
-    buf = []
-    let html = inline('p', parseInline(text, links, theme), {
-      ...paragraphStyle(theme),
-      margin: '0 0 8px',
-    })
-    for (let d = depth; d < maxDepth; d++) {
-      html = inline('blockquote', html, level2QuoteStyle(theme))
-    }
-    parts.push(html)
-  }
-
-  for (const { depth, text } of parsed) {
-    if (!text.trim()) {
-      flush(currentDepth)
-    } else {
-      if (depth !== currentDepth && buf.length) {
-        flush(currentDepth)
-      }
-      currentDepth = depth
-      buf.push(text)
-    }
-  }
-  flush(currentDepth)
-
-  // Wrap all parts in the outermost blockquote (level-1)
-  let result = parts.join('')
-  result = inline('blockquote', result, {
-    ...quoteStyle(theme),
-    margin: '0 0 18px',
-  })
-  return result
 }
 
 interface ListNode {
@@ -704,7 +342,10 @@ export function renderMarkdown(
   markdown: string,
   theme: ThemeBase,
   codeTheme: CodeTheme,
+  options: { linkMode?: 'footnote' | 'inline'; leafify?: boolean } = {},
 ): string {
+  const linkMode = options.linkMode ?? 'footnote'
+  const leafify = options.leafify ?? true
   const lines = markdown.replace(/\r\n/g, '\n').split('\n')
   const article = analyzeArticle(markdown)
   const renderContext = createThemeRenderContext(theme, article)
@@ -737,7 +378,11 @@ export function renderMarkdown(
 
   const flushParagraph = () => {
     if (!paragraph.length) return
-    html += inline('p', parseInline(paragraph.join(' '), links, theme), paragraphStyle(theme))
+    html += inline(
+      'p',
+      parseInline(paragraph.join(' '), links, theme, linkMode),
+      paragraphStyle(theme),
+    )
     paragraph.length = 0
   }
 
@@ -748,7 +393,7 @@ export function renderMarkdown(
 
   function renderListNode(list: ListNode): string {
     const items = list.items.map(
-      (item) => parseInline(item.text, links, theme) + (item.childrenHtml || ''),
+      (item) => parseInline(item.text, links, theme, linkMode) + (item.childrenHtml || ''),
     )
     return renderList(items, list.type === 'ol', renderContext)
   }
@@ -890,9 +535,15 @@ export function renderMarkdown(
         .join('\n')
         .split(/\n\s*\n/)
         .filter((part) => part.trim())
-        .map((part) => inline('p', parseInline(part.replace(/\n/g, ' '), links, theme), paragraphStyle(theme)))
+        .map((part) =>
+          inline(
+            'p',
+            parseInline(part.replace(/\n/g, ' '), links, theme, linkMode),
+            paragraphStyle(theme),
+          ),
+        )
         .join('')
-      html += renderCallout(kind, parseInline(title, links, theme), content, renderContext)
+      html += renderCallout(kind, parseInline(title, links, theme, linkMode), content, renderContext)
       continue
     }
 
@@ -931,7 +582,7 @@ export function renderMarkdown(
       i -= 1
       const ths = headers
         .map((cell, ci) =>
-          inline('th', parseInline(cell, links, theme), {
+          inline('th', parseInline(cell, links, theme, linkMode), {
             padding: '9px 8px',
             border: `1px solid ${theme.border}`,
             background:
@@ -957,7 +608,7 @@ export function renderMarkdown(
             'tr',
             row
               .map((cell, ci) =>
-                inline('td', parseInline(cell, links, theme), {
+                inline('td', parseInline(cell, links, theme, linkMode), {
                   padding: '9px 8px',
                   border: `1px solid ${theme.border}`,
                   color: theme.color,
@@ -988,7 +639,7 @@ export function renderMarkdown(
       flushParagraph()
       flushAllLists()
       const level = (heading[1] ?? '').length
-      const content = parseInline(heading[2] ?? '', links, theme)
+      const content = parseInline(heading[2] ?? '', links, theme, linkMode)
       if (level === 1) {
         html += renderCover(content, renderContext)
         html += renderToc(renderContext)
@@ -1022,7 +673,9 @@ export function renderMarkdown(
       const quoteContent = quoteLines
         .map((quoteLine) => quoteLine.replace(/^>\s?/, ''))
         .filter((quoteLine) => quoteLine.trim())
-        .map((quoteLine) => inline('p', parseInline(quoteLine, links, theme), { margin: '0 0 8px' }))
+        .map((quoteLine) =>
+          inline('p', parseInline(quoteLine, links, theme, linkMode), { margin: '0 0 8px' }),
+        )
         .join('')
       html += renderQuote(quoteContent, renderContext)
       continue
@@ -1105,7 +758,7 @@ export function renderMarkdown(
   flushParagraph()
   flushAllLists()
 
-  if (links.length) {
+  if (linkMode === 'footnote' && links.length) {
     const linkItems = links
       .filter((item) => !item.href.startsWith('fn:'))
       .map((item, index) =>
@@ -1142,7 +795,7 @@ export function renderMarkdown(
       .map((fn, index) =>
         inline(
           'p',
-          `<span style="color:${theme.muted};font-size:12px;margin-right:4px;">[${index + 1}]</span> ${parseInline(fn.content, links, theme)}`,
+          `<span style="color:${theme.muted};font-size:12px;margin-right:4px;">[${index + 1}]</span> ${parseInline(fn.content, links, theme, linkMode)}`,
           {
             margin: '0 0 6px',
             color: theme.muted,
@@ -1172,7 +825,7 @@ export function renderMarkdown(
   const hasPagePadding = Number.isFinite(pageMargin) && pageMargin > 0
   if (coverRendered || html.trim()) html += renderEndMark(renderContext)
 
-  return leafifyHtml(inline(
+  const body = inline(
     'section',
     html || inline('p', '开始输入 Markdown，右侧会实时预览。', paragraphStyle(theme)),
     {
@@ -1188,5 +841,6 @@ export function renderMarkdown(
       fontSize: `${theme.fontSize || 16}px`,
       lineHeight: themeLineHeight(theme, 1.8),
     },
-  ))
+  )
+  return leafify ? leafifyHtml(body) : body
 }
