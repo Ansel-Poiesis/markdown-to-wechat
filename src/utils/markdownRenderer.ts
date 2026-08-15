@@ -174,6 +174,7 @@ function parseInline(
   text: string,
   links: Array<{ label: string; href: string }>,
   theme?: ThemeBase,
+  linkMode: 'footnote' | 'inline' = 'footnote',
 ): string {
   let value = escapeHtml(text)
 
@@ -186,6 +187,9 @@ function parseInline(
   value = value.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+[^)]*)?\)/g, (_, label, href) => {
     const safeHref = safeUrl(href)
     if (!safeHref) return escapeHtml(`[${label}](${href})`)
+    if (linkMode === 'inline') {
+      return `<a href="${escapeHtml(safeHref)}">${label}</a>`
+    }
     const externalLinks = links.filter((item) => !item.href.startsWith('fn:'))
     const id = externalLinks.findIndex((item) => item.href === safeHref)
     if (id < 0) links.push({ label, href: safeHref })
@@ -338,7 +342,10 @@ export function renderMarkdown(
   markdown: string,
   theme: ThemeBase,
   codeTheme: CodeTheme,
+  options: { linkMode?: 'footnote' | 'inline'; leafify?: boolean } = {},
 ): string {
+  const linkMode = options.linkMode ?? 'footnote'
+  const leafify = options.leafify ?? true
   const lines = markdown.replace(/\r\n/g, '\n').split('\n')
   const article = analyzeArticle(markdown)
   const renderContext = createThemeRenderContext(theme, article)
@@ -371,7 +378,11 @@ export function renderMarkdown(
 
   const flushParagraph = () => {
     if (!paragraph.length) return
-    html += inline('p', parseInline(paragraph.join(' '), links, theme), paragraphStyle(theme))
+    html += inline(
+      'p',
+      parseInline(paragraph.join(' '), links, theme, linkMode),
+      paragraphStyle(theme),
+    )
     paragraph.length = 0
   }
 
@@ -382,7 +393,7 @@ export function renderMarkdown(
 
   function renderListNode(list: ListNode): string {
     const items = list.items.map(
-      (item) => parseInline(item.text, links, theme) + (item.childrenHtml || ''),
+      (item) => parseInline(item.text, links, theme, linkMode) + (item.childrenHtml || ''),
     )
     return renderList(items, list.type === 'ol', renderContext)
   }
@@ -524,9 +535,15 @@ export function renderMarkdown(
         .join('\n')
         .split(/\n\s*\n/)
         .filter((part) => part.trim())
-        .map((part) => inline('p', parseInline(part.replace(/\n/g, ' '), links, theme), paragraphStyle(theme)))
+        .map((part) =>
+          inline(
+            'p',
+            parseInline(part.replace(/\n/g, ' '), links, theme, linkMode),
+            paragraphStyle(theme),
+          ),
+        )
         .join('')
-      html += renderCallout(kind, parseInline(title, links, theme), content, renderContext)
+      html += renderCallout(kind, parseInline(title, links, theme, linkMode), content, renderContext)
       continue
     }
 
@@ -565,7 +582,7 @@ export function renderMarkdown(
       i -= 1
       const ths = headers
         .map((cell, ci) =>
-          inline('th', parseInline(cell, links, theme), {
+          inline('th', parseInline(cell, links, theme, linkMode), {
             padding: '9px 8px',
             border: `1px solid ${theme.border}`,
             background:
@@ -591,7 +608,7 @@ export function renderMarkdown(
             'tr',
             row
               .map((cell, ci) =>
-                inline('td', parseInline(cell, links, theme), {
+                inline('td', parseInline(cell, links, theme, linkMode), {
                   padding: '9px 8px',
                   border: `1px solid ${theme.border}`,
                   color: theme.color,
@@ -622,7 +639,7 @@ export function renderMarkdown(
       flushParagraph()
       flushAllLists()
       const level = (heading[1] ?? '').length
-      const content = parseInline(heading[2] ?? '', links, theme)
+      const content = parseInline(heading[2] ?? '', links, theme, linkMode)
       if (level === 1) {
         html += renderCover(content, renderContext)
         html += renderToc(renderContext)
@@ -656,7 +673,9 @@ export function renderMarkdown(
       const quoteContent = quoteLines
         .map((quoteLine) => quoteLine.replace(/^>\s?/, ''))
         .filter((quoteLine) => quoteLine.trim())
-        .map((quoteLine) => inline('p', parseInline(quoteLine, links, theme), { margin: '0 0 8px' }))
+        .map((quoteLine) =>
+          inline('p', parseInline(quoteLine, links, theme, linkMode), { margin: '0 0 8px' }),
+        )
         .join('')
       html += renderQuote(quoteContent, renderContext)
       continue
@@ -739,7 +758,7 @@ export function renderMarkdown(
   flushParagraph()
   flushAllLists()
 
-  if (links.length) {
+  if (linkMode === 'footnote' && links.length) {
     const linkItems = links
       .filter((item) => !item.href.startsWith('fn:'))
       .map((item, index) =>
@@ -776,7 +795,7 @@ export function renderMarkdown(
       .map((fn, index) =>
         inline(
           'p',
-          `<span style="color:${theme.muted};font-size:12px;margin-right:4px;">[${index + 1}]</span> ${parseInline(fn.content, links, theme)}`,
+          `<span style="color:${theme.muted};font-size:12px;margin-right:4px;">[${index + 1}]</span> ${parseInline(fn.content, links, theme, linkMode)}`,
           {
             margin: '0 0 6px',
             color: theme.muted,
@@ -806,7 +825,7 @@ export function renderMarkdown(
   const hasPagePadding = Number.isFinite(pageMargin) && pageMargin > 0
   if (coverRendered || html.trim()) html += renderEndMark(renderContext)
 
-  return leafifyHtml(inline(
+  const body = inline(
     'section',
     html || inline('p', '开始输入 Markdown，右侧会实时预览。', paragraphStyle(theme)),
     {
@@ -822,5 +841,6 @@ export function renderMarkdown(
       fontSize: `${theme.fontSize || 16}px`,
       lineHeight: themeLineHeight(theme, 1.8),
     },
-  ))
+  )
+  return leafify ? leafifyHtml(body) : body
 }
