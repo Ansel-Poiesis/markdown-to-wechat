@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file is a secondary engineering reference for Claude Code (and other coding agents) working in this repository. The authoritative entry point is `AGENTS.md`; the authoritative project archive lives in the Poiesis project directory (`40-Projects/12-markdown渲染器`).
+This file is a secondary engineering reference for Claude Code (and other coding agents) working in this repository. The authoritative entry point is `AGENTS.md`; the authoritative project archive lives in the Poiesis project directory (`50-阿莱是台珍妮机/10-Project/02-markdown渲染器`).
 
 ## Project Overview
 
