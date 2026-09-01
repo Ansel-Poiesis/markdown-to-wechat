@@ -5,7 +5,7 @@ This file is the version-management entry for `markdown-to-wechat`.
 ## Canonical Sources
 
 - Source: this repository, `main`, with `origin` at `https://github.com/Ansel-Poiesis/markdown-to-wechat.git`.
-- Project record: `C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮机\10-可用项目\12-markdown渲染器`.
+- Project record: `C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮机\10-Project\02-markdown渲染器`.
 - Formal desktop releases: `C:\Ansel_Work\10_Projects\10_Products\markdown-to-wechat\release`.
 - Release candidates: `C:\Ansel_Work\10_Projects\10_Products\markdown-to-wechat\candidates`.
 

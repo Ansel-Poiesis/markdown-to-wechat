@@ -4,7 +4,7 @@ type: agent-entry
 status: active
 created: 2026-06-12
 updated: 2026-09-01
-poiesis_project: C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮机\10-可用项目\12-markdown渲染器
+poiesis_project: C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮机\10-Project\02-markdown渲染器
 ---
 
 # AGENTS.md — 公众号渲染器
@@ -17,8 +17,8 @@ poiesis_project: C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮
 
 按顺序读取：
 
-1. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮机\10-可用项目\12-markdown渲染器\README.md`
-2. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮机\10-可用项目\12-markdown渲染器\版本状态.md`
+1. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮机\10-Project\02-markdown渲染器\README.md`
+2. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮机\10-Project\02-markdown渲染器\版本状态.md`
 3. 本仓库的 `VERSIONING.md`、`README.md` 与 `package.json`。
 
 如果只是修一个很小的代码问题，也至少读取第 1、2 项，确认本轮是否属于低频维护、补丁还是下一版本候选。
