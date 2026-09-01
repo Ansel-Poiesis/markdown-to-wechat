@@ -1,0 +1,30 @@
+# Versioning
+
+This file is the version-management entry for `markdown-to-wechat`.
+
+## Canonical Sources
+
+- Source: this repository, `main`, with `origin` at `https://github.com/Ansel-Poiesis/markdown-to-wechat.git`.
+- Project record: `C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-账号\20-阿莱是台珍妮机\10-可用项目\12-markdown渲染器`.
+- Formal desktop releases: `C:\Ansel_Work\10_Projects\10_Products\markdown-to-wechat\release`.
+- Release candidates: `C:\Ansel_Work\10_Projects\10_Products\markdown-to-wechat\candidates`.
+
+No other local directory is a development or release source.
+
+## Current State
+
+| Line | Version | Evidence | Status |
+| --- | --- | --- | --- |
+| Source baseline | 2.0.1 | `main` at `0dd9f84f36aa120aada9ba5f368252d9cfb2c8b6` | Canonical development line |
+| Formal desktop release | 2.0.0 | `10_Products\\markdown-to-wechat\\release` | Current official local delivery |
+| Desktop candidate | 2.0.1 | `10_Products\\markdown-to-wechat\\candidates\\2.0.1` | Not released |
+
+The tracked `docs/` tree was last changed by `9e6c0fc`. Do not claim that the public Pages site contains later source changes until a fresh build, deployed revision, and browser check are recorded.
+
+## Promotion Rules
+
+1. Development work only starts from a clean `main` synchronized with `origin/main`.
+2. A desktop build is stored once under `candidates/<version>` until it passes the release gate.
+3. Promotion to `release/` requires explicit approval, a recorded source commit, verification, desktop smoke testing, and an updated Products release record.
+4. A web release requires a fresh committed `docs/` build and a recorded deployed revision. A source commit alone is not a web-release claim.
+5. Historical branches and unreachable Git objects are recovery evidence, never active release lines. Do not delete them without an explicit retention decision.

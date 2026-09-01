@@ -15,6 +15,14 @@
 
 </div>
 
+## 版本状态
+
+- 已合并开发版本：`2.0.1`，当前源码基线为 `main`。
+- 正式 Windows 桌面交付：`2.0.0`。
+- `2.0.1` 的本地构建包只是候选物，尚未完成正式发布门禁；请勿将其当作公开版本。
+
+维护、发布和本地产物的唯一规则见 [VERSIONING.md](VERSIONING.md)。
+
 ![Markdown渲染器工作台：左侧编辑 Markdown，中间选择主题，右侧实时预览公众号文章](.github/assets/workbench-overview.jpg)
 
 ## 为什么使用
