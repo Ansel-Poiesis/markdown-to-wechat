@@ -70,4 +70,4 @@ poiesis_project: C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮
 - 改了哪些文件。
 - 验证了什么。
 - 下一步写回到了哪里。
-- 是否需要明川确认。
+- 是否需要先生确认。
