@@ -36,7 +36,7 @@ poiesis_project: C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮
 - GitHub：<https://github.com/Ansel-Poiesis/markdown-to-wechat>
 - 网页预览：<https://ansel-poiesis.github.io/markdown-to-wechat/>
 - 维护节奏：每月 15 号 09:00（Asia/Shanghai）由自动任务执行维护迭代
-- 下一次维护检查：`2026-09-15`
+- 下一次维护检查：`2026-10-15`（2026-09-15 跳过：9 月人工轮已于 2026-09-07 完成）
 - 唯一行动入口：Poiesis 项目档案的 `00-维护待办.md`
 
 2026-09-07 由先生决定：取消原「每半年体检、下一维护点 `2027-01-22`」的节奏限制，改为每月自动维护迭代。自动任务只做体检、文档与测试修正、刷新网页快照，并推送到维护分支开 PR；不自行合并 PR、不创建 Release、不发布 Pages 正式版、不提升桌面安装包、不删除既有产物，也不代先生完成 GitHub 2FA 或公众号后台验证。
