@@ -19,9 +19,12 @@ poiesis_project: C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮
 
 1. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮机\10-Project\02-markdown渲染器\README.md`
 2. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮机\10-Project\02-markdown渲染器\版本状态.md`
-3. 本仓库的 `VERSIONING.md`、`README.md` 与 `package.json`。
+3. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮机\10-Project\02-markdown渲染器\00-维护待办.md`（唯一行动入口，按优先级顺序执行）
+4. 本仓库的 `VERSIONING.md`、`README.md` 与 `package.json`。
 
-如果只是修一个很小的代码问题，也至少读取第 1、2 项，确认本轮是否属于低频维护、补丁还是下一版本候选。
+如果只是修一个很小的代码问题，也至少读取第 1、2、3 项，确认本轮是否属于月度维护、补丁还是下一版本候选。
+
+`00-维护待办.md` 中标记「需先生本人」的项（GitHub 2FA、真实公众号后台粘贴验证）Agent 不得代做，也不得自行标记为完成。
 
 ## 当前项目状态
 
@@ -32,9 +35,13 @@ poiesis_project: C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮
 - 本地产品目录：`C:\Ansel_Work\10_Projects\10_Products\markdown-to-wechat`
 - GitHub：<https://github.com/Ansel-Poiesis/markdown-to-wechat>
 - 网页预览：<https://ansel-poiesis.github.io/markdown-to-wechat/>
-- 下一次维护检查：`2027-01-22`
+- 维护节奏：每月 15 号 09:00（Asia/Shanghai）由自动任务执行维护迭代
+- 下一次维护检查：`2026-09-15`
+- 唯一行动入口：Poiesis 项目档案的 `00-维护待办.md`
 
-维护节奏是低频节奏：每半年体检一次并判断 no-op / patch / release，不做连续产品冲刺。
+2026-09-07 由先生决定：取消原「每半年体检、下一维护点 `2027-01-22`」的节奏限制，改为每月自动维护迭代。自动任务只做体检、文档与测试修正、刷新网页快照，并推送到维护分支开 PR；不自行合并 PR、不创建 Release、不发布 Pages 正式版、不提升桌面安装包、不删除既有产物，也不代先生完成 GitHub 2FA 或公众号后台验证。
+
+`main` 已启用分支保护（`protected=true`，要求 PR + `verify` + 禁止强推），任何自动或人工改动都必须经维护分支与 PR 进入 `main`，不得直接 push，不得使用 `--no-verify`。
 
 ## 继续迭代时先做
 
