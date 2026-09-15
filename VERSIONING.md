@@ -19,7 +19,11 @@ No other local directory is a development or release source.
 | Formal desktop release | 2.0.1 | `10_Products\\markdown-to-wechat\\release` | Current official local delivery |
 | Historical desktop release | 2.0.0 | `10_Products\\markdown-to-wechat\\archive\\2.0.0` | Retained for recovery |
 
-The tracked `docs/` tree was last changed by `9e6c0fc`. Do not claim that the public Pages site contains later source changes until a fresh build, deployed revision, and browser check are recorded.
+The tracked `docs/` tree was last changed by `25bdac5` (`release: consolidate markdown renderer 2.0.1`), which the `v2.0.1` tag merge commit `e07e866` carries. Record the implementation commit (`25bdac5`) when citing the web build baseline, and the merge commit (`e07e866`) when citing the tag point. Do not claim that the public Pages site contains later source changes until a fresh build, deployed revision, and browser check are recorded.
+
+Verified 2026-09-07: the live site serves `assets/index-DK6Y9cKj.js` and `assets/index-BZHcZM-0.css`, byte-identical to the references in the committed `docs/index.html`.
+
+Re-verified 2026-09-15 (monthly maintenance round): the live site returns HTTP 200 and still references `./assets/index-DK6Y9cKj.js` and `./assets/index-BZHcZM-0.css`, character-for-character identical to the committed `docs/index.html`. The local Products snapshot `10_Products\markdown-to-wechat\web\` is byte-identical to `docs/` across all 8 compared files (SHA-256, 0 mismatches), so no refresh was needed. `docs/` was last changed by `25bdac5`; the web baseline is unchanged from 2.0.1.
 
 ## Promotion Rules
 
