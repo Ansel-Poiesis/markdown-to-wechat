@@ -3,7 +3,7 @@ project: markdown-to-wechat
 type: agent-entry
 status: active
 created: 2026-06-12
-updated: 2026-09-01
+updated: 2026-09-15
 poiesis_project: C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮机\10-Project\02-markdown渲染器
 ---
 
@@ -36,8 +36,11 @@ poiesis_project: C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮
 - GitHub：<https://github.com/Ansel-Poiesis/markdown-to-wechat>
 - 网页预览：<https://ansel-poiesis.github.io/markdown-to-wechat/>
 - 维护节奏：每月 15 号 09:00（Asia/Shanghai）由自动任务执行维护迭代
-- 下一次维护检查：`2026-10-15`（2026-09-15 跳过：9 月人工轮已于 2026-09-07 完成）
+- 上一次维护检查：`2026-09-15`（实际执行，未跳过）
+- 下一次维护检查：`2026-10-15`
 - 唯一行动入口：Poiesis 项目档案的 `00-维护待办.md`
+
+调度事实（2026-09-15 核实）：月度维护由系统内置 cron 任务「markdown渲染器每月维护迭代」触发（`0 9 15 * *`，Asia/Shanghai，永久运行），该任务无「跳过某月」机制。此前记载的「2026-09-15 跳过」不成立——当日已实际执行完整体检轮。另一套 dsh-routines 例行（`~/.dsh/routines/markdown-renderer-monthly.yaml.pending`）仍为未激活状态；两套调度同时激活会在 10-15 造成重复触发，激活决定归先生。
 
 2026-09-07 由先生决定：取消原「每半年体检、下一维护点 `2027-01-22`」的节奏限制，改为每月自动维护迭代。自动任务只做体检、文档与测试修正、刷新网页快照，并推送到维护分支开 PR；不自行合并 PR、不创建 Release、不发布 Pages 正式版、不提升桌面安装包、不删除既有产物，也不代先生完成 GitHub 2FA 或公众号后台验证。
 

@@ -23,6 +23,8 @@ The tracked `docs/` tree was last changed by `25bdac5` (`release: consolidate ma
 
 Verified 2026-09-07: the live site serves `assets/index-DK6Y9cKj.js` and `assets/index-BZHcZM-0.css`, byte-identical to the references in the committed `docs/index.html`.
 
+Re-verified 2026-09-15 (monthly maintenance round): the live site returns HTTP 200 and still references `./assets/index-DK6Y9cKj.js` and `./assets/index-BZHcZM-0.css`, character-for-character identical to the committed `docs/index.html`. The local Products snapshot `10_Products\markdown-to-wechat\web\` is byte-identical to `docs/` across all 8 compared files (SHA-256, 0 mismatches), so no refresh was needed. `docs/` was last changed by `25bdac5`; the web baseline is unchanged from 2.0.1.
+
 ## Promotion Rules
 
 1. Development work only starts from a clean `main` synchronized with `origin/main`.
