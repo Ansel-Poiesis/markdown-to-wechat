@@ -26,15 +26,15 @@ poiesis_project: C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮
 
 ## 当前项目状态
 
-- 当前开发版本：`2.0.1`
-- 当前正式桌面版本：`2.0.1`
-- `2.0.0` 为历史正式版本
+- 当前开发版本：`2.1.0`
+- 当前发布线：`v2.1.0`；正式桌面资产与发布回执见 GitHub Release 和 Products `RELEASES.md`
+- `2.0.1`、`2.0.0` 为历史正式版本
 - 源码仓库：`C:\Ansel_Work\10_Projects\20_ContentTools\markdown-to-wechat`
 - 本地产品目录：`C:\Ansel_Work\10_Projects\10_Products\markdown-to-wechat`
 - GitHub：<https://github.com/Ansel-Poiesis/markdown-to-wechat>
 - 网页预览：<https://ansel-poiesis.github.io/markdown-to-wechat/>
-- 最新审计：`audit/2026-09-27/README.md`，本地补丁候选，未发布。
-- 本地功能候选：`codex/studio-agent-20260927`，继承审计提交 `d0b1b42`；新拟态、九主题、Agent 与长图交接见 `design/2026-09-27/README.md`，接口见 `AGENT_CONTROL.md`。正式版本仍为 2.0.1。
+- 最新审计：`audit/2026-09-27/README.md`，修复纳入 2.1.0。
+- 新拟态、九主题、Agent 与长图交接见 `design/2026-09-27/README.md`，接口见 `AGENT_CONTROL.md`；历史候选记录保留，发布说明见 `release-notes/2.1.0.md`。
 
 原半年维护规则已被先生 2026-09-07 的每月维护决定取代。调度与下一动作以 Player Todo `TASK-14` 及实测调度记录为准，不能把旧文档日期当作运行回执；本次审计未更改任何自动化。
 

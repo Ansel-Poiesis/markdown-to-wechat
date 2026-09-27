@@ -9,7 +9,7 @@
 [**在线使用**](https://ansel-poiesis.github.io/markdown-to-wechat/) · [快速开始](#快速开始) · [自动渲染](#自动渲染)
 
 [![quality](https://github.com/Ansel-Poiesis/markdown-to-wechat/actions/workflows/quality.yml/badge.svg)](https://github.com/Ansel-Poiesis/markdown-to-wechat/actions/workflows/quality.yml)
-![version](https://img.shields.io/badge/version-2.0.1-17795f)
+![version](https://img.shields.io/badge/version-2.1.0-17795f)
 ![Vue](https://img.shields.io/badge/Vue-3.5-42b883?logo=vuedotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178c6?logo=typescript&logoColor=white)
 
@@ -17,17 +17,17 @@
 
 ## 版本状态
 
-- 已合并开发版本：`2.0.1`，当前源码基线为 `main`。
-- 正式 Windows 桌面交付：`2.0.1`。
-- `2.0.0` 保留在 Products 历史归档中。
+- 当前版本：`2.1.0`，源码发布线为 `main` / `v2.1.0`。
+- Windows x64 安装包与便携包见 [GitHub Release](https://github.com/Ansel-Poiesis/markdown-to-wechat/releases/tag/v2.1.0)。
+- 本版变更与验收边界见 [2.1.0 发布说明](release-notes/2.1.0.md)；历史版本保留在 Release 与 Products 归档中。
 
 维护、发布和本地产物的唯一规则见 [VERSIONING.md](VERSIONING.md)。
 
-2026-09-27 的工程审计及本地补丁见 [评估、验证与优化计划](audit/2026-09-27/README.md)。正式交付仍为 2.0.1；补丁尚未进入线上网页或安装包。
+2026-09-27 的工程审计及修复见 [评估、验证与优化计划](audit/2026-09-27/README.md)，其修复随 2.1.0 交付。审计和设计记录描述各自检查时点，最新发布状态以 Release 回执为准。
 
-本地功能候选 `codex/studio-agent-20260927` 在审计补丁上加入声笺风格的新拟态工作台、九套重建主题、Agent 控制台与 imagegen 长图交接。以下截图来自本地候选；在线入口与正式安装包尚未更新。见 [四项实现与验收](design/2026-09-27/README.md)。
+2.1.0 加入声笺风格的新拟态工作台、九套重建主题、Agent 控制台与 imagegen 长图交接。以下为实际工作台截图。见 [四项实现与验收](design/2026-09-27/README.md)。
 
-![本地候选：新拟态工作台，左侧原稿、中间主题、右侧文章预览](design/2026-09-27/ui-desktop.png)
+![新拟态工作台，左侧原稿、中间主题、右侧文章预览](design/2026-09-27/ui-desktop.png)
 
 ## 为什么使用
 
