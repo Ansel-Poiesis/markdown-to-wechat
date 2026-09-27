@@ -3,7 +3,7 @@ project: markdown-to-wechat
 type: agent-entry
 status: active
 created: 2026-06-12
-updated: 2026-09-01
+updated: 2026-09-27
 poiesis_project: C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮机\10-Project\02-markdown渲染器
 ---
 
@@ -19,22 +19,26 @@ poiesis_project: C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮
 
 1. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮机\10-Project\02-markdown渲染器\README.md`
 2. `C:\Ansel_Work\10_Projects\00_Core\Poiesis\50-阿莱是台珍妮机\10-Project\02-markdown渲染器\版本状态.md`
-3. 本仓库的 `VERSIONING.md`、`README.md` 与 `package.json`。
+3. Player Todo `TASK-14` 及相关子任务（本次全面审计为 `TASK-14.1`）；Poiesis 的旧维护待办只保留背景与证据。
+4. 本仓库的 `VERSIONING.md`、`README.md` 与 `package.json`。
 
-如果只是修一个很小的代码问题，也至少读取第 1、2 项，确认本轮是否属于低频维护、补丁还是下一版本候选。
+如果只是修一个很小的代码问题，也至少读取第 1、2 项，确认本轮属于维护、补丁还是下一版本候选。
 
 ## 当前项目状态
 
-- 当前开发版本：`2.0.1`
-- 当前正式桌面版本：`2.0.1`
-- `2.0.0` 为历史正式版本
+- 当前开发版本：`2.1.0`
+- 当前发布线：`v2.1.0`；正式桌面资产与发布回执见 GitHub Release 和 Products `RELEASES.md`
+- `2.0.1`、`2.0.0` 为历史正式版本
 - 源码仓库：`C:\Ansel_Work\10_Projects\20_ContentTools\markdown-to-wechat`
 - 本地产品目录：`C:\Ansel_Work\10_Projects\10_Products\markdown-to-wechat`
 - GitHub：<https://github.com/Ansel-Poiesis/markdown-to-wechat>
 - 网页预览：<https://ansel-poiesis.github.io/markdown-to-wechat/>
-- 下一次维护检查：`2027-01-22`
+- 最新审计：`audit/2026-09-27/README.md`，修复纳入 2.1.0。
+- 新拟态、九主题、Agent 与长图交接见 `design/2026-09-27/README.md`，接口见 `AGENT_CONTROL.md`；历史候选记录保留，发布说明见 `release-notes/2.1.0.md`。
 
-维护节奏是低频节奏：每半年体检一次并判断 no-op / patch / release，不做连续产品冲刺。
+原半年维护规则已被先生 2026-09-07 的每月维护决定取代。调度与下一动作以 Player Todo `TASK-14` 及实测调度记录为准，不能把旧文档日期当作运行回执；本次审计未更改任何自动化。
+
+`main` 已核实启用分支保护（2026-09-27）：要求 PR、严格 `verify` 检查，禁止强推/删除且包含管理员。开发从同步且干净的主线建立独立分支；未经确认不合并、推送正式发布或提升安装包。
 
 ## 继续迭代时先做
 

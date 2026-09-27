@@ -1,6 +1,6 @@
 {
   "name": "markdown-to-wechat",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "本地优先的微信公众号 Markdown 排版与内联 HTML 渲染工具",
   "author": "Ansel",
   "private": true,
@@ -10,10 +10,12 @@
     "dev": "vite",
     "build": "npm run type-check && npm run build-only",
     "build:electron": "npm run verify && electron-builder --win",
-    "build:web": "vite build --outDir docs && npm run check:secrets",
+    "build:web": "npm run type-check && vite build --outDir docs && npm run check:secrets",
+    "audit:dependencies": "npm audit --audit-level=moderate",
     "smoke:browser": "node scripts/browser-smoke.mjs",
     "preview": "vite preview",
     "render": "tsx --tsconfig tsconfig.node.json scripts/render-wechat.ts",
+    "agent": "tsx --tsconfig tsconfig.node.json scripts/agent-render.ts",
     "feedback:sync": "tsx --tsconfig tsconfig.node.json scripts/feedback-inbox.ts",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
@@ -61,7 +63,7 @@
     "typescript": "~6.0.0",
     "vite": "^8.0.8",
     "vite-plugin-vue-devtools": "^8.1.1",
-    "vitest": "4.1.10",
+    "vitest": "4.1.11",
     "vue-tsc": "^3.2.6"
   },
   "engines": {

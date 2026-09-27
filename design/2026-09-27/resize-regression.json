@@ -1,0 +1,82 @@
+[
+  {
+    "documentWidth": 390,
+    "preview": [
+      {
+        "client": 363,
+        "scroll": 363
+      }
+    ],
+    "width": 390
+  },
+  {
+    "documentWidth": 1280,
+    "preview": [
+      {
+        "client": 373,
+        "scroll": 373
+      }
+    ],
+    "width": 1280
+  },
+  {
+    "documentWidth": 768,
+    "preview": [
+      {
+        "client": 737,
+        "scroll": 737
+      }
+    ],
+    "width": 768
+  },
+  {
+    "documentWidth": 1536,
+    "preview": [
+      {
+        "client": 458,
+        "scroll": 458
+      }
+    ],
+    "width": 1536
+  },
+  {
+    "documentWidth": 1180,
+    "preview": [
+      {
+        "client": 344,
+        "scroll": 344
+      }
+    ],
+    "width": 1180
+  },
+  {
+    "documentWidth": 1600,
+    "preview": [
+      {
+        "client": 648,
+        "scroll": 648
+      }
+    ],
+    "width": 1600
+  },
+  {
+    "documentWidth": 1024,
+    "preview": [
+      {
+        "client": 993,
+        "scroll": 993
+      }
+    ],
+    "width": 1024
+  },
+  {
+    "documentWidth": 390,
+    "preview": [
+      {
+        "client": 363,
+        "scroll": 363
+      }
+    ],
+    "width": 390
+  }
+]

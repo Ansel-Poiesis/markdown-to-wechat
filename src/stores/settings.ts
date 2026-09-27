@@ -72,9 +72,6 @@ const COMPONENT_TOC_KEY = 'wechat-md-component-toc'
 const COMPONENT_END_MARK_KEY = 'wechat-md-component-end-mark'
 const COMPONENT_END_MARK_TEXT_KEY = 'wechat-md-component-end-mark-text'
 
-const VALID_FONT_SIZES = [12, 14, 16, 18, 20]
-const VALID_LINE_HEIGHTS = [1, 1.6, 2, 2.6, 3]
-const VALID_PAGE_MARGINS = [12, 20, 28, 34, 36]
 const VALID_PARAGRAPH_SPACINGS = [0.5, 1, 1.5, 2, 2.5]
 const VALID_TEXT_INDENTS = [0, 1, 2, 3, 4]
 const VALID_LETTER_SPACINGS = ['', '0.6px', '1.2px', '2px', '4px']
@@ -143,7 +140,7 @@ export const STYLE_PRESETS: Array<{
     color: '#a94f32',
     settings: {
       fontFamilyKey: 'serif',
-      lineHeight: 1.6,
+      lineHeight: 1.9,
       pageMargin: 20,
       textColor: '#28241f',
       mutedColor: '#746b60',
@@ -151,9 +148,9 @@ export const STYLE_PRESETS: Array<{
       bgSoftColor: '#f3eee7',
       quoteBgColor: '#f0e9df',
       accentColor: '#a94f32',
-      h1Mode: 'center',
+      h1Mode: 'plain',
       h2Mode: 'plain',
-      h3Mode: 'bar',
+      h3Mode: 'plain',
       h4Mode: 'plain',
       quoteMode: 'soft',
       quoteMode2: 'fade',
@@ -166,7 +163,7 @@ export const STYLE_PRESETS: Array<{
       headingAccent: '#a94f32',
       quoteAccent: '#2f6258',
       letterSpacing: '',
-      paragraphSpacing: 1,
+      paragraphSpacing: 1.5,
       boldColor: '#a94f32',
       boldMode: 'default',
       underlineColor: '#2f6258',
@@ -181,8 +178,8 @@ export const STYLE_PRESETS: Array<{
     color: '#9d2f2f',
     settings: {
       fontFamilyKey: 'sans',
-      lineHeight: 2,
-      pageMargin: 12,
+      lineHeight: 1.85,
+      pageMargin: 20,
       textColor: '#292729',
       mutedColor: '#777174',
       borderColor: '#e7e1df',
@@ -190,13 +187,13 @@ export const STYLE_PRESETS: Array<{
       quoteBgColor: '#fbf4f1',
       accentColor: '#9d2f2f',
       h1Mode: 'plain',
-      h2Mode: 'chip',
+      h2Mode: 'plain',
       h3Mode: 'plain',
       h4Mode: 'plain',
       quoteMode: 'panel',
       quoteMode2: 'fade',
       textIndent: 0,
-      textJustify: true,
+      textJustify: false,
       h1Color: '#292729',
       h2Color: '#7d3034',
       h3Color: '#292729',
@@ -204,7 +201,7 @@ export const STYLE_PRESETS: Array<{
       headingAccent: '#9d2f2f',
       quoteAccent: '#6f3f46',
       letterSpacing: '',
-      paragraphSpacing: 1,
+      paragraphSpacing: 1.5,
       boldColor: '#7d3034',
       boldMode: 'color',
       underlineColor: '#9d2f2f',
@@ -218,8 +215,8 @@ export const STYLE_PRESETS: Array<{
     description: '炭黑骨架与灰绿层次，克制清醒，适合观点文章和分析报告。',
     color: '#33443d',
     settings: {
-      fontFamilyKey: 'serif',
-      lineHeight: 1.6,
+      fontFamilyKey: 'sans',
+      lineHeight: 1.75,
       pageMargin: 20,
       textColor: '#161a19',
       mutedColor: '#646b68',
@@ -227,14 +224,14 @@ export const STYLE_PRESETS: Array<{
       bgSoftColor: '#eef1ef',
       quoteBgColor: '#edf0ee',
       accentColor: '#33443d',
-      h1Mode: 'underline',
+      h1Mode: 'plain',
       h2Mode: 'plain',
       h3Mode: 'plain',
       h4Mode: 'plain',
       quoteMode: 'bar',
       quoteMode2: 'bar',
       textIndent: 0,
-      textJustify: true,
+      textJustify: false,
       h1Color: '#161a19',
       h2Color: '#161a19',
       h3Color: '#33443d',
@@ -257,7 +254,7 @@ export const STYLE_PRESETS: Array<{
     color: '#416d78',
     settings: {
       fontFamilyKey: 'sans',
-      lineHeight: 1.6,
+      lineHeight: 1.8,
       pageMargin: 20,
       textColor: '#1d2930',
       mutedColor: '#657681',
@@ -265,9 +262,9 @@ export const STYLE_PRESETS: Array<{
       bgSoftColor: '#eef4f5',
       quoteBgColor: '#edf5f7',
       accentColor: '#416d78',
-      h1Mode: 'dash',
-      h2Mode: 'bar',
-      h3Mode: 'dash',
+      h1Mode: 'plain',
+      h2Mode: 'plain',
+      h3Mode: 'plain',
       h4Mode: 'plain',
       quoteMode: 'outline',
       quoteMode2: 'panel',
@@ -282,9 +279,9 @@ export const STYLE_PRESETS: Array<{
       letterSpacing: '',
       paragraphSpacing: 1,
       boldColor: '#284e59',
-      boldMode: 'underline',
+      boldMode: 'color',
       underlineColor: '#416d78',
-      underlineMode: 'double',
+      underlineMode: 'solid',
       canvasColor: '#fbfdfd',
     },
   },
@@ -295,7 +292,7 @@ export const STYLE_PRESETS: Array<{
     color: '#2d6a58',
     settings: {
       fontFamilyKey: 'sans',
-      lineHeight: 1.6,
+      lineHeight: 1.9,
       pageMargin: 20,
       textColor: '#1c2b27',
       mutedColor: '#65736d',
@@ -303,8 +300,8 @@ export const STYLE_PRESETS: Array<{
       bgSoftColor: '#edf4ef',
       quoteBgColor: '#eaf2ed',
       accentColor: '#2d6a58',
-      h1Mode: 'marker',
-      h2Mode: 'bar',
+      h1Mode: 'plain',
+      h2Mode: 'plain',
       h3Mode: 'plain',
       h4Mode: 'plain',
       quoteMode: 'note',
@@ -334,7 +331,7 @@ export const STYLE_PRESETS: Array<{
     settings: {
       fontFamilyKey: 'serif',
       lineHeight: 2,
-      pageMargin: 28,
+      pageMargin: 20,
       textColor: '#202823',
       mutedColor: '#657067',
       borderColor: '#d7ddd6',
@@ -342,7 +339,7 @@ export const STYLE_PRESETS: Array<{
       quoteBgColor: '#edf2eb',
       accentColor: '#56734f',
       h1Mode: 'center',
-      h2Mode: 'bar',
+      h2Mode: 'plain',
       h3Mode: 'plain',
       h4Mode: 'plain',
       quoteMode: 'soft',
@@ -360,7 +357,7 @@ export const STYLE_PRESETS: Array<{
       boldColor: '#295c4c',
       boldMode: 'color',
       underlineColor: '#a14d3e',
-      underlineMode: 'marker',
+      underlineMode: 'solid',
       canvasColor: '#fffdf8',
     },
   },
@@ -370,8 +367,8 @@ export const STYLE_PRESETS: Array<{
     description: '海棠胭脂与灰粉留白，柔和细腻，适合人物、审美和情绪表达。',
     color: '#a5405b',
     settings: {
-      fontFamilyKey: 'serif',
-      lineHeight: 1.6,
+      fontFamilyKey: 'sans',
+      lineHeight: 1.9,
       pageMargin: 20,
       textColor: '#36272d',
       mutedColor: '#806e75',
@@ -379,8 +376,8 @@ export const STYLE_PRESETS: Array<{
       bgSoftColor: '#f8f0f2',
       quoteBgColor: '#f6edef',
       accentColor: '#a5405b',
-      h1Mode: 'center',
-      h2Mode: 'chip',
+      h1Mode: 'plain',
+      h2Mode: 'plain',
       h3Mode: 'plain',
       h4Mode: 'plain',
       quoteMode: 'soft',
@@ -398,7 +395,7 @@ export const STYLE_PRESETS: Array<{
       boldColor: '#7b3047',
       boldMode: 'color',
       underlineColor: '#a5405b',
-      underlineMode: 'marker',
+      underlineMode: 'solid',
       canvasColor: '#fffdfd',
     },
   },
@@ -408,9 +405,9 @@ export const STYLE_PRESETS: Array<{
     description: '纸袋橙与茶青题眼，松弛有锋芒，适合文化观察和评论文章。',
     color: '#b76524',
     settings: {
-      fontFamilyKey: 'serif',
-      lineHeight: 2,
-      pageMargin: 28,
+      fontFamilyKey: 'sans',
+      lineHeight: 1.8,
+      pageMargin: 20,
       textColor: '#25251f',
       mutedColor: '#706e62',
       borderColor: '#ded9ca',
@@ -418,13 +415,13 @@ export const STYLE_PRESETS: Array<{
       quoteBgColor: '#f8f1df',
       accentColor: '#b76524',
       h1Mode: 'plain',
-      h2Mode: 'bar',
+      h2Mode: 'plain',
       h3Mode: 'plain',
       h4Mode: 'plain',
       quoteMode: 'bar',
       quoteMode2: 'fade',
       textIndent: 0,
-      textJustify: true,
+      textJustify: false,
       h1Color: '#25251f',
       h2Color: '#2d675c',
       h3Color: '#25251f',
@@ -436,7 +433,7 @@ export const STYLE_PRESETS: Array<{
       boldColor: '#2d675c',
       boldMode: 'color',
       underlineColor: '#c8952f',
-      underlineMode: 'marker',
+      underlineMode: 'solid',
       canvasColor: '#fffdf7',
     },
   },
@@ -447,7 +444,7 @@ export const STYLE_PRESETS: Array<{
     color: '#936b1f',
     settings: {
       fontFamilyKey: 'sans',
-      lineHeight: 1.6,
+      lineHeight: 1.8,
       pageMargin: 20,
       textColor: '#2c291f',
       mutedColor: '#756e5d',
@@ -455,9 +452,9 @@ export const STYLE_PRESETS: Array<{
       bgSoftColor: '#f6f2e6',
       quoteBgColor: '#f7eed8',
       accentColor: '#936b1f',
-      h1Mode: 'panel',
-      h2Mode: 'chip',
-      h3Mode: 'marker',
+      h1Mode: 'plain',
+      h2Mode: 'plain',
+      h3Mode: 'plain',
       h4Mode: 'plain',
       quoteMode: 'note',
       quoteMode2: 'panel',
@@ -470,11 +467,11 @@ export const STYLE_PRESETS: Array<{
       headingAccent: '#936b1f',
       quoteAccent: '#936b1f',
       letterSpacing: '',
-      paragraphSpacing: 1.5,
+      paragraphSpacing: 1,
       boldColor: '#6b5423',
-      boldMode: 'marker',
+      boldMode: 'color',
       underlineColor: '#936b1f',
-      underlineMode: 'marker',
+      underlineMode: 'solid',
       canvasColor: '#fffdf8',
     },
   },
@@ -559,16 +556,18 @@ export const useSettingsStore = defineStore('settings', () => {
     fontFamilyKey.value = MAGAZINE_DEFAULTS.fontFamilyKey
   }
 
-  if (!VALID_FONT_SIZES.includes(Number(fontSize.value)))
+  if (!Number.isFinite(fontSize.value) || fontSize.value < 10 || fontSize.value > 32)
     fontSize.value = MAGAZINE_DEFAULTS.fontSize
-  if (!VALID_LINE_HEIGHTS.includes(Number(lineHeight.value))) {
+  if (!Number.isFinite(lineHeight.value) || lineHeight.value < 1 || lineHeight.value > 3) {
     lineHeight.value = MAGAZINE_DEFAULTS.lineHeight
   }
-  if (pageMarginVersion.value < 2 && Number(pageMargin.value) === 24) {
-    pageMargin.value = MAGAZINE_DEFAULTS.pageMargin
+  if (pageMarginVersion.value < 2) {
+    if (Number(pageMargin.value) === 24) pageMargin.value = MAGAZINE_DEFAULTS.pageMargin
+    // Complete the legacy migration even when the initial margin did not need changing.
+    // Later explicit values (including Agent requests for 24) must survive reload.
     pageMarginVersion.value = 2
   }
-  if (!VALID_PAGE_MARGINS.includes(Number(pageMargin.value))) {
+  if (!Number.isFinite(pageMargin.value) || pageMargin.value < 0 || pageMargin.value > 48) {
     pageMargin.value = MAGAZINE_DEFAULTS.pageMargin
   }
   if (!VALID_PARAGRAPH_SPACINGS.includes(Number(paragraphSpacing.value))) {

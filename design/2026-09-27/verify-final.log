@@ -1,0 +1,82 @@
+npm warn Unknown user config "shamefully-hoist". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> markdown-to-wechat@2.0.1 verify
+> npm run type-check && npm run lint && npm test && npm run build-only && npm run check:secrets
+
+npm warn Unknown env config "shamefully-hoist". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "shamefully-hoist". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> markdown-to-wechat@2.0.1 type-check
+> vue-tsc --build
+
+npm warn Unknown env config "shamefully-hoist". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "shamefully-hoist". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> markdown-to-wechat@2.0.1 lint
+> npm run lint:oxlint && npm run lint:eslint
+
+npm warn Unknown env config "shamefully-hoist". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "shamefully-hoist". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> markdown-to-wechat@2.0.1 lint:oxlint
+> oxlint .
+
+Found 0 warnings and 0 errors.
+Finished in 41ms on 95 files with 101 rules using 18 threads.
+npm warn Unknown env config "shamefully-hoist". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "shamefully-hoist". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> markdown-to-wechat@2.0.1 lint:eslint
+> eslint . --cache
+
+npm warn Unknown env config "shamefully-hoist". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "shamefully-hoist". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> markdown-to-wechat@2.0.1 test
+> vitest run
+
+
+ RUN  v4.1.11 C:/Ansel_Work/10_Projects/20_ContentTools/markdown-to-wechat
+
+
+ Test Files  29 passed (29)
+      Tests  256 passed (256)
+   Start at  11:56:41
+   Duration  8.45s (transform 2.02s, setup 0ms, import 3.88s, tests 11.01s, environment 7ms)
+
+npm warn Unknown env config "shamefully-hoist". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "shamefully-hoist". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> markdown-to-wechat@2.0.1 build-only
+> vite build
+
+vite v8.1.5 building client environment for production...
+[2K
+transforming...✓ 136 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                               1.23 kB │ gzip:   0.76 kB
+dist/assets/EditorPane-Bh6vlTmk.css           2.69 kB │ gzip:   0.88 kB
+dist/assets/FeedbackModal-Dx4E6O6Z.css        4.93 kB │ gzip:   1.12 kB
+dist/assets/AgentControlPanel-CZTlB87K.css    5.24 kB │ gzip:   1.36 kB
+dist/assets/index-9BZx3BT2.css               54.27 kB │ gzip:  10.90 kB
+dist/assets/useModalFocus-DfKafodZ.js         1.18 kB │ gzip:   0.67 kB
+dist/assets/PreflightModal-B3-Tu-jR.js        3.40 kB │ gzip:   1.50 kB
+dist/assets/FeedbackModal-Df7N5xBf.js         8.10 kB │ gzip:   3.86 kB
+dist/assets/AgentControlPanel-CsqXo8qH.js    10.93 kB │ gzip:   4.99 kB
+dist/assets/AppIcon-nssLk0SO.js              99.02 kB │ gzip:  37.94 kB
+dist/assets/index-DANBHXjq.js               288.74 kB │ gzip:  91.97 kB
+dist/assets/EditorPane-x3Ht8Rrk.js          627.81 kB │ gzip: 216.77 kB
+
+✓ built in 579ms
+[plugin builtin:vite-reporter]
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+npm warn Unknown env config "shamefully-hoist". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "shamefully-hoist". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+> markdown-to-wechat@2.0.1 check:secrets
+> node scripts/check-secrets.mjs
+
+Secret scan passed (107 text files).

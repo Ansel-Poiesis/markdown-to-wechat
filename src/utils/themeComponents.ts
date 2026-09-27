@@ -13,7 +13,7 @@ function css(style: Style): string {
 }
 
 function tag(name: string, content: string, style: Style = {}): string {
-  const styleAttr = Object.keys(style).length ? ` style="${css(style)}"` : ''
+  const styleAttr = Object.keys(style).length ? ` style="${escapeText(css(style))}"` : ''
   return `<${name}${styleAttr}>${content}</${name}>`
 }
 
@@ -97,7 +97,7 @@ function decorateHeading(
     }
   }
 
-  if (mode === 'underline' || (mode === 'plain' && level > 1)) {
+  if (mode === 'underline') {
     return {
       content,
       style: {
@@ -147,150 +147,126 @@ export function createThemeRenderContext(
     showToc:
       overrides?.tocMode === 'show' ? true : overrides?.tocMode === 'hide' ? false : base.showToc,
     endMark:
-      overrides?.endMarkMode === 'hide' ? '' : overrides?.endMarkText?.trim() || base.endMark,
+      overrides?.endMarkMode === 'hide'
+        ? ''
+        : overrides?.endMarkText?.trim() ||
+          (overrides?.endMarkMode === 'show' ? base.endMark || '完' : base.endMark),
   }
   return { theme, design, article }
 }
 
+const EDITORIAL_SERIF = "'Songti SC', 'STSong', 'Noto Serif CJK SC', 'SimSun', serif"
+
 export function renderCover(content: string, context: ThemeRenderContext): string {
-  const { theme, design, article } = context
+  const { theme, design } = context
   const accent = theme.headingAccent || theme.accent
   const decoratedTitle = decorateHeading(content, 1, theme)
   const title = tag('p', decoratedTitle.content, {
     margin: '0',
     color: headingColor(theme, 1),
-    fontSize: `${(theme.fontSize || 16) + 9}px`,
-    lineHeight: '1.35',
-    fontWeight: '800',
-    textAlign: design.cover === 'minimal' || design.cover === 'ticket' ? 'left' : 'center',
-    ...decoratedTitle.style,
-  })
-  const eyebrow = tag('p', design.eyebrow, {
-    margin: '0 0 14px',
-    color: accent,
-    fontSize: '10px',
+    fontFamily: design.titleSerif ? EDITORIAL_SERIF : theme.fontFamily,
+    fontSize: `${(theme.fontSize || 16) + design.titleOffset}px`,
     lineHeight: '1.4',
     fontWeight: '700',
-    letterSpacing: '2px',
-    textAlign: design.cover === 'minimal' || design.cover === 'ticket' ? 'left' : 'center',
+    textAlign: design.cover === 'paper' ? 'center' : 'left',
+    wordBreak: 'break-word',
+    ...decoratedTitle.style,
   })
-  const meta = tag('p', `${padNumber(article.sectionCount)} SECTIONS`, {
-    margin: '14px 0 0',
-    color: theme.muted,
-    fontSize: '10px',
-    lineHeight: '1.4',
-    letterSpacing: '1px',
-    textAlign: design.cover === 'minimal' || design.cover === 'ticket' ? 'left' : 'center',
-  })
-
-  if (design.cover === 'cinnabar') {
-    return tag('section', eyebrow + title + meta, {
-      margin: '0 0 30px',
-      padding: '26px 22px 22px',
-      borderTop: `4px solid ${accent}`,
+  const rule = (width: string, color = accent, height = '2px') =>
+    tag('section', '', {
+      width,
+      height,
+      background: color,
+      margin: '0 0 14px',
+    })
+  const coverStyle: Style = { margin: '0 0 24px' }
+  if (design.cover === 'editorial') {
+    return tag('section', rule('32px') + title, {
+      ...coverStyle,
+      padding: '8px 0 20px',
       borderBottom: `1px solid ${theme.border}`,
-      background: theme.canvas,
+    })
+  }
+  if (design.cover === 'cinnabar') {
+    return tag('section', title, {
+      ...coverStyle,
+      padding: '4px 0 4px 16px',
+      borderLeft: `4px solid ${accent}`,
     })
   }
   if (design.cover === 'minimal') {
-    return tag('section', eyebrow + title + meta, {
-      margin: '0 0 32px',
-      padding: '24px 0 20px',
-      borderTop: `1px solid ${theme.color}`,
-      borderBottom: `4px solid ${theme.color}`,
+    return tag('section', title, {
+      ...coverStyle,
+      padding: '4px 0 18px',
+      borderBottom: `2px solid ${theme.color}`,
     })
   }
   if (design.cover === 'index') {
     return tag(
       'section',
-      tag('p', '01', {
-        margin: '0 0 16px',
-        color: accent,
-        fontSize: '36px',
-        lineHeight: '1',
-        fontWeight: '300',
-      }) +
-        eyebrow +
-        title +
-        meta,
-      {
-        margin: '0 0 30px',
-        padding: '24px 22px',
-        borderLeft: `4px solid ${accent}`,
-        background: theme.bgSoft,
-      },
+      title +
+        tag('section', '', {
+          height: '4px',
+          width: '48px',
+          margin: '18px 0 0',
+          background: accent,
+        }),
+      { ...coverStyle, padding: '4px 0 0' },
     )
   }
   if (design.cover === 'botanical') {
-    return tag('section', eyebrow + title + meta, {
-      margin: '0 0 34px',
-      padding: '30px 18px',
-      borderTop: `1px solid ${alpha(accent, 0.35)}`,
-      borderBottom: `1px solid ${alpha(accent, 0.35)}`,
+    return tag('section', title, {
+      ...coverStyle,
+      padding: '14px 16px',
       background: theme.bgSoft,
+      borderRadius: '0 16px 0 0',
+      borderBottom: `1px solid ${theme.border}`,
     })
   }
   if (design.cover === 'paper') {
-    return tag('section', eyebrow + title + meta, {
-      margin: '0 0 34px',
-      padding: '28px 20px',
-      border: `1px solid ${theme.border}`,
-      borderTop: `5px solid ${accent}`,
-      background: theme.bgSoft,
+    return tag('section', title, {
+      ...coverStyle,
+      padding: '16px 4px',
+      borderTop: `1px solid ${accent}`,
+      borderBottom: `1px solid ${accent}`,
     })
   }
   if (design.cover === 'soft') {
-    return tag('section', eyebrow + title + meta, {
-      margin: '0 0 30px',
-      padding: '28px 22px',
-      borderRadius: `${design.radius}px`,
-      background: theme.bgSoft,
-      boxShadow: `inset 0 0 0 1px ${alpha(accent, 0.12)}`,
-    })
-  }
-  if (design.cover === 'ticket') {
     return tag(
       'section',
-      tag('p', design.eyebrow, {
-        margin: '0 0 16px',
-        color: accent,
-        fontSize: '10px',
-        fontWeight: '700',
-        letterSpacing: '2px',
-      }) +
-        title +
-        meta,
-      {
-        margin: '0 0 30px',
-        padding: '24px 20px',
-        border: `2px solid ${theme.color}`,
-        borderLeft: `10px solid ${accent}`,
-        background: theme.bgSoft,
-      },
+      title +
+        tag('section', '', {
+          width: '24px',
+          height: '3px',
+          margin: '18px 0 0',
+          background: accent,
+        }),
+      { ...coverStyle, padding: '8px 0 4px' },
     )
   }
-  if (design.cover === 'guide') {
-    return tag('section', eyebrow + title + meta, {
-      margin: '0 0 30px',
-      padding: '26px 22px',
-      borderRadius: `${design.radius}px`,
+  if (design.cover === 'ticket') {
+    return tag('section', title, {
+      ...coverStyle,
+      padding: '16px 14px',
       border: `1px solid ${theme.border}`,
-      borderBottom: `5px solid ${accent}`,
+      borderTop: `4px solid ${theme.color}`,
+      borderBottom: `2px solid ${accent}`,
       background: theme.bgSoft,
     })
   }
-  return tag('section', eyebrow + title + meta, {
-    margin: '0 0 32px',
-    padding: '28px 18px 24px',
-    borderTop: `1px solid ${theme.border}`,
-    borderBottom: `1px solid ${theme.border}`,
+  return tag('section', title, {
+    ...coverStyle,
+    padding: '14px 16px',
+    borderLeft: `4px solid ${accent}`,
+    background: theme.bgSoft,
   })
 }
 
 export function renderToc(context: ThemeRenderContext): string {
   const { design, article, theme } = context
   const sections = article.headings.filter((heading) => heading.level === 2)
-  if (!design.showToc || sections.length < 2) return ''
+  const explicitlyShown = theme.componentOverrides?.tocMode === 'show'
+  if (!design.showToc || sections.length < (explicitlyShown ? 2 : design.tocMinSections)) return ''
   const accent = theme.headingAccent || theme.accent
   const items = sections
     .map((heading, index) =>
@@ -298,55 +274,43 @@ export function renderToc(context: ThemeRenderContext): string {
         'p',
         tag('span', padNumber(index + 1), {
           display: 'inline-block',
-          width: '30px',
+          width: '28px',
           color: accent,
-          fontSize: '11px',
-          fontWeight: '700',
+          fontSize: '12px',
+          fontWeight: '600',
         }) + escapeText(heading.text),
         {
-          margin: index === sections.length - 1 ? '0' : '0 0 9px',
+          margin: index === sections.length - 1 ? '0' : '0 0 8px',
           color: theme.color,
-          fontSize: '13px',
+          fontSize: '14px',
           lineHeight: '1.6',
         },
       ),
     )
     .join('')
   const containerStyle: Style = {
-    margin: '0 0 30px',
-    padding: '18px 20px',
-    borderLeft: `3px solid ${accent}`,
+    margin: '0 0 28px',
+    padding: '16px 18px',
     background: theme.bgSoft,
+    borderTop: `1px solid ${theme.border}`,
+    borderBottom: `1px solid ${theme.border}`,
   }
-  if (design.cover === 'minimal') {
+  if (design.cover === 'minimal' || design.cover === 'paper') {
+    Object.assign(containerStyle, { padding: '16px 0', background: 'transparent' })
+  } else if (design.cover === 'guide') {
     Object.assign(containerStyle, {
-      padding: '18px 0',
-      borderLeft: undefined,
-      borderTop: `1px solid ${theme.color}`,
-      borderBottom: `1px solid ${theme.color}`,
-      background: 'transparent',
-    })
-  } else if (design.cover === 'ticket') {
-    Object.assign(containerStyle, {
-      border: `1px dashed ${accent}`,
-      borderLeft: `7px solid ${accent}`,
-      background: theme.canvas,
-    })
-  } else if (design.cover === 'paper') {
-    Object.assign(containerStyle, {
-      borderLeft: `1px solid ${theme.border}`,
-      borderRight: `1px solid ${theme.border}`,
-      background: theme.bgSoft,
+      borderLeft: `2px solid ${accent}`,
+      borderTop: undefined,
+      borderBottom: undefined,
     })
   }
   return tag(
     'section',
-    tag('p', 'CONTENTS', {
-      margin: '0 0 14px',
+    tag('p', '本文目录', {
+      margin: '0 0 12px',
       color: theme.muted,
-      fontSize: '10px',
-      fontWeight: '700',
-      letterSpacing: '2px',
+      fontSize: '12px',
+      fontWeight: '600',
     }) + items,
     containerStyle,
   )
@@ -361,52 +325,79 @@ export function renderSectionHeading(
   const { design, theme } = context
   const accent = theme.headingAccent || theme.accent
   const decoratedTitle = decorateHeading(content, level, theme)
-  const size = `${(theme.fontSize || 16) + (level === 2 ? 4 : level === 3 ? 2 : 0)}px`
   const base: Style = {
-    margin: level === 2 ? '34px 0 18px' : '26px 0 12px',
+    margin: level === 2 ? `${design.sectionGap}px 0 16px` : '24px 0 12px',
     color: headingColor(theme, level),
-    fontSize: size,
+    fontFamily: level === 2 && design.titleSerif ? EDITORIAL_SERIF : theme.fontFamily,
+    fontSize: `${(theme.fontSize || 16) + (level === 2 ? 5 : level === 3 ? 2 : 0)}px`,
     lineHeight: '1.5',
-    fontWeight: '750',
+    fontWeight: level === 2 ? '700' : '600',
   }
   if (level > 2) return tag('p', decoratedTitle.content, { ...base, ...decoratedTitle.style })
   if (design.section === 'numbered') {
+    const numberStyle: Style = {
+      display: 'inline-block',
+      marginRight: '12px',
+      color: accent,
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '13px',
+      lineHeight: '1.5',
+      fontWeight: '600',
+      verticalAlign: 'middle',
+    }
+    if (design.cover === 'index') {
+      Object.assign(numberStyle, {
+        padding: '2px 6px',
+        color: theme.canvas || '#ffffff',
+        background: accent,
+      })
+    } else if (design.cover === 'guide') {
+      Object.assign(numberStyle, {
+        padding: '3px 7px',
+        background: theme.bgSoft,
+        border: `1px solid ${theme.border}`,
+        borderRadius: '3px',
+      })
+    }
+    return tag(
+      'section',
+      tag('span', padNumber(sectionIndex), numberStyle) +
+        tag('span', decoratedTitle.content, decoratedTitle.style),
+      { ...base, paddingBottom: '10px', borderBottom: `1px solid ${theme.border}` },
+    )
+  }
+  if (design.section === 'label') {
+    const clipping = design.cover === 'ticket'
     return tag(
       'section',
       tag('span', padNumber(sectionIndex), {
         display: 'inline-block',
-        marginRight: '12px',
-        color: accent,
-        fontSize: '28px',
-        lineHeight: '1',
-        fontWeight: '300',
+        marginRight: '10px',
+        padding: clipping ? '2px 5px' : undefined,
+        color: clipping ? theme.canvas || '#ffffff' : accent,
+        background: clipping ? theme.color : undefined,
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '12px',
+        fontWeight: '600',
         verticalAlign: 'middle',
-      }) +
-        tag('span', decoratedTitle.content, { verticalAlign: 'middle', ...decoratedTitle.style }),
-      base,
-    )
-  }
-  if (design.section === 'label') {
-    return tag(
-      'p',
-      tag('span', `${padNumber(sectionIndex)} · `, { color: accent }) +
-        tag('span', decoratedTitle.content, decoratedTitle.style),
+      }) + tag('span', decoratedTitle.content, decoratedTitle.style),
       {
         ...base,
-        padding: '8px 12px',
-        borderLeft: `5px solid ${accent}`,
-        background: theme.bgSoft,
+        paddingBottom: clipping ? '10px' : undefined,
+        borderBottom: clipping ? `1px dashed ${theme.border}` : undefined,
       },
     )
   }
   if (design.section === 'marker') {
-    return tag('p', decoratedTitle.content, {
-      ...base,
-      display: 'inline-block',
-      padding: '2px 6px',
-      background: `linear-gradient(transparent 55%,${alpha(accent, 0.22)} 0)`,
-      ...decoratedTitle.style,
-    })
+    return tag(
+      'section',
+      tag('span', decoratedTitle.content, {
+        padding: '0 0 5px',
+        borderBottom: `3px solid ${alpha(accent, 0.25)}`,
+        ...decoratedTitle.style,
+      }),
+      base,
+    )
   }
   if (design.section === 'stamp') {
     return tag(
@@ -414,156 +405,145 @@ export function renderSectionHeading(
       tag('span', padNumber(sectionIndex), {
         display: 'inline-block',
         marginRight: '10px',
-        padding: '2px 6px',
+        padding: '2px 5px',
         color: accent,
         border: `1px solid ${accent}`,
-        fontSize: '11px',
+        fontSize: '12px',
+        fontWeight: '400',
         lineHeight: '1.4',
         verticalAlign: 'middle',
-      }) +
-        tag('span', decoratedTitle.content, { verticalAlign: 'middle', ...decoratedTitle.style }),
+      }) + tag('span', decoratedTitle.content, decoratedTitle.style),
       base,
     )
   }
-  return tag('p', decoratedTitle.content, {
-    ...base,
-    paddingBottom: '8px',
-    borderBottom: `2px solid ${accent}`,
-    ...decoratedTitle.style,
-  })
+  return tag(
+    'section',
+    tag('section', '', {
+      width: design.cover === 'soft' ? '16px' : '24px',
+      height: '1px',
+      background: accent,
+      margin: '0 0 12px',
+    }) + tag('p', decoratedTitle.content, { margin: '0', ...decoratedTitle.style }),
+    base,
+  )
 }
 
 export function renderQuote(content: string, context: ThemeRenderContext): string {
   const { design, theme } = context
   const accent = theme.quoteAccent || theme.accent
   const base: Style = {
-    margin: '22px 0',
+    margin: '24px 0',
     color: theme.color,
-    fontSize: `${Math.max((theme.fontSize || 16) - 1, 13)}px`,
+    fontSize: `${theme.fontSize || 16}px`,
     lineHeight: '1.85',
   }
   if (design.quote === 'pull') {
-    return tag(
-      'section',
-      tag('p', '“', { margin: '0 0 -12px', color: accent, fontSize: '40px', lineHeight: '1' }) +
-        content,
-      {
-        ...base,
-        padding: '18px 20px',
-        borderTop: `1px solid ${accent}`,
-        borderBottom: `1px solid ${accent}`,
-        textAlign: 'center',
-      },
-    )
+    const portrait = design.cover === 'soft'
+    return tag('section', content, {
+      ...base,
+      margin: '28px 8px',
+      padding: portrait ? '8px 0 8px 16px' : '16px 0 8px',
+      fontFamily: EDITORIAL_SERIF,
+      fontSize: `${(theme.fontSize || 16) + 1}px`,
+      borderLeft: portrait ? `2px solid ${accent}` : undefined,
+      borderTop: portrait ? undefined : `1px solid ${theme.border}`,
+      borderBottom: portrait ? undefined : `1px solid ${theme.border}`,
+    })
   }
-  if (design.quote === 'panel')
+  if (design.quote === 'panel') {
     return tag('section', content, {
       ...base,
-      padding: '18px 20px',
+      padding: '16px 16px 8px',
       background: theme.quoteBg,
+      borderTop: design.cover === 'ticket' ? `2px solid ${accent}` : undefined,
+      borderRadius: design.cover === 'index' ? '4px' : undefined,
+    })
+  }
+  if (design.quote === 'note') {
+    return tag('section', content, {
+      ...base,
+      padding: '14px 16px 6px',
+      background: theme.quoteBg,
+      borderLeft: `2px solid ${accent}`,
+    })
+  }
+  if (design.quote === 'outline') {
+    return tag('section', content, {
+      ...base,
+      padding: '16px 16px 8px',
       border: `1px solid ${theme.border}`,
+      fontFamily: EDITORIAL_SERIF,
     })
-  if (design.quote === 'note')
-    return tag('section', content, {
-      ...base,
-      padding: '16px 18px',
-      background: theme.quoteBg,
-      borderLeft: `4px solid ${accent}`,
-      borderRadius: `${design.radius}px`,
-    })
-  if (design.quote === 'outline')
-    return tag('section', content, {
-      ...base,
-      padding: '17px 19px',
-      border: `1px dashed ${accent}`,
-    })
+  }
   return tag('section', content, {
     ...base,
-    paddingLeft: '16px',
-    borderLeft: `3px solid ${accent}`,
+    padding: '4px 0 0 16px',
+    borderLeft: `2px solid ${accent}`,
   })
 }
 
-export function renderList(items: string[], ordered: boolean, context: ThemeRenderContext): string {
+export function renderList(
+  items: string[],
+  ordered: boolean,
+  context: ThemeRenderContext,
+  start = 1,
+): string {
   const { design, theme } = context
   const variant = ordered ? design.orderedList : design.unorderedList
-  const accent = theme.accent
   const rendered = items
     .map((content, index) => {
-      const marker = ordered ? padNumber(index + 1) : '•'
-      if (variant === 'cards' || variant === 'steps') {
-        return tag(
-          'section',
-          tag('span', marker, {
-            display: 'inline-block',
-            minWidth: ordered ? '30px' : '20px',
-            marginRight: '10px',
-            color: accent,
-            fontSize: ordered ? '13px' : '18px',
-            fontWeight: '800',
-            verticalAlign: 'top',
-          }) +
-            tag('span', content, {
-              display: 'inline-block',
-              maxWidth: '88%',
-              verticalAlign: 'top',
-            }),
-          {
-            margin: '0 0 9px',
-            padding: '11px 13px',
-            color: theme.color,
-            fontSize: `${theme.fontSize || 16}px`,
-            lineHeight: '1.7',
-            border: `1px solid ${theme.border}`,
-            borderRadius: `${design.radius}px`,
-            background: variant === 'cards' ? theme.bgSoft : theme.canvas,
-          },
-        )
+      const marker = ordered ? padNumber(index + start) : '•'
+      const markerStyle: Style = {
+        display: 'inline-block',
+        width: ordered ? '30px' : '22px',
+        color: theme.accent,
+        fontSize: ordered ? '13px' : '16px',
+        lineHeight: '1.8',
+        fontWeight: '600',
+        verticalAlign: 'top',
       }
-      if (variant === 'ledger') {
-        return tag(
-          'p',
-          tag('span', marker, {
-            display: 'inline-block',
-            width: '34px',
-            color: accent,
-            fontWeight: '700',
-          }) + content,
-          {
-            margin: '0',
-            padding: '10px 0',
-            color: theme.color,
-            fontSize: `${theme.fontSize || 16}px`,
-            lineHeight: '1.7',
-            borderBottom: `1px solid ${theme.border}`,
-          },
-        )
+      const rowStyle: Style = {
+        margin: '0 0 8px',
+        color: theme.color,
+        fontSize: `${theme.fontSize || 16}px`,
+        lineHeight: '1.8',
+      }
+      if (variant === 'steps') {
+        Object.assign(markerStyle, { width: '32px', fontWeight: '700' })
+        Object.assign(rowStyle, { padding: '10px 0', borderBottom: `1px solid ${theme.border}` })
+      } else if (variant === 'cards') {
+        Object.assign(rowStyle, {
+          padding: '12px 14px',
+          background: theme.bgSoft,
+          borderRadius: '4px',
+        })
+      } else if (variant === 'ledger') {
+        Object.assign(rowStyle, {
+          margin: '0',
+          padding: '10px 0',
+          borderBottom: `1px solid ${theme.border}`,
+        })
       }
       return tag(
-        'p',
-        tag('span', marker, {
-          display: 'inline-block',
-          width: ordered ? '32px' : '22px',
-          color: accent,
-          fontWeight: '700',
-        }) + content,
-        {
-          margin: '0 0 8px',
-          color: theme.color,
-          fontSize: `${theme.fontSize || 16}px`,
-          lineHeight: '1.75',
-        },
+        'section',
+        tag('span', marker, markerStyle) +
+          tag('section', content, {
+            display: 'inline-block',
+            width: `calc(100% - ${ordered ? 34 : 24}px)`,
+            verticalAlign: 'top',
+          }),
+        rowStyle,
       )
     })
     .join('')
-  return tag('section', rendered, { margin: '0 0 20px' })
+  return tag('section', rendered, { margin: '0 0 24px' })
 }
 
 export function renderTable(tableHtml: string, context: ThemeRenderContext): string {
   const { design, theme } = context
   return tag('section', tableHtml, {
-    margin: '22px 0',
-    padding: design.table === 'ledger' ? '0' : '4px',
+    margin: '24px 0',
+    padding: '0',
     overflowX: 'auto',
     border: design.table === 'grid' ? `1px solid ${theme.border}` : undefined,
     background: design.table === 'striped' ? theme.bgSoft : theme.canvas,
@@ -579,9 +559,9 @@ export function renderImage(image: string, caption: string, context: ThemeRender
         ? tag('p', caption, {
             margin: '9px 0 0',
             color: theme.muted,
-            fontSize: '12px',
+            fontSize: '13px',
             lineHeight: '1.6',
-            textAlign: 'center',
+            textAlign: design.cover === 'paper' ? 'left' : 'center',
           })
         : ''),
     {
@@ -613,33 +593,15 @@ export function renderDivider(context: ThemeRenderContext): string {
 export function renderEndMark(context: ThemeRenderContext): string {
   const { design, theme } = context
   if (!design.endMark) return ''
-  return tag(
-    'section',
-    tag('span', '', {
-      display: 'inline-block',
-      width: '34px',
-      height: '1px',
-      marginRight: '12px',
-      background: theme.border,
-      verticalAlign: 'middle',
-    }) +
-      tag('span', escapeText(design.endMark), {
-        color: theme.muted,
-        fontSize: '10px',
-        fontWeight: '700',
-        letterSpacing: '2px',
-        verticalAlign: 'middle',
-      }) +
-      tag('span', '', {
-        display: 'inline-block',
-        width: '34px',
-        height: '1px',
-        marginLeft: '12px',
-        background: theme.border,
-        verticalAlign: 'middle',
-      }),
-    { margin: '36px 0 10px', textAlign: 'center' },
-  )
+  return tag('section', escapeText(design.endMark), {
+    margin: '32px 0 8px',
+    paddingTop: '12px',
+    borderTop: `1px solid ${theme.border}`,
+    color: theme.muted,
+    fontSize: '13px',
+    lineHeight: '1.6',
+    textAlign: 'center',
+  })
 }
 
 export function renderCallout(
@@ -649,48 +611,44 @@ export function renderCallout(
   context: ThemeRenderContext,
 ): string {
   const { theme, design } = context
-  const accent = theme.accent
-  if (kind === 'signature') {
-    return tag(
-      'section',
-      tag('p', title || '作者', {
-        margin: '0 0 8px',
-        color: accent,
-        fontSize: '12px',
-        fontWeight: '700',
-      }) + content,
-      {
-        margin: '28px 0 0',
-        padding: '18px 0 0',
-        borderTop: `1px solid ${theme.border}`,
-        color: theme.muted,
+  const label = title
+    ? tag('p', title, {
+        margin: '0 0 10px',
+        color: theme.accent,
         fontSize: '13px',
-        lineHeight: '1.7',
-      },
-    )
-  }
-  if (kind === 'lead') {
-    return tag('section', content, {
-      margin: '0 0 26px',
-      padding: '18px 20px',
-      color: theme.color,
-      fontSize: `${(theme.fontSize || 16) + 1}px`,
-      lineHeight: '1.85',
-      borderLeft: `4px solid ${accent}`,
-      background: theme.bgSoft,
+        fontWeight: '600',
+        lineHeight: '1.5',
+      })
+    : ''
+  if (kind === 'signature') {
+    return tag('section', label + content, {
+      margin: '32px 0 0',
+      padding: '16px 0 0',
+      borderTop: `1px solid ${theme.border}`,
+      color: theme.muted,
+      fontSize: '14px',
+      lineHeight: '1.8',
     })
   }
-  return tag(
-    'section',
-    (title
-      ? tag('p', title, { margin: '0 0 8px', color: accent, fontSize: '13px', fontWeight: '800' })
-      : '') + content,
-    {
-      margin: '20px 0',
-      padding: '16px 18px',
-      border: `1px solid ${theme.border}`,
-      borderRadius: `${design.radius}px`,
-      background: theme.bgSoft,
-    },
-  )
+  if (kind === 'lead') {
+    const isNarrative = ['editorial', 'cinnabar', 'soft', 'botanical', 'paper'].includes(
+      design.cover,
+    )
+    return tag('section', label + content, {
+      margin: '0 0 28px',
+      padding: isNarrative ? '0 0 4px' : '16px 16px 0',
+      color: theme.color,
+      lineHeight: '1.85',
+      borderBottom: isNarrative ? `1px solid ${theme.border}` : undefined,
+      borderLeft: !isNarrative ? `2px solid ${theme.accent}` : undefined,
+      background: isNarrative ? undefined : theme.bgSoft,
+    })
+  }
+  return tag('section', label + content, {
+    margin: '24px 0',
+    padding: '16px 16px 0',
+    border: `1px solid ${theme.border}`,
+    borderRadius: `${Math.min(design.radius, 4)}px`,
+    background: theme.bgSoft,
+  })
 }

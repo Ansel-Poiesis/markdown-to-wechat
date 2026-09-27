@@ -1,6 +1,7 @@
 import {
   CATEGORY_LABELS,
   formatFeedbackBody,
+  prepareFeedbackPayload,
   type FeedbackPayload,
 } from './feedback-protocol'
 
@@ -33,7 +34,10 @@ export function buildFeedbackFormData(payload: FeedbackPayload): FormData {
   data.set('反馈类型', CATEGORY_LABELS[payload.category])
   data.set('提交时间', payload.createdAt)
   data.set('反馈详情', formatFeedbackBody(payload))
-  data.set('_subject', `[微信 Markdown 排版][${payload.feedbackId}][${CATEGORY_LABELS[payload.category]}]`)
+  data.set(
+    '_subject',
+    `[微信 Markdown 排版][${payload.feedbackId}][${CATEGORY_LABELS[payload.category]}]`,
+  )
   data.set('_template', 'table')
   data.set('_captcha', 'false')
   data.set('_honey', '')
@@ -41,6 +45,7 @@ export function buildFeedbackFormData(payload: FeedbackPayload): FormData {
 }
 
 export async function submitFeedback(payload: FeedbackPayload): Promise<FeedbackDelivery> {
+  payload = prepareFeedbackPayload(payload)
   const endpoint = resolveFeedbackEndpoint()
   if (endpoint) {
     const controller = new AbortController()
@@ -49,11 +54,14 @@ export async function submitFeedback(payload: FeedbackPayload): Promise<Feedback
       const formSubmit = new URL(endpoint).hostname === 'formsubmit.co'
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: formSubmit ? { Accept: 'application/json' } : { 'Content-Type': 'application/json' },
+        headers: formSubmit
+          ? { Accept: 'application/json' }
+          : { 'Content-Type': 'application/json' },
         body: formSubmit
           ? buildFeedbackFormData(payload)
           : JSON.stringify({ product: 'markdown-to-wechat', ...payload }),
         credentials: 'omit',
+        redirect: 'error',
         signal: controller.signal,
       })
       const result = (await response.json().catch(() => null)) as {
@@ -68,6 +76,8 @@ export async function submitFeedback(payload: FeedbackPayload): Promise<Feedback
       if (formSubmit && String(result?.success) !== 'true') {
         throw new Error(result?.message || '反馈服务暂时不可用')
       }
+      if (!formSubmit && result?.accepted !== true)
+        throw new Error('反馈服务未确认接收，请稍后重试')
       return 'endpoint'
     } finally {
       window.clearTimeout(timeout)
@@ -89,8 +99,13 @@ function resolveFeedbackEndpoint(): string | null {
   if (!configured) return null
 
   const endpoint = new URL(configured, window.location.href)
-  const localEndpoint = ['localhost', '127.0.0.1', '::1'].includes(endpoint.hostname)
-  if (endpoint.protocol !== 'https:' && !localEndpoint) {
+  const localEndpoint = ['localhost', '127.0.0.1', '[::1]'].includes(endpoint.hostname)
+  if (
+    (endpoint.protocol !== 'https:' && !(endpoint.protocol === 'http:' && localEndpoint)) ||
+    endpoint.username ||
+    endpoint.password ||
+    endpoint.hash
+  ) {
     throw new Error('反馈服务必须使用 HTTPS')
   }
   return endpoint.toString()

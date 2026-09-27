@@ -4,12 +4,14 @@ import { useEditorStore } from '@/stores/editor'
 import { useThemeStore } from '@/stores/theme'
 import { useUiStore } from '@/stores/ui'
 import { useDraftStore } from '@/stores/drafts'
+import { useSettingsStore } from '@/stores/settings'
+import { renderAgentArticle } from '@/agent/render'
+import type { AgentRenderRequest } from '@/agent/contract'
 import { renderMarkdown } from '@/utils/markdownRenderer'
 import { validateWechatHtml } from '@/utils/wechatHtml'
 import { useMarkdownAnalyzer } from '@/composables/useMarkdownAnalyzer'
 import { useMarkdownWarnings } from '@/composables/useMarkdownWarnings'
 import { useClipboard } from '@/composables/useClipboard'
-import { useSmartFormat } from '@/composables/useSmartFormat'
 import { useExport } from '@/composables/useExport'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { welcomeMarkdown } from '@/config/templates'
@@ -36,14 +38,16 @@ const EditorPane = defineAsyncComponent({
 })
 const PreflightModal = defineAsyncComponent(() => import('@/components/modals/PreflightModal.vue'))
 const FeedbackModal = defineAsyncComponent(() => import('@/components/modals/FeedbackModal.vue'))
+const AgentControlPanel = defineAsyncComponent(() => import('@/components/AgentControlPanel.vue'))
 
 const editorStore = useEditorStore()
 const themeStore = useThemeStore()
 const ui = useUiStore()
 const draftStore = useDraftStore()
+const settingsStore = useSettingsStore()
+const agentControlOpen = ref(false)
 const { isMobile } = useBreakpoint()
 const { copyRenderedHtml } = useClipboard()
-const { formatMarkdown } = useSmartFormat()
 const { exportHtml } = useExport()
 
 watch(
@@ -66,8 +70,14 @@ const content = computed({
 })
 
 function recordDraftSave(saved: boolean) {
-  draftSaveFailed.value = !saved
+  draftSaveFailed.value = !saved || Boolean(editorStore.persistenceError)
   draftSaveRevision.value += 1
+}
+
+function warnBeforeUnsavedExit(event: BeforeUnloadEvent) {
+  if (!draftStore.persistenceError && !editorStore.persistenceError) return
+  event.preventDefault()
+  event.returnValue = ''
 }
 
 function handleGlobalKeydown(event: KeyboardEvent) {
@@ -83,6 +93,10 @@ function handleGlobalKeydown(event: KeyboardEvent) {
   }
   if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'c') {
     event.preventDefault()
+    if (renderError.value) {
+      ui.showToast(renderError.value, 'error')
+      return
+    }
     const hasBlocking = warnings.value.some((w) => w.level === 'danger')
     if (hasBlocking) {
       ui.openModal('preflight')
@@ -93,34 +107,53 @@ function handleGlobalKeydown(event: KeyboardEvent) {
 }
 
 onMounted(() => {
-  const initialContent = draftStore.initializeWorkspace(editorStore.content, welcomeMarkdown)
+  const initialContent = draftStore.initializeWorkspace(
+    editorStore.content,
+    welcomeMarkdown,
+    editorStore.recovery,
+  )
   if (initialContent !== editorStore.content) {
     editorStore.setContent(initialContent)
   }
+  recordDraftSave(!draftStore.persistenceError)
   document.addEventListener('keydown', handleGlobalKeydown)
+  window.addEventListener('beforeunload', warnBeforeUnsavedExit)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleGlobalKeydown)
+  window.removeEventListener('beforeunload', warnBeforeUnsavedExit)
 })
 
 watch(
-  () => draftStore.persistenceError,
+  () => draftStore.persistenceError || editorStore.persistenceError,
   (error, previousError) => {
+    draftSaveFailed.value = Boolean(error)
     if (error && error !== previousError) ui.showToast(error, 'error')
   },
+  { immediate: true },
 )
 
 const { stats } = useMarkdownAnalyzer(content)
 const { warnings: markdownWarnings } = useMarkdownWarnings(content)
 const scrollRatio = ref<number>()
 
-const renderedHtml = computed(() => {
-  return renderMarkdown(content.value, themeStore.themeBase, themeStore.currentCodeTheme)
+const renderResult = computed(() => {
+  try {
+    const html = renderMarkdown(content.value, themeStore.themeBase, themeStore.currentCodeTheme)
+    return { html, issues: validateWechatHtml(html).issues, error: '' }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '渲染未能完成，请缩短原稿后重试。'
+    return { html: '', issues: [], error: `预览已暂停：${message} 原稿已保留。` }
+  }
 })
-
-const htmlValidation = computed(() => validateWechatHtml(renderedHtml.value))
-const warnings = computed(() => [...markdownWarnings.value, ...htmlValidation.value.issues])
+const renderedHtml = computed(() => renderResult.value.html)
+const renderError = computed(() => renderResult.value.error)
+const warnings = computed(() => [
+  ...markdownWarnings.value,
+  ...renderResult.value.issues,
+  ...(renderError.value ? [{ level: 'danger' as const, text: renderError.value }] : []),
+])
 const preflightCounts = computed(() => ({
   danger: warnings.value.filter((warning) => warning.level === 'danger').length,
   warn: warnings.value.filter((warning) => warning.level === 'warn').length,
@@ -143,26 +176,56 @@ function loadSample() {
 }
 
 function handleExport() {
-  const html = renderMarkdown(
-    editorStore.content,
-    themeStore.themeBase,
-    themeStore.currentCodeTheme,
-  )
-  exportHtml(html)
-  ui.showToast('HTML 已导出')
+  if (renderError.value) {
+    ui.showToast(renderError.value, 'error')
+    return
+  }
+  try {
+    exportHtml(renderedHtml.value)
+    ui.showToast('已发起 HTML 下载')
+  } catch {
+    ui.showToast('HTML 导出失败，请重试或检查浏览器下载权限。', 'error')
+  }
+}
+
+function openAgentDraft(request: AgentRenderRequest) {
+  try {
+    const prepared = renderAgentArticle(request)
+    if (!draftStore.updateActiveDraft(content.value) || editorStore.persistenceError) {
+      throw new Error('当前原稿尚未保存成功，请先备份原稿，再打开 Agent 稿件。')
+    }
+    draftStore.createDraft(prepared.request.markdown!, prepared.request.title)
+    editorStore.setContent(prepared.request.markdown!)
+    settingsStore.applyStylePreset(prepared.request.theme)
+    const options = prepared.rendered.options
+    settingsStore.fontFamilyKey = options.fontFamily
+    settingsStore.fontSize = options.fontSize
+    settingsStore.lineHeight = options.lineHeight
+    settingsStore.pageMargin = options.pageMargin
+    settingsStore.accentColor = options.accent
+    settingsStore.textColor = options.textColor
+    settingsStore.canvasColor = options.canvas
+    settingsStore.componentTocMode = options.toc
+    settingsStore.componentEndMarkMode = options.endMark
+    settingsStore.componentEndMarkText = options.endMarkText
+    themeStore.currentCodeThemeKey = options.codeTheme
+    recordDraftSave(!draftStore.persistenceError)
+    agentControlOpen.value = false
+    mobileTab.value = 'preview'
+    ui.showToast(
+      draftSaveFailed.value
+        ? '已在内存中打开新稿，保存失败，请另行备份。'
+        : '已作为新草稿打开，原稿已保留。',
+      draftSaveFailed.value ? 'error' : 'success',
+    )
+  } catch (error) {
+    ui.showToast(error instanceof Error ? error.message : 'Agent 稿件未能打开。', 'error')
+  }
 }
 
 watch(
   () => content.value,
-  (v, oldV) => {
-    if (oldV === '' && v.length > 0) {
-      const formatted = formatMarkdown(v)
-      if (formatted !== v) {
-        editorStore.setContent(formatted)
-        recordDraftSave(draftStore.updateActiveDraft(formatted))
-        return
-      }
-    }
+  (v) => {
     recordDraftSave(draftStore.updateActiveDraft(v))
   },
 )
@@ -173,16 +236,16 @@ watch(
     :rendered-html="renderedHtml"
     :warnings="warnings"
     :stats="stats"
+    :render-error="renderError"
+    :agent-control-open="agentControlOpen"
     @export-html="handleExport"
     @feedback="ui.openModal('feedback')"
+    @agent-control="agentControlOpen = true"
   />
 
   <!-- Desktop layout: Editor | Settings | Preview -->
   <template v-if="!isMobile">
-    <main
-      class="desktop-workspace mx-auto w-full gap-3 px-4 py-3 min-h-0"
-      style="height: calc(100dvh - 64px)"
-    >
+    <main class="desktop-workspace mx-auto w-full px-4 min-h-0" style="height: calc(100dvh - 64px)">
       <EditorPane
         v-model="content"
         :save-revision="draftSaveRevision"
@@ -192,7 +255,12 @@ watch(
         @scroll="(r: number) => (scrollRatio = r)"
       />
       <SettingsPanel :stats="stats" :warnings="warnings" class="min-h-0 min-w-0" />
-      <PreviewPane :html="renderedHtml" :scroll-ratio="scrollRatio" class="min-h-0 min-w-0" />
+      <PreviewPane
+        :html="renderedHtml"
+        :error="renderError"
+        :scroll-ratio="scrollRatio"
+        class="min-h-0 min-w-0"
+      />
     </main>
   </template>
 
@@ -200,7 +268,7 @@ watch(
   <template v-else>
     <main
       class="flex flex-col min-h-0 w-full max-w-[100vw] overflow-hidden"
-      style="height: calc(100dvh - 64px - 48px)"
+      style="height: calc(100dvh - 64px - 48px - env(safe-area-inset-bottom, 0px))"
     >
       <div v-show="mobileTab === 'editor'" class="flex-1 min-h-0 w-full min-w-0">
         <EditorPane
@@ -214,6 +282,7 @@ watch(
       <PreviewPane
         v-show="mobileTab === 'preview'"
         :html="renderedHtml"
+        :error="renderError"
         :scroll-ratio="1"
         class="flex-1 min-h-0 w-full min-w-0"
       />
@@ -226,13 +295,14 @@ watch(
     </main>
 
     <!-- Mobile tab bar -->
-    <nav class="mobile-nav safe-area-bottom">
+    <nav class="mobile-nav safe-area-bottom" aria-label="工作区切换">
       <button
         v-for="tab in ['editor', 'preview', 'inspector'] as const"
         :key="tab"
         type="button"
         class="mobile-nav__button"
         :class="mobileTab === tab ? 'mobile-nav__button--active' : ''"
+        :aria-current="mobileTab === tab ? 'page' : undefined"
         @click="mobileTab = tab"
       >
         <AppIcon
@@ -251,6 +321,9 @@ watch(
       name="toast"
       tag="div"
       class="fixed bottom-5 right-5 z-[1000] flex flex-col gap-2"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
     >
       <div
         v-for="toast in ui.toasts"
@@ -268,11 +341,24 @@ watch(
     </TransitionGroup>
   </Teleport>
 
-  <PreflightModal :warnings="warnings" :counts="preflightCounts" :html="renderedHtml" />
+  <PreflightModal
+    :warnings="warnings"
+    :counts="preflightCounts"
+    :html="renderedHtml"
+    :render-error="renderError"
+  />
   <FeedbackModal
     :open="Boolean(ui.activeModals.feedback)"
     :diagnostics="feedbackDiagnostics"
     @close="ui.closeModal('feedback')"
+  />
+  <AgentControlPanel
+    v-if="agentControlOpen"
+    :open="agentControlOpen"
+    :markdown="content"
+    :initial-theme="themeStore.themeBase.designKey || 'qiuhe'"
+    @close="agentControlOpen = false"
+    @apply="openAgentDraft"
   />
 </template>
 
@@ -280,13 +366,24 @@ watch(
 .desktop-workspace {
   max-width: min(1760px, 100vw);
   display: grid;
-  grid-template-columns: minmax(520px, 1fr) minmax(340px, 0.62fr) 679px;
+  grid-template-columns: minmax(500px, 1fr) minmax(340px, 0.62fr) 679px;
   align-items: stretch;
+  gap: 18px;
+  padding-top: 18px;
+  padding-bottom: 18px;
 }
 
-@media (max-width: 1480px) {
+@media (max-width: 1599px) {
   .desktop-workspace {
-    grid-template-columns: minmax(320px, 1.15fr) minmax(292px, 0.85fr) minmax(440px, 1fr);
+    grid-template-columns: minmax(0, 1.15fr) minmax(270px, 0.85fr) minmax(370px, 1fr);
+  }
+}
+
+@media (max-width: 1279px) {
+  .desktop-workspace {
+    gap: 12px;
+    padding-top: 12px;
+    padding-bottom: 12px;
   }
 }
 
@@ -306,14 +403,14 @@ watch(
   z-index: 50;
   width: 100%;
   max-width: 100vw;
-  height: 48px;
+  height: calc(48px + env(safe-area-inset-bottom, 0px));
   display: flex;
   align-items: stretch;
   overflow: hidden;
-  border-top: 1px solid var(--color-border-subtle);
-  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
-  box-shadow: 0 -4px 14px rgb(0 0 0 / 0.04);
-  backdrop-filter: blur(14px);
+  padding: 5px 8px;
+  gap: 8px;
+  background: var(--color-surface);
+  box-shadow: 0 -3px 12px var(--neo-dark);
 }
 
 .mobile-nav__button {
@@ -321,6 +418,7 @@ watch(
   flex: 1;
   min-width: 0;
   height: 100%;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -345,11 +443,12 @@ watch(
 
 .mobile-nav__button--active {
   color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-inset-soft);
 }
 
 .mobile-nav__button--active::before {
-  background: var(--color-accent);
+  background: transparent;
 }
 
 .mobile-nav__button:focus {

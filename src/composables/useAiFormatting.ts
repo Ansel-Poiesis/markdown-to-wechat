@@ -1,9 +1,18 @@
-import { computed, getCurrentInstance, onMounted, ref, type ComputedRef } from 'vue'
+import {
+  computed,
+  getCurrentInstance,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+  type ComputedRef,
+} from 'vue'
 import { useUiStore } from '@/stores/ui'
 import { mimoFormatStream } from '@/composables/useMimoStream'
 
 interface UseAiFormattingOptions {
   content: ComputedRef<string>
+  documentId?: ComputedRef<unknown>
   applyContent: (value: string) => void
   onApplied?: () => void
   onUndone?: () => void
@@ -24,15 +33,33 @@ export function useAiFormatting(options: UseAiFormattingOptions) {
   const progressCharacters = ref(0)
   const undoSnapshot = ref<UndoSnapshot | null>(null)
   let formatAbort: AbortController | null = null
-
-  const requiresApiKey = computed(
-    () => !electronCredentialAvailable.value && !browserApiKey.value,
+  let contentRevision = 0
+  watch(
+    options.content,
+    () => {
+      contentRevision += 1
+    },
+    { flush: 'sync' },
   )
-  const canUndo = computed(
-    () => Boolean(undoSnapshot.value && options.content.value === undoSnapshot.value.formatted),
+  if (options.documentId) {
+    watch(
+      options.documentId,
+      () => {
+        formatAbort?.abort()
+        undoSnapshot.value = null
+        confirmOpen.value = false
+      },
+      { flush: 'sync' },
+    )
+  }
+
+  const requiresApiKey = computed(() => !electronCredentialAvailable.value && !browserApiKey.value)
+  const canUndo = computed(() =>
+    Boolean(undoSnapshot.value && options.content.value === undoSnapshot.value.formatted),
   )
 
   if (typeof window !== 'undefined' && getCurrentInstance()) {
+    onBeforeUnmount(() => formatAbort?.abort())
     onMounted(async () => {
       if (!window.electronAPI?.getMimoStatus) return
       try {
@@ -45,6 +72,7 @@ export function useAiFormatting(options: UseAiFormattingOptions) {
   }
 
   function requestFormat() {
+    if (formatLoading.value) return
     if (!options.content.value.trim()) {
       ui.showToast('请先输入需要排版的内容', 'error')
       return
@@ -57,31 +85,41 @@ export function useAiFormatting(options: UseAiFormattingOptions) {
   }
 
   async function confirmFormat(apiKey = '') {
+    if (formatLoading.value) return
     const resolvedKey = apiKey.trim() || browserApiKey.value
     if (!electronCredentialAvailable.value && !resolvedKey) {
       ui.showToast('请先输入 MiMo API Key', 'error')
       return
     }
     const original = options.content.value
+    if (!original.trim()) return
+    const originalRevision = contentRevision
     confirmOpen.value = false
     formatLoading.value = true
     progressCharacters.value = 0
-    formatAbort = new AbortController()
+    const controller = new AbortController()
+    formatAbort = controller
     try {
       const formatted = await (options.formatClient || mimoFormatStream)(original, {
         apiKey: resolvedKey,
-        signal: formatAbort.signal,
+        signal: controller.signal,
         onChunk: (text) => {
-          progressCharacters.value = text.length
+          if (!controller.signal.aborted) progressCharacters.value = text.length
         },
       })
+      if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError')
+      if (contentRevision !== originalRevision || options.content.value !== original) {
+        ui.showToast('正文已在排版期间修改，保留当前内容，请重新排版', 'info')
+        return
+      }
+      if (!formatted.trim()) throw new Error('辅助排版没有返回有效内容')
       undoSnapshot.value = { original, formatted }
       if (resolvedKey) browserApiKey.value = resolvedKey
       options.applyContent(formatted)
       options.onApplied?.()
       ui.showToast('已完成辅助排版，可撤销', 'success')
     } catch (error: unknown) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
+      if (controller.signal.aborted || (error instanceof Error && error.name === 'AbortError')) {
         ui.showToast('已取消排版，原文未改动', 'info')
       } else {
         const message = error instanceof Error ? error.message : '排版服务异常'

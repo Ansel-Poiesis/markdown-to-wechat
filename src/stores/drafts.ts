@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { Draft } from '@/types'
+import type { WorkspaceBackup } from '@/stores/editor'
 
 const STORAGE_KEY = 'wechat-md-drafts'
 const ACTIVE_DRAFT_KEY = 'wechat-md-active-draft-id'
@@ -11,15 +12,17 @@ const WELCOME_HEADING = '# 把 Markdown 变成公众号文章'
 
 function stripMarkdownInline(value: string): string {
   return value
-    .replace(/!\[([^\]]*)]\([^)]+\)/g, '$1')
-    .replace(/\[([^\]]+)]\([^)]+\)/g, '$1')
+    .slice(0, 512)
+    .replace(/!?\[([^[\]\r\n]*)]\([^()[\]\r\n]+\)/g, '$1')
     .replace(/[`*_~>#|[\]()]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
 }
 
 function inferDraftName(content: string): string {
-  const lines = content.split(/\r?\n/)
+  // Naming must stay cheap even for multi-megabyte or adversarial articles.
+  // This bounds only the title heuristic; the actual draft content is never truncated.
+  const lines = content.slice(0, 8192).split(/\r?\n/, 64)
   const heading = lines
     .map((line) => line.match(/^\s{0,3}#{1,6}\s+(.+?)\s*#*\s*$/)?.[1])
     .find((value): value is string => Boolean(value?.trim()))
@@ -30,7 +33,7 @@ function inferDraftName(content: string): string {
       trimmed &&
       !trimmed.startsWith('```') &&
       !/^[-*_]{3,}$/.test(trimmed) &&
-      !/^!\[[^\]]*]\([^)]+\)/.test(trimmed)
+      !/^!\[[^[\]\r\n]*]\([^()[\]\r\n]+\)/.test(trimmed)
     )
   })
 
@@ -59,6 +62,9 @@ export const useDraftStore = defineStore('drafts', () => {
   const activeDraftId = ref<number | null>(null)
   const loaded = ref(false)
   const persistenceError = ref<string | null>(null)
+  let readBlocked = false
+  const readError =
+    '本地草稿无法完整读取，已保留原存储且暂停覆盖。请先备份当前原稿，再检查存储权限或恢复草稿数据后刷新。'
 
   const activeDraft = computed(() =>
     activeDraftId.value === null
@@ -79,7 +85,14 @@ export const useDraftStore = defineStore('drafts', () => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       const parsed = stored ? JSON.parse(stored) : []
-      drafts.value = Array.isArray(parsed) ? parsed.filter(isDraft) : []
+      if (
+        !Array.isArray(parsed) ||
+        !parsed.every(isDraft) ||
+        new Set(parsed.map((draft) => draft.id)).size !== parsed.length
+      ) {
+        throw new Error('Invalid draft archive')
+      }
+      drafts.value = parsed
 
       let migrated = false
       for (const draft of drafts.value) {
@@ -92,21 +105,26 @@ export const useDraftStore = defineStore('drafts', () => {
       }
       if (migrated) writeDrafts()
 
-      const storedActive = Number(localStorage.getItem(ACTIVE_DRAFT_KEY))
+      const activeValue = localStorage.getItem(ACTIVE_DRAFT_KEY)
+      const storedActive = activeValue === null ? Number.NaN : Number(activeValue)
       activeDraftId.value =
         Number.isFinite(storedActive) && drafts.value.some((draft) => draft.id === storedActive)
           ? storedActive
           : null
     } catch {
-      drafts.value = []
       activeDraftId.value = null
-      persistenceError.value = '无法读取本地草稿，请检查浏览器存储权限。'
+      readBlocked = true
+      persistenceError.value = readError
     } finally {
       loaded.value = true
     }
   }
 
   function writeDrafts(): boolean {
+    if (readBlocked) {
+      persistenceError.value = readError
+      return false
+    }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(drafts.value))
       return true
@@ -118,10 +136,15 @@ export const useDraftStore = defineStore('drafts', () => {
 
   function saveDrafts(): boolean {
     persistenceError.value = null
-    return writeDrafts()
+    const saved = writeDrafts()
+    return saved && writeActiveDraft(activeDraftId.value)
   }
 
   function writeActiveDraft(id: number | null): boolean {
+    if (readBlocked) {
+      persistenceError.value = readError
+      return false
+    }
     try {
       if (id === null) {
         localStorage.removeItem(ACTIVE_DRAFT_KEY)
@@ -137,8 +160,8 @@ export const useDraftStore = defineStore('drafts', () => {
 
   function persistActiveDraft(id: number | null): boolean {
     activeDraftId.value = id
-    persistenceError.value = null
-    return writeActiveDraft(id)
+    // Persist the archive as well: a previous quota failure must not be hidden by a switch.
+    return saveDrafts()
   }
 
   function createDraft(content = '', name?: string) {
@@ -153,9 +176,8 @@ export const useDraftStore = defineStore('drafts', () => {
       updatedAt: now,
     }
     drafts.value.unshift(draft)
-    writeDrafts()
     activeDraftId.value = draft.id
-    writeActiveDraft(draft.id)
+    saveDrafts()
     return draft
   }
 
@@ -163,8 +185,33 @@ export const useDraftStore = defineStore('drafts', () => {
     return createDraft(content, inferDraftName(content))
   }
 
-  function initializeWorkspace(editorContent: string, welcomeContent: string) {
+  function initializeWorkspace(
+    editorContent: string,
+    welcomeContent: string,
+    backup?: WorkspaceBackup | null,
+  ) {
     loadDrafts()
+    if (backup?.draftId !== null && backup?.draftId !== undefined) {
+      const matching = drafts.value.find((draft) => draft.id === backup.draftId)
+      if (
+        matching &&
+        backup.content !== matching.content &&
+        Date.parse(backup.updatedAt) > Date.parse(matching.updatedAt)
+      ) {
+        // Only restore to the identified draft, never into whichever draft happens to be active.
+        updateDraft(matching.id, backup.content)
+        return backup.content
+      }
+      if (!matching && backup.content.trim()) {
+        // A newly created draft may have failed to reach the archive before the page closed.
+        createDraft(backup.content, `恢复：${inferDraftName(backup.content)}`)
+        return backup.content
+      }
+      if (!activeDraft.value && matching) {
+        persistActiveDraft(matching.id)
+        return matching.content
+      }
+    }
     if (activeDraft.value) return activeDraft.value.content
 
     const migratedEditorContent = migrateLegacyWelcomeHeading(editorContent)
@@ -185,7 +232,12 @@ export const useDraftStore = defineStore('drafts', () => {
     }
 
     const draft = drafts.value.find((item) => item.id === activeDraftId.value)
-    if (!draft || draft.content === content) return true
+    if (!draft) {
+      activeDraftId.value = null
+      createDraft(content, inferDraftName(content))
+      return persistenceError.value === null
+    }
+    if (draft.content === content) return persistenceError.value ? saveDrafts() : true
     if (shouldAutoRenameDraft(draft)) {
       draft.name = inferDraftName(content)
     }
@@ -202,10 +254,8 @@ export const useDraftStore = defineStore('drafts', () => {
     }
     draft.content = content
     draft.updatedAt = new Date().toISOString()
-    persistenceError.value = null
-    writeDrafts()
     activeDraftId.value = id
-    writeActiveDraft(id)
+    saveDrafts()
     return draft
   }
 
@@ -223,9 +273,8 @@ export const useDraftStore = defineStore('drafts', () => {
     drafts.value = drafts.value.filter((draft) => draft.id !== id)
     if (deletingActive) {
       activeDraftId.value = null
-      writeActiveDraft(null)
     }
-    writeDrafts()
+    saveDrafts()
     return deletingActive
   }
 
@@ -253,9 +302,13 @@ function isDraft(value: unknown): value is Draft {
   const candidate = value as Partial<Draft>
   return (
     typeof candidate?.id === 'number' &&
+    Number.isSafeInteger(candidate.id) &&
+    candidate.id >= 0 &&
     typeof candidate.name === 'string' &&
     typeof candidate.content === 'string' &&
     typeof candidate.createdAt === 'string' &&
-    typeof candidate.updatedAt === 'string'
+    typeof candidate.updatedAt === 'string' &&
+    Number.isFinite(Date.parse(candidate.createdAt)) &&
+    Number.isFinite(Date.parse(candidate.updatedAt))
   )
 }

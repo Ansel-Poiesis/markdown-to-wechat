@@ -18,9 +18,13 @@ export function useExport() {
     link.href = url
     link.download = `wechat-article-${stamp}.html`
     document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(url)
+    try {
+      link.click()
+    } finally {
+      link.remove()
+      // Let the browser consume the download URL before releasing its Blob.
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    }
   }
 
   return { exportHtml }

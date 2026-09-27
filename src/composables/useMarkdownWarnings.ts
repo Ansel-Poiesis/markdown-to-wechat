@@ -1,33 +1,25 @@
 import { computed } from 'vue'
 import type { WarningItem } from '@/types'
+import { countReadableWords, inspectMarkdown, readableText } from '@/utils/markdownInspection'
 
 export function useMarkdownWarnings(markdownRef: { value: string }) {
   const warnings = computed<WarningItem[]>(() => {
-    const markdown = markdownRef.value || ''
+    const inspection = inspectMarkdown(markdownRef.value || '')
+    const markdown = inspection.prose
     const result: WarningItem[] = []
-    const localImages = markdown.match(/!\[[^\]]*]\((?!https?:\/\/|data:image\/)[^)]+\)/gi) || []
-    const embeddedImages = markdown.match(/!\[[^\]]*]\(data:image\/[^)]+\)/gi) || []
-    const links = markdown.match(/\[[^\]]+\]\((https?:\/\/[^)]+)\)/gi) || []
+    const localImages = markdown.match(/!\[[^[\]\r\n]*]\((?!https?:\/\/|data:image\/)[^()[\]\r\n]+\)/gi) || []
+    const embeddedImages = markdown.match(/!\[[^[\]\r\n]*]\(data:image\/[^()[\]\r\n]+\)/gi) || []
+    const links = markdown.match(/(?<!!)\[[^[\]\r\n]+]\((https?:\/\/[^()[\]\r\n]+)\)/gi) || []
     const tables = markdown.match(/^\s*\|.+\|\s*$/gm) || []
     const longLines = markdown.split('\n').filter((line) => line.length > 120)
-    const emptyLinks = markdown.match(/\[[^\]]*]\(\s*\)/g) || []
+    const emptyLinks = markdown.match(/\[[^[\]\r\n]*]\(\s*\)/g) || []
     const headings = markdown.match(/^#{1,6}\s+.*$/gm) || []
     const h1Count = markdown.match(/^#\s+.+$/gm)?.length || 0
     const h5Plus = markdown.match(/^#{5,6}\s+.+$/gm) || []
-    const codeBlocks = markdown.match(/```[\s\S]*?```/g) || []
-    const unclosedCodeFenceCount = (markdown.match(/```/g) || []).length
+    const codeBlocks = inspection.codeBlocks
     const veryLongCodeBlocks = codeBlocks.filter((block) => block.split('\n').length > 28)
 
-    const text = markdown
-      .replace(/```[\s\S]*?```/g, ' ')
-      .replace(/!\[[^\]]*]\([^)]+\)/g, ' ')
-      .replace(/\[([^\]]+)]\([^)]+\)/g, '$1')
-      .replace(/[#>*_`~\-|[\]()]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-    const chinese = text.match(/[一-鿿]/g) || []
-    const latin = text.replace(/[一-鿿]/g, ' ').match(/[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)*/g) || []
-    const wordCount = chinese.length + latin.length
+    const wordCount = countReadableWords(readableText(markdown))
 
     if (localImages.length) {
       result.push({
@@ -50,10 +42,10 @@ export function useMarkdownWarnings(markdownRef: { value: string }) {
         type: 'emptyLink',
       })
     }
-    if (unclosedCodeFenceCount % 2 !== 0) {
+    if (inspection.unclosedCode) {
       result.push({
         level: 'danger',
-        text: '代码块围栏数量不成对，后续内容可能都会被当成代码。',
+        text: '代码块围栏未闭合，后续内容可能都会被当成代码。',
         type: 'unclosedCode',
       })
     }

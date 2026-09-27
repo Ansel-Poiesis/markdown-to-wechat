@@ -1,11 +1,16 @@
 /**
- * Direct MiMo API call with SSE streaming for fast markdown formatting.
- * Bypasses n8n overhead — response starts appearing in ~2-3s instead of ~40s.
+ * MiMo formatting with bounded SSE streaming and transactional completion.
  *
  * 支持通过 modelId 参数选择不同的 MiMo 模型。
  */
 
 import { getModelById, DEFAULT_CHAT_MODEL, type MimoModel } from '@/config/models'
+
+const REQUEST_TIMEOUT_MS = 120_000
+const MAX_CONTENT_LENGTH = 500_000
+const MAX_OUTPUT_LENGTH = 1_000_000
+const MAX_STREAM_BYTES = 8_000_000
+const MAX_EVENT_LENGTH = 256_000
 
 const SYSTEM_PROMPT = `你是一个 Markdown 排版专家。对用户提供的原始文本进行排版优化，只输出排版后的 Markdown，不要添加解释或前言。
 
@@ -59,26 +64,24 @@ export interface StreamOptions {
   signal?: AbortSignal
   /** 模型 ID，默认使用 mimo-v2.5 */
   modelId?: string
-  /** Browser-only credential. Electron reads MIMO_API_KEY in the main process. */
+  /** Optional session credential; otherwise Electron uses its main-process key. */
   apiKey?: string
 }
 
 /**
- * 获取 MiMo API 配置
- * 优先使用环境变量，回退到模型配置中的 endpoint
+ * Resolve an explicitly supplied session key against the configured model endpoint.
  */
 function getBrowserApiConfig(model: MimoModel, apiKey = '') {
-  if (!apiKey) {
+  if (!apiKey.trim()) {
     throw new Error('请先输入 MiMo API Key')
   }
   return { endpoint: model.endpoint, apiKey: apiKey.trim() }
 }
 
-export async function mimoFormatStream(
-  content: string,
-  options: StreamOptions,
-): Promise<string> {
+export async function mimoFormatStream(content: string, options: StreamOptions): Promise<string> {
   const { onChunk, signal, modelId, apiKey } = options
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
+  if (content.length > MAX_CONTENT_LENGTH) throw new Error('正文过长，暂不发送')
   const id = modelId || DEFAULT_CHAT_MODEL
   const model = getModelById(id)
 
@@ -91,12 +94,12 @@ export async function mimoFormatStream(
   }
 
   const electronApi = typeof window !== 'undefined' ? window.electronAPI : undefined
-  if (electronApi?.formatMimo) {
+  if (electronApi?.formatMimo && !apiKey?.trim()) {
     const requestId = crypto.randomUUID()
     const cancel = () => electronApi.cancelMimo(requestId)
     signal?.addEventListener('abort', cancel, { once: true })
     try {
-      return await electronApi.formatMimo(
+      const result = await electronApi.formatMimo(
         {
           requestId,
           content,
@@ -109,6 +112,8 @@ export async function mimoFormatStream(
         },
         onChunk,
       )
+      if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
+      return result
     } catch (error) {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
       throw error
@@ -119,77 +124,125 @@ export async function mimoFormatStream(
 
   const browserConfig = getBrowserApiConfig(model, apiKey)
   const { endpoint } = browserConfig
+  const controller = new AbortController()
+  const cancel = () => controller.abort()
+  signal?.addEventListener('abort', cancel, { once: true })
+  let timedOut = false
+  const timeout = setTimeout(() => {
+    timedOut = true
+    controller.abort()
+  }, REQUEST_TIMEOUT_MS)
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
+  try {
+    const res = await abortable(
+      fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': browserConfig.apiKey,
+        },
+        body: JSON.stringify({
+          model: model.id,
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'user', content },
+          ],
+          max_completion_tokens: model.defaults?.max_completion_tokens ?? 4000,
+          temperature: model.defaults?.temperature ?? 0.2,
+          stream: true,
+          reasoning_effort: model.defaults?.reasoning_effort ?? 'low',
+        }),
+        signal: controller.signal,
+        redirect: 'error',
+        credentials: 'omit',
+      }),
+      controller.signal,
+    )
 
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'api-key': browserConfig.apiKey,
-    },
-    body: JSON.stringify({
-      model: model.id,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content },
-      ],
-      max_completion_tokens: model.defaults?.max_completion_tokens ?? 4000,
-      temperature: model.defaults?.temperature ?? 0.2,
-      stream: true,
-      reasoning_effort: model.defaults?.reasoning_effort ?? 'low',
-    }),
-    signal,
-  })
+    if (!res.ok) {
+      void res.body?.cancel().catch(() => undefined)
+      throw new Error(`MiMo API 错误 (${res.status})`)
+    }
 
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '')
-    throw new Error(`MiMo API 错误 (${res.status}): ${errText.slice(0, 200)}`)
-  }
+    reader = res.body?.getReader()
+    if (!reader) throw new Error('无法读取流式响应')
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let full = ''
+    let completed = false
+    let streamBytes = 0
 
-  const reader = res.body?.getReader()
-  if (!reader) throw new Error('无法读取流式响应')
-  const decoder = new TextDecoder()
-  let buffer = ''
-  let full = ''
-  let completed = false
-
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
-    buffer = lines.pop()! // keep incomplete line
-
-    for (const line of lines) {
+    const consume = (line: string) => {
+      if (line.length > MAX_EVENT_LENGTH) throw new Error('辅助排版响应单条数据过长')
       const event = parseSSEEvent(line)
-      if (event.done) completed = true
-      if (event.finishReason === 'length') {
-        throw new Error('辅助排版输出被模型截断，原文未被替换')
+      if (event.finishReason && event.finishReason !== 'stop') {
+        throw new Error(
+          event.finishReason === 'length'
+            ? '辅助排版输出被模型截断，原文未被替换'
+            : '辅助排版响应被服务中止，原文未被替换',
+        )
       }
-      const prev = full
-      full = event.token ? full + event.token : full
-      if (full !== prev) onChunk(full)
+      if (event.token) {
+        full += event.token
+        if (full.length > MAX_OUTPUT_LENGTH) throw new Error('辅助排版输出过长，原文未被替换')
+        onChunk(full)
+      }
+      if (event.done) completed = true
     }
-  }
 
-  if (buffer.trim()) {
-    const event = parseSSEEvent(buffer)
-    if (event.done || event.finishReason === 'stop') completed = true
-    if (event.finishReason === 'length') {
-      throw new Error('辅助排版输出被模型截断，原文未被替换')
+    while (!completed) {
+      const { done, value } = await abortable(reader.read(), controller.signal)
+      if (done) {
+        buffer += decoder.decode()
+        break
+      }
+      streamBytes += value.byteLength
+      if (streamBytes > MAX_STREAM_BYTES) throw new Error('辅助排版响应过大，原文未被替换')
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop()! // keep incomplete line
+
+      for (const line of lines) {
+        consume(line)
+        if (completed) break
+      }
+      if (!completed && buffer.length > MAX_EVENT_LENGTH)
+        throw new Error('辅助排版响应单条数据过长')
     }
-    if (event.token) {
-      full += event.token
-      onChunk(full)
+
+    if (!completed && buffer.trim()) consume(buffer)
+
+    if (!completed) {
+      throw new Error('辅助排版响应未完整结束，原文未被替换')
     }
-  }
+    if (!full.trim()) throw new Error('辅助排版没有返回有效内容')
+    if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError')
 
-  if (!completed) {
-    throw new Error('辅助排版响应未完整结束，原文未被替换')
+    return full.trim()
+  } catch (error) {
+    if (timedOut) throw new Error('辅助排版服务超时，原文未被替换')
+    if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError')
+    throw error
+  } finally {
+    clearTimeout(timeout)
+    signal?.removeEventListener('abort', cancel)
+    // Do not wait for a peer that never closes its response body.
+    void reader?.cancel().catch(() => undefined)
+    controller.abort()
   }
-  if (!full.trim()) throw new Error('辅助排版没有返回有效内容')
+}
 
-  return full.trim()
+function abortable<T>(task: Promise<T>, signal: AbortSignal): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const abort = () => reject(new DOMException('Aborted', 'AbortError'))
+    task.then(resolve, reject).finally(() => signal.removeEventListener('abort', abort))
+    if (signal.aborted) {
+      abort()
+      return
+    }
+    signal.addEventListener('abort', abort, { once: true })
+  })
 }
 
 export function parseSSELine(line: string, acc: string): string {
@@ -206,17 +259,30 @@ export function parseSSEEvent(line: string): {
   if (!trimmed?.startsWith('data:')) return { token: '', done: false }
   const payload = trimmed.slice(5).trim()
   if (payload === '[DONE]') return { token: '', done: true }
+  let chunk: {
+    error?: unknown
+    choices?: { delta?: { content?: unknown }; finish_reason?: unknown }[]
+  }
   try {
-    const chunk = JSON.parse(payload) as {
-      choices?: { delta?: { content?: string }; finish_reason?: string | null }[]
-    }
-    const choice = chunk.choices?.[0]
-    return {
-      token: choice?.delta?.content || '',
-      done: choice?.finish_reason === 'stop',
-      finishReason: choice?.finish_reason || undefined,
-    }
+    chunk = JSON.parse(payload)
   } catch {
-    return { token: '', done: false }
+    throw new Error('辅助排版流数据损坏，原文未被替换')
+  }
+  if (!chunk || typeof chunk !== 'object' || chunk.error || !Array.isArray(chunk.choices)) {
+    throw new Error('辅助排版响应格式无效，原文未被替换')
+  }
+  const choice = chunk.choices?.[0]
+  const token = choice?.delta?.content
+  const reason = choice?.finish_reason
+  if (
+    (token != null && typeof token !== 'string') ||
+    (reason != null && typeof reason !== 'string')
+  ) {
+    throw new Error('辅助排版响应格式无效，原文未被替换')
+  }
+  return {
+    token: typeof token === 'string' ? token : '',
+    done: reason === 'stop',
+    finishReason: typeof reason === 'string' ? reason : undefined,
   }
 }

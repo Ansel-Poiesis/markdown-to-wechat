@@ -18,6 +18,9 @@ const DEFAULT_OPTIONS: Required<ImageInsertOptions> = {
   format: 'image/jpeg',
 }
 
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024
+const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
+
 function compressImage(
   file: File,
   options: Required<ImageInsertOptions>,
@@ -27,34 +30,42 @@ function compressImage(
     const url = URL.createObjectURL(file)
     img.onload = () => {
       URL.revokeObjectURL(url)
-      let { width, height } = img
+      try {
+        let { width, height } = img
+        if (!width || !height || width * height > 40_000_000) {
+          throw new Error('图片尺寸无效或超过 4000 万像素，请先缩小图片。')
+        }
 
-      // Scale down if too large
-      if (width > options.maxWidth) {
-        height = Math.round((height * options.maxWidth) / width)
-        width = options.maxWidth
-      }
-      if (height > options.maxHeight) {
-        width = Math.round((width * options.maxHeight) / height)
-        height = options.maxHeight
-      }
+        // Scale down if too large
+        if (width > options.maxWidth) {
+          height = Math.max(1, Math.round((height * options.maxWidth) / width))
+          width = options.maxWidth
+        }
+        if (height > options.maxHeight) {
+          width = Math.max(1, Math.round((width * options.maxHeight) / height))
+          height = options.maxHeight
+        }
 
-      const canvas = document.createElement('canvas')
-      canvas.width = width
-      canvas.height = height
-      const ctx = canvas.getContext('2d')
-      if (!ctx) {
-        reject(new Error('Canvas context not available'))
-        return
-      }
-      ctx.drawImage(img, 0, 0, width, height)
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          reject(new Error('浏览器无法处理图片，请尝试其他浏览器。'))
+          return
+        }
+        ctx.drawImage(img, 0, 0, width, height)
 
-      const dataUrl = canvas.toDataURL(options.format, options.quality)
-      resolve({ dataUrl, width, height })
+        const dataUrl = canvas.toDataURL(options.format, options.quality)
+        if (!dataUrl.startsWith('data:image/')) throw new Error('图片压缩失败，请先缩小图片。')
+        resolve({ dataUrl, width, height })
+      } catch (error) {
+        reject(error)
+      }
     }
     img.onerror = () => {
       URL.revokeObjectURL(url)
-      reject(new Error('Failed to load image'))
+      reject(new Error('无法读取图片，请检查文件是否损坏。'))
     }
     img.src = url
   })
@@ -64,7 +75,8 @@ function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(reader.result as string)
-    reader.onerror = reject
+    reader.onerror = () => reject(new Error('无法读取图片文件。'))
+    reader.onabort = () => reject(new Error('图片读取已取消。'))
     reader.readAsDataURL(file)
   })
 }
@@ -73,11 +85,32 @@ export async function processImageFile(
   file: File,
   options: ImageInsertOptions = {},
 ): Promise<{ markdown: string; originalSize: number; compressedSize: number }> {
-  const opts = { ...DEFAULT_OPTIONS, ...options }
+  if (!SUPPORTED_IMAGE_TYPES.has(file.type)) {
+    throw new Error('暂仅支持 PNG、JPEG、WebP 和 GIF 图片。')
+  }
+  if (file.size > MAX_IMAGE_BYTES) throw new Error('图片超过 10 MB，请先压缩后再插入。')
+  const opts = {
+    ...DEFAULT_OPTIONS,
+    // Preserve transparency by default; GIF is kept unchanged to preserve animation.
+    format:
+      file.type === 'image/png' || file.type === 'image/webp' ? file.type : DEFAULT_OPTIONS.format,
+    ...options,
+  } satisfies Required<ImageInsertOptions>
+  if (
+    !Number.isInteger(opts.maxWidth) ||
+    opts.maxWidth < 1 ||
+    !Number.isInteger(opts.maxHeight) ||
+    opts.maxHeight < 1 ||
+    !Number.isFinite(opts.quality) ||
+    opts.quality < 0 ||
+    opts.quality > 1
+  )
+    throw new Error('图片压缩参数无效。')
   const originalSize = file.size
 
   // Only compress if the image is large or not already a small format
-  const shouldCompress = file.size > 200 * 1024 || file.type === 'image/png'
+  const shouldCompress =
+    file.type !== 'image/gif' && (file.size > 200 * 1024 || file.type === 'image/png')
 
   let dataUrl: string
   let compressedSize: number
@@ -85,13 +118,19 @@ export async function processImageFile(
   if (shouldCompress) {
     const result = await compressImage(file, opts)
     dataUrl = result.dataUrl
-    compressedSize = Math.round((dataUrl.length * 3) / 4) // approximate base64 size
+    const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1)
+    compressedSize =
+      Math.floor((base64.length * 3) / 4) -
+      (base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0)
   } else {
     dataUrl = await fileToDataUrl(file)
     compressedSize = originalSize
   }
 
-  const alt = file.name.replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ')
+  const alt = file.name
+    .replace(/\.[^.]+$/, '')
+    .replace(/[_-]/g, ' ')
+    .replace(/[[\]\\\r\n]/g, ' ')
   const markdown = `![${alt}](${dataUrl})`
 
   return { markdown, originalSize, compressedSize }

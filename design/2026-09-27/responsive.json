@@ -1,0 +1,167 @@
+[
+  {
+    "height": 1000,
+    "pageWidth": 1536,
+    "panels": [
+      {
+        "name": "Markdown 编辑区",
+        "right": 578.71875,
+        "x": 16
+      },
+      {
+        "name": "设置",
+        "right": 1012.65625,
+        "x": 596.71875
+      },
+      {
+        "name": "预览区",
+        "right": 1520,
+        "x": 1030.65625
+      }
+    ],
+    "preview": [
+      {
+        "client": 458,
+        "scroll": 458
+      }
+    ],
+    "width": 1536
+  },
+  {
+    "height": 1000,
+    "pageWidth": 1280,
+    "panels": [
+      {
+        "name": "Markdown 编辑区",
+        "right": 480.59375,
+        "x": 16
+      },
+      {
+        "name": "设置",
+        "right": 842,
+        "x": 498.59375
+      },
+      {
+        "name": "预览区",
+        "right": 1264,
+        "x": 860
+      }
+    ],
+    "preview": [
+      {
+        "client": 373,
+        "scroll": 373
+      }
+    ],
+    "width": 1280
+  },
+  {
+    "height": 1000,
+    "pageWidth": 1180,
+    "panels": [
+      {
+        "name": "Markdown 编辑区",
+        "right": 446.859375,
+        "x": 16
+      },
+      {
+        "name": "设置",
+        "right": 777.328125,
+        "x": 458.859375
+      },
+      {
+        "name": "预览区",
+        "right": 1163.984375,
+        "x": 789.328125
+      }
+    ],
+    "preview": [
+      {
+        "client": 344,
+        "scroll": 344
+      }
+    ],
+    "width": 1180
+  },
+  {
+    "height": 1000,
+    "pageWidth": 1024,
+    "panels": [
+      {
+        "name": "预览区",
+        "right": 1024,
+        "x": 0
+      }
+    ],
+    "preview": [
+      {
+        "client": 993,
+        "scroll": 993
+      }
+    ],
+    "width": 1024
+  },
+  {
+    "height": 1000,
+    "pageWidth": 768,
+    "panels": [
+      {
+        "name": "预览区",
+        "right": 768,
+        "x": 0
+      }
+    ],
+    "preview": [
+      {
+        "client": 737,
+        "scroll": 737
+      }
+    ],
+    "width": 768
+  },
+  {
+    "height": 844,
+    "pageWidth": 390,
+    "panels": [
+      {
+        "name": "预览区",
+        "right": 390,
+        "x": 0
+      }
+    ],
+    "preview": [
+      {
+        "client": 363,
+        "scroll": 363
+      }
+    ],
+    "width": 390
+  },
+  {
+    "pageWidth": 1600,
+    "panels": [
+      {
+        "name": "Markdown 编辑区",
+        "right": 529,
+        "x": 16
+      },
+      {
+        "name": "设置",
+        "right": 887,
+        "x": 547
+      },
+      {
+        "name": "预览区",
+        "right": 1584,
+        "x": 905
+      }
+    ],
+    "preview": [
+      {
+        "client": 648,
+        "scroll": 648
+      }
+    ],
+    "width": 1600
+  }
+]

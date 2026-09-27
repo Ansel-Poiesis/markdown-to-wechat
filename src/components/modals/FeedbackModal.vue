@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useUiStore } from '@/stores/ui'
+import { useModalFocus } from '@/composables/useModalFocus'
 import {
   createFeedbackId,
   feedbackDeliveryMode,
@@ -24,6 +25,8 @@ const includeDiagnostics = ref(true)
 const submitting = ref(false)
 const errorMessage = ref('')
 const deliveryMode = feedbackDeliveryMode()
+const dialog = ref<HTMLElement>()
+useModalFocus(() => props.open, dialog, close)
 
 const categories: Array<{ key: FeedbackCategory; label: string }> = [
   { key: 'problem', label: '问题' },
@@ -79,6 +82,8 @@ async function submit() {
       <div v-if="open" class="modal-backdrop" @click.self="close">
         <section
           class="modal feedback-modal"
+          ref="dialog"
+          tabindex="-1"
           role="dialog"
           aria-modal="true"
           aria-labelledby="feedback-title"
@@ -88,7 +93,12 @@ async function submit() {
               <p class="feedback-modal__eyebrow">Feedback</p>
               <h2 id="feedback-title" class="feedback-modal__title">提交反馈</h2>
             </div>
-            <button type="button" class="feedback-modal__icon-button" aria-label="关闭" @click="close">
+            <button
+              type="button"
+              class="feedback-modal__icon-button"
+              aria-label="关闭"
+              @click="close"
+            >
               <AppIcon name="x" :size="16" />
             </button>
           </header>

@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { analyzeArticle } from '@/utils/articleStructure'
+import { analyzeArticle, stripInlineMarkdown } from '@/utils/articleStructure'
 
 describe('analyzeArticle', () => {
+  it('keeps unmatched bracket headings literal and strips balanced link destinations', () => {
+    const source = '['.repeat(100000)
+    expect(analyzeArticle('# ' + source).title).toBe(source)
+    expect(
+      stripInlineMarkdown(
+        '**title** [a](https://example.com/a_(b)) ![image](https://example.com/a.png)',
+      ),
+    ).toBe('title a image')
+  })
   it('extracts article-level structure without reading headings inside code blocks', () => {
     const document = analyzeArticle(`# 主标题
 

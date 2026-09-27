@@ -63,12 +63,69 @@ export function formatFeedbackBody(payload: FeedbackPayload): string {
       `当前主题：${diagnostics.theme}`,
       `稿件统计：${diagnostics.articleStats}`,
       `预检信息：${diagnostics.warnings}`,
-      `页面地址：${diagnostics.pageUrl}`,
+      `页面地址：${redactFeedbackPageUrl(diagnostics.pageUrl)}`,
       '隐私说明：未附带文章正文、草稿内容或剪贴板数据。',
     )
   }
 
   return lines.join('\n')
+}
+
+export function redactFeedbackPageUrl(value: string): string {
+  try {
+    const url = new URL(value)
+    if (url.protocol === 'file:') return 'file:///[local-app]'
+    if (!['http:', 'https:'].includes(url.protocol)) return '[local-app]'
+    url.username = ''
+    url.password = ''
+    url.search = ''
+    url.hash = ''
+    return url.toString()
+  } catch {
+    return '[unavailable]'
+  }
+}
+
+/** Explicitly project the transport payload; TypeScript does not remove extra runtime fields. */
+export function prepareFeedbackPayload(payload: FeedbackPayload): FeedbackPayload {
+  if (
+    !/^FB-\d{8}-[A-Z0-9]{6}$/.test(payload.feedbackId) ||
+    !isFeedbackCategory(payload.category) ||
+    typeof payload.message !== 'string' ||
+    payload.message.trim().length < 5 ||
+    payload.message.length > 1200 ||
+    (payload.contact != null &&
+      (typeof payload.contact !== 'string' || payload.contact.length > 120)) ||
+    typeof payload.createdAt !== 'string' ||
+    !Number.isFinite(Date.parse(payload.createdAt))
+  ) {
+    throw new Error('反馈内容格式无效')
+  }
+  let diagnostics: FeedbackDiagnostics | undefined
+  if (payload.diagnostics) {
+    if (!isFeedbackDiagnostics(payload.diagnostics)) throw new Error('反馈诊断格式无效')
+    const source = payload.diagnostics
+    diagnostics = {
+      appVersion: source.appVersion,
+      runtime: source.runtime,
+      platform: source.platform,
+      viewport: source.viewport,
+      theme: source.theme,
+      articleStats: source.articleStats,
+      warnings: source.warnings,
+      pageUrl: redactFeedbackPageUrl(source.pageUrl),
+    }
+    if (Object.values(diagnostics).some((value) => value.length > 500))
+      throw new Error('反馈诊断过长')
+  }
+  return {
+    feedbackId: payload.feedbackId,
+    category: payload.category,
+    message: payload.message,
+    contact: payload.contact,
+    createdAt: payload.createdAt,
+    diagnostics,
+  }
 }
 
 export function formatMachineFeedbackBlock(payload: FeedbackPayload): string {
@@ -172,7 +229,9 @@ function readLine(content: string, label: string): string {
 }
 
 function isFeedbackCategory(value: unknown): value is FeedbackCategory {
-  return value === 'problem' || value === 'suggestion' || value === 'experience' || value === 'other'
+  return (
+    value === 'problem' || value === 'suggestion' || value === 'experience' || value === 'other'
+  )
 }
 
 function isFeedbackDiagnostics(value: unknown): value is FeedbackDiagnostics {

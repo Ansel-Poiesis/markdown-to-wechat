@@ -72,8 +72,8 @@ describe('renderMarkdown design system', () => {
     'renders %s with its own component language and valid WeChat HTML',
     (key) => {
       const html = renderMarkdown(markdown, theme(key), codeTheme)
-      expect(html).toContain(designThemes[key].eyebrow)
-      expect(html).toContain(designThemes[key].endMark)
+      expect(html).not.toMatch(/AUTUMN NOTES|HUMAN STUDIES|CRITICAL ANALYSIS|CONTENTS|SECTIONS/)
+      expect(html).toContain('一篇用于回归的文章')
       expect(html).toContain('<span leaf="">')
       expect(html).not.toMatch(/<\/?div[\s>]/i)
       expect(html).not.toMatch(/\sclass=/i)
@@ -87,8 +87,8 @@ describe('renderMarkdown design system', () => {
     const editorial = renderMarkdown(markdown, theme('qiuhe'), codeTheme)
     const technical = renderMarkdown(markdown, theme('songyan'), codeTheme)
     expect(editorial).not.toBe(technical)
-    expect(editorial).toContain('AUTUMN NOTES')
-    expect(technical).toContain('CRITICAL ANALYSIS')
+    expect(editorial).toContain('width:32px')
+    expect(technical).toContain('border-bottom:2px solid #292524')
   })
 
   it('lets component overrides change structure without changing the selected theme', () => {
@@ -100,8 +100,8 @@ describe('renderMarkdown design system', () => {
       endMarkMode: 'hide',
     }
     const html = renderMarkdown(markdown, overridden, codeTheme)
-    expect(html).toContain('AUTUMN NOTES')
-    expect(html).not.toContain('CONTENTS')
+    expect(html).toContain('一篇用于回归的文章')
+    expect(html).not.toContain('本文目录')
     expect(html).not.toContain('秋水有声')
     expect(validateWechatHtml(html).valid).toBe(true)
   })
@@ -141,10 +141,10 @@ describe('renderMarkdown design system', () => {
     const plain = renderMarkdown(headingMarkdown, plainTheme, codeTheme)
     const decorated = renderMarkdown(headingMarkdown, decoratedTheme, codeTheme)
 
-    expect(plain).toContain('AUTUMN NOTES')
-    expect(decorated).toContain('AUTUMN NOTES')
-    expect(plain).toContain('font-size:28px')
-    expect(decorated).toContain('font-size:28px')
+    expect(plain).toContain('width:32px')
+    expect(decorated).toContain('width:32px')
+    expect(plain).toContain('font-size:27px')
+    expect(decorated).toContain('font-size:27px')
     expect(decorated).toContain('border-bottom:1.5px dashed #b45309')
     expect(decorated).toContain('background:#b45309;border-radius:3px')
     expect(decorated).toContain('border-left:4px solid #b45309')
@@ -211,9 +211,16 @@ describe('renderMarkdown edge cases', () => {
 
     expect(validateWechatHtml(html).valid).toBe(true)
     const text = html.replace(/<[^>]+>/g, '')
-    const order = ['一级 A', '二级 A1', '三级 A1a', '二级 A2', '一级 B', '有序一', '有序嵌套', '有序二'].map(
-      (item) => text.indexOf(item),
-    )
+    const order = [
+      '一级 A',
+      '二级 A1',
+      '三级 A1a',
+      '二级 A2',
+      '一级 B',
+      '有序一',
+      '有序嵌套',
+      '有序二',
+    ].map((item) => text.indexOf(item))
     const keepsOrder = order.every((index, i, all) => {
       const previous = all[i - 1]
       return index >= 0 && (i === 0 || (previous !== undefined && index > previous))
@@ -257,7 +264,7 @@ describe('renderMarkdown edge cases', () => {
 
     expect(validateWechatHtml(html).valid).toBe(true)
     const text = html.replace(/<[^>]+>/g, '')
-    expect(text).toContain('const x = 1')
+    expect(text.replace(/&#160;|&nbsp;/g, ' ')).toContain('const x = 1')
     expect(text).toContain('末尾正文')
   })
 
@@ -273,7 +280,7 @@ describe('renderMarkdown edge cases', () => {
 
     expect(validateWechatHtml(html).valid).toBe(true)
     const text = html.replace(/<[^>]+>/g, '')
-    expect(text).toContain('const s = `tick`')
+    expect(text.replace(/&#160;|&nbsp;/g, ' ')).toContain('const s = `tick`')
   })
 
   it('renders inline images with titles, allows safe sources and blocks relative paths at the gate', () => {
@@ -301,9 +308,9 @@ describe('renderMarkdown edge cases', () => {
     const relative = renderMarkdown('![相对](../img/a.png)', theme('qiuhe'), codeTheme)
     const gate = validateWechatHtml(relative)
     expect(gate.valid).toBe(false)
-    expect(gate.issues.some((issue) => issue.level === 'danger' && issue.text.includes('img[src]'))).toBe(
-      true,
-    )
+    expect(
+      gate.issues.some((issue) => issue.level === 'danger' && issue.text.includes('img[src]')),
+    ).toBe(true)
   })
 
   it('deduplicates external links and keeps unsafe link targets literal', () => {

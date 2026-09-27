@@ -1,0 +1,34 @@
+{
+  "baseline": "1182575",
+  "scope": "Core parser comparison; current theme components and gate dependencies",
+  "rows": [
+    {
+      "name": "query_escaping",
+      "passed": false
+    },
+    {
+      "name": "inline_code_atomic",
+      "passed": false
+    },
+    {
+      "name": "code_footnote_retained",
+      "passed": false
+    },
+    {
+      "name": "long_fence_keeps_inner_fence",
+      "passed": false
+    },
+    {
+      "name": "table_pipe_cells",
+      "passed": false
+    },
+    {
+      "name": "ordered_start",
+      "passed": false
+    },
+    {
+      "name": "url_delimiters_preserved",
+      "passed": false
+    }
+  ]
+}

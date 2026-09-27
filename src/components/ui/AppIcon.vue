@@ -35,6 +35,7 @@ defineProps<{
     | 'externalLink'
     | 'messageSquare'
     | 'send'
+    | 'agent'
   size?: number
 }>()
 </script>
@@ -50,7 +51,13 @@ defineProps<{
     stroke-linecap="round"
     stroke-linejoin="round"
   >
-    <template v-if="name === 'settings'">
+    <template v-if="name === 'agent'">
+      <rect x="5" y="7" width="14" height="13" rx="4" />
+      <path d="M12 3v4M2 12v4m20-4v4M9 16h6" />
+      <path d="M9 11v1m6-1v1" />
+      <circle cx="12" cy="3" r="1" />
+    </template>
+    <template v-else-if="name === 'settings'">
       <path
         d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
       />
