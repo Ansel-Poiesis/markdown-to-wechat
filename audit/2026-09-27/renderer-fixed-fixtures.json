@@ -1,0 +1,34 @@
+{
+  "baseline": "working-tree",
+  "scope": "Core parser comparison; current theme components and gate dependencies",
+  "rows": [
+    {
+      "name": "query_escaping",
+      "passed": true
+    },
+    {
+      "name": "inline_code_atomic",
+      "passed": true
+    },
+    {
+      "name": "code_footnote_retained",
+      "passed": true
+    },
+    {
+      "name": "long_fence_keeps_inner_fence",
+      "passed": true
+    },
+    {
+      "name": "table_pipe_cells",
+      "passed": true
+    },
+    {
+      "name": "ordered_start",
+      "passed": true
+    },
+    {
+      "name": "url_delimiters_preserved",
+      "passed": true
+    }
+  ]
+}

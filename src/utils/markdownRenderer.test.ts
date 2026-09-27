@@ -211,9 +211,16 @@ describe('renderMarkdown edge cases', () => {
 
     expect(validateWechatHtml(html).valid).toBe(true)
     const text = html.replace(/<[^>]+>/g, '')
-    const order = ['一级 A', '二级 A1', '三级 A1a', '二级 A2', '一级 B', '有序一', '有序嵌套', '有序二'].map(
-      (item) => text.indexOf(item),
-    )
+    const order = [
+      '一级 A',
+      '二级 A1',
+      '三级 A1a',
+      '二级 A2',
+      '一级 B',
+      '有序一',
+      '有序嵌套',
+      '有序二',
+    ].map((item) => text.indexOf(item))
     const keepsOrder = order.every((index, i, all) => {
       const previous = all[i - 1]
       return index >= 0 && (i === 0 || (previous !== undefined && index > previous))
@@ -257,7 +264,7 @@ describe('renderMarkdown edge cases', () => {
 
     expect(validateWechatHtml(html).valid).toBe(true)
     const text = html.replace(/<[^>]+>/g, '')
-    expect(text).toContain('const x = 1')
+    expect(text.replace(/&#160;|&nbsp;/g, ' ')).toContain('const x = 1')
     expect(text).toContain('末尾正文')
   })
 
@@ -273,7 +280,7 @@ describe('renderMarkdown edge cases', () => {
 
     expect(validateWechatHtml(html).valid).toBe(true)
     const text = html.replace(/<[^>]+>/g, '')
-    expect(text).toContain('const s = `tick`')
+    expect(text.replace(/&#160;|&nbsp;/g, ' ')).toContain('const s = `tick`')
   })
 
   it('renders inline images with titles, allows safe sources and blocks relative paths at the gate', () => {
@@ -301,9 +308,9 @@ describe('renderMarkdown edge cases', () => {
     const relative = renderMarkdown('![相对](../img/a.png)', theme('qiuhe'), codeTheme)
     const gate = validateWechatHtml(relative)
     expect(gate.valid).toBe(false)
-    expect(gate.issues.some((issue) => issue.level === 'danger' && issue.text.includes('img[src]'))).toBe(
-      true,
-    )
+    expect(
+      gate.issues.some((issue) => issue.level === 'danger' && issue.text.includes('img[src]')),
+    ).toBe(true)
   })
 
   it('deduplicates external links and keeps unsafe link targets literal', () => {

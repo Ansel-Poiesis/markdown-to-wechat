@@ -6,6 +6,7 @@ import AppIcon from '@/components/ui/AppIcon.vue'
 
 const props = defineProps<{
   html: string
+  error?: string
   scrollRatio?: number
 }>()
 
@@ -134,6 +135,7 @@ defineExpose({ scrollHost })
                 : 'text-text-tertiary hover:text-text'
             "
             title="移动端预览 (375px)"
+            :aria-pressed="previewDevice === 'mobile'"
             @click="setPreviewDevice('mobile')"
           >
             <AppIcon name="smartphone" :size="12" />
@@ -148,6 +150,7 @@ defineExpose({ scrollHost })
                 : 'text-text-tertiary hover:text-text'
             "
             title="网页端预览"
+            :aria-pressed="previewDevice === 'desktop'"
             @click="setPreviewDevice('desktop')"
           >
             <AppIcon name="monitor" :size="12" />
@@ -157,7 +160,14 @@ defineExpose({ scrollHost })
       </div>
     </div>
     <div ref="scrollHost" class="preview-scroll">
-      <div class="preview-canvas" :style="previewCanvasStyle">
+      <p
+        v-if="error"
+        role="alert"
+        class="m-5 self-start rounded-md border border-border bg-surface p-4 text-sm leading-relaxed text-danger"
+      >
+        {{ error }}
+      </p>
+      <div v-else class="preview-canvas" :style="previewCanvasStyle">
         <article
           class="preview-page"
           :style="{ ...previewStyle, background: themeStore.themeBase.canvas || '#ffffff' }"

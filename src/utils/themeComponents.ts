@@ -13,7 +13,7 @@ function css(style: Style): string {
 }
 
 function tag(name: string, content: string, style: Style = {}): string {
-  const styleAttr = Object.keys(style).length ? ` style="${css(style)}"` : ''
+  const styleAttr = Object.keys(style).length ? ` style="${escapeText(css(style))}"` : ''
   return `<${name}${styleAttr}>${content}</${name}>`
 }
 
@@ -484,13 +484,18 @@ export function renderQuote(content: string, context: ThemeRenderContext): strin
   })
 }
 
-export function renderList(items: string[], ordered: boolean, context: ThemeRenderContext): string {
+export function renderList(
+  items: string[],
+  ordered: boolean,
+  context: ThemeRenderContext,
+  start = 1,
+): string {
   const { design, theme } = context
   const variant = ordered ? design.orderedList : design.unorderedList
   const accent = theme.accent
   const rendered = items
     .map((content, index) => {
-      const marker = ordered ? padNumber(index + 1) : '•'
+      const marker = ordered ? padNumber(index + start) : '•'
       if (variant === 'cards' || variant === 'steps') {
         return tag(
           'section',
@@ -503,7 +508,7 @@ export function renderList(items: string[], ordered: boolean, context: ThemeRend
             fontWeight: '800',
             verticalAlign: 'top',
           }) +
-            tag('span', content, {
+            tag('section', content, {
               display: 'inline-block',
               maxWidth: '88%',
               verticalAlign: 'top',
@@ -522,7 +527,7 @@ export function renderList(items: string[], ordered: boolean, context: ThemeRend
       }
       if (variant === 'ledger') {
         return tag(
-          'p',
+          'section',
           tag('span', marker, {
             display: 'inline-block',
             width: '34px',
@@ -540,7 +545,7 @@ export function renderList(items: string[], ordered: boolean, context: ThemeRend
         )
       }
       return tag(
-        'p',
+        'section',
         tag('span', marker, {
           display: 'inline-block',
           width: ordered ? '32px' : '22px',

@@ -2,18 +2,22 @@ import type { WarningItem } from '@/types'
 import { parseFragment, type DefaultTreeAdapterTypes, type ParserError } from 'parse5'
 
 const FORBIDDEN: Array<{ pattern: RegExp; message: string }> = [
-  { pattern: /<style[\s>]/i, message: '最终 HTML 含有 style 标签，公众号会过滤。' },
-  { pattern: /<script[\s>]/i, message: '最终 HTML 含有 script 标签，公众号会过滤。' },
-  { pattern: /<\/?div[\s>]/i, message: '最终 HTML 含有 div，请改用 section。' },
-  { pattern: /\sclass\s*=/i, message: '最终 HTML 含有 class，复制后样式可能丢失。' },
-  { pattern: /\sid\s*=/i, message: '最终 HTML 含有 id，公众号会剥离。' },
-  { pattern: /position\s*:\s*(fixed|absolute|sticky)/i, message: '最终 HTML 使用了公众号不支持的定位。' },
+  {
+    pattern: /position\s*:\s*(fixed|absolute|sticky)/i,
+    message: '最终 HTML 使用了公众号不支持的定位。',
+  },
   { pattern: /float\s*:/i, message: '最终 HTML 使用了公众号不支持的 float。' },
   { pattern: /display\s*:\s*grid/i, message: '最终 HTML 使用了 display:grid。' },
   { pattern: /var\s*\(\s*--/i, message: '最终 HTML 使用了 CSS 变量。' },
   { pattern: /@(media|keyframes|import)/i, message: '最终 HTML 使用了公众号会过滤的 CSS 规则。' },
-  { pattern: /url\s*\(\s*['"]?https?:\/\/[^)]*\.(woff2?|ttf|otf|eot)/i, message: '最终 HTML 引用了外部字体。' },
-  { pattern: /white-space\s*:\s*pre/i, message: '代码块使用 white-space:pre，微信中可能出现异常空白。' },
+  {
+    pattern: /url\s*\(\s*['"]?https?:\/\/[^)]*\.(woff2?|ttf|otf|eot)/i,
+    message: '最终 HTML 引用了外部字体。',
+  },
+  {
+    pattern: /white-space\s*:\s*pre/i,
+    message: '代码块使用 white-space:pre，微信中可能出现异常空白。',
+  },
 ]
 
 const ALLOWED_TAGS = new Set([
@@ -40,6 +44,19 @@ const ALLOWED_TAGS = new Set([
 ])
 const ALLOWED_ATTRIBUTES = new Set(['style', 'leaf', 'src', 'alt', 'colspan', 'rowspan'])
 const SAFE_IMAGE_DATA_URL = /^data:image\/(?:png|jpe?g|gif|webp);base64,[a-z0-9+/=\s]+$/i
+const SAFE_CSS_FUNCTIONS = new Set([
+  'rgb',
+  'rgba',
+  'hsl',
+  'hsla',
+  'linear-gradient',
+  'repeating-linear-gradient',
+  'radial-gradient',
+  'calc',
+  'min',
+  'max',
+  'clamp',
+])
 
 export interface WechatHtmlValidation {
   valid: boolean
@@ -48,7 +65,28 @@ export interface WechatHtmlValidation {
 }
 
 export function leafifyHtml(html: string): string {
-  const tokens = html.split(/(<[^>]+>)/g)
+  // A greater-than sign inside a quoted attribute is not the end of a tag.
+  const tokens: string[] = []
+  let start = 0
+  for (let index = 0; index < html.length; index += 1) {
+    if (html[index] !== '<') continue
+    if (index > start) tokens.push(html.slice(start, index))
+    start = index
+    let quote = ''
+    for (index += 1; index < html.length; index += 1) {
+      const character = html[index]
+      if (quote) {
+        if (character === quote) quote = ''
+      } else if (character === '"' || character === "'") {
+        quote = character
+      } else if (character === '>') {
+        break
+      }
+    }
+    tokens.push(html.slice(start, index + 1))
+    start = index + 1
+  }
+  if (start < html.length) tokens.push(html.slice(start))
   const stack: Array<{ tag: string; leaf: boolean }> = []
   let leafDepth = 0
 
@@ -93,14 +131,15 @@ export function validateWechatHtml(html: string): WechatHtmlValidation {
       type: 'htmlCompatibility',
     })
   }
-  for (const rule of FORBIDDEN) {
-    if (rule.pattern.test(html)) issues.push({ level: 'danger', text: rule.message, type: 'htmlCompatibility' })
-  }
   const structure = inspectTree(fragment)
   issues.push(...structure.issues)
   const leafCount = structure.leafCount
-  if (/[一-鿿]/.test(html) && leafCount === 0) {
-    issues.push({ level: 'danger', text: '最终 HTML 没有 span leaf 包裹，粘贴后样式可能大面积丢失。', type: 'htmlCompatibility' })
+  if (structure.unwrappedCjkCount > 0 && leafCount === 0) {
+    issues.push({
+      level: 'danger',
+      text: '最终 HTML 没有 span leaf 包裹，粘贴后样式可能大面积丢失。',
+      type: 'htmlCompatibility',
+    })
   }
   const unwrappedCount = structure.unwrappedCjkCount
   if (unwrappedCount > 0) {
@@ -125,19 +164,24 @@ function inspectTree(fragment: DefaultTreeAdapterTypes.DocumentFragment): {
   let leafCount = 0
   let unwrappedCjkCount = 0
 
-  function visit(node: DefaultTreeAdapterTypes.Node, insideLeaf: boolean) {
+  const pending: Array<{ node: DefaultTreeAdapterTypes.Node; insideLeaf: boolean }> =
+    fragment.childNodes.map((node) => ({ node, insideLeaf: false }))
+  while (pending.length > 0) {
+    const entry = pending.pop()!
+    const { node, insideLeaf } = entry
     if (node.nodeName === '#text') {
       if (!insideLeaf && /[一-鿿]/.test((node as DefaultTreeAdapterTypes.TextNode).value)) {
         unwrappedCjkCount += 1
       }
-      return
+      continue
     }
 
     let nextInsideLeaf = insideLeaf
     if ('tagName' in node) {
       const element = node as DefaultTreeAdapterTypes.Element
       if (!ALLOWED_TAGS.has(element.tagName)) invalidTags.add(element.tagName)
-      const isLeaf = element.tagName === 'span' && element.attrs.some((attr) => attr.name === 'leaf')
+      const isLeaf =
+        element.tagName === 'span' && element.attrs.some((attr) => attr.name === 'leaf')
       if (isLeaf) leafCount += 1
       nextInsideLeaf ||= isLeaf
       for (const attr of element.attrs) {
@@ -152,11 +196,9 @@ function inspectTree(fragment: DefaultTreeAdapterTypes.DocumentFragment): {
     }
 
     if ('childNodes' in node) {
-      for (const child of node.childNodes) visit(child, nextInsideLeaf)
+      for (const child of node.childNodes) pending.push({ node: child, insideLeaf: nextInsideLeaf })
     }
   }
-
-  for (const child of fragment.childNodes) visit(child, false)
   if (invalidTags.size > 0) {
     issues.push({
       level: 'danger',
@@ -184,7 +226,16 @@ function inspectTree(fragment: DefaultTreeAdapterTypes.DocumentFragment): {
 
 function isAllowedAttributeValue(tagName: string, name: string, value: string): boolean {
   if (name === 'style') {
-    return !/(?:expression|url)\s*\(|behavior\s*:|-moz-binding/i.test(value)
+    // Generated styles do not need escapes/comments/at-rules. Reject them rather
+    // than attempting to decode every CSS obfuscation a browser may understand.
+    for (const character of value) {
+      if (character.charCodeAt(0) < 32 && !'\t\n\r'.includes(character)) return false
+    }
+    if (/[\\@<>]|\/\*|\*\/|behavior\s*:|-moz-binding/i.test(value)) return false
+    if (FORBIDDEN.some((rule) => rule.pattern.test(value))) return false
+    return [...value.matchAll(/([a-z-]+)\s*\(/gi)].every((match) =>
+      SAFE_CSS_FUNCTIONS.has(match[1]!.toLowerCase()),
+    )
   }
   if (name === 'leaf') return tagName === 'span' && value === ''
   if (name === 'src') return tagName === 'img' && isSafeImageSource(value)

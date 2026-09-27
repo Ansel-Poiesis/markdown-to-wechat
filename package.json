@@ -10,7 +10,8 @@
     "dev": "vite",
     "build": "npm run type-check && npm run build-only",
     "build:electron": "npm run verify && electron-builder --win",
-    "build:web": "vite build --outDir docs && npm run check:secrets",
+    "build:web": "npm run type-check && vite build --outDir docs && npm run check:secrets",
+    "audit:dependencies": "npm audit --audit-level=moderate",
     "smoke:browser": "node scripts/browser-smoke.mjs",
     "preview": "vite preview",
     "render": "tsx --tsconfig tsconfig.node.json scripts/render-wechat.ts",
@@ -61,7 +62,7 @@
     "typescript": "~6.0.0",
     "vite": "^8.0.8",
     "vite-plugin-vue-devtools": "^8.1.1",
-    "vitest": "4.1.10",
+    "vitest": "4.1.11",
     "vue-tsc": "^3.2.6"
   },
   "engines": {

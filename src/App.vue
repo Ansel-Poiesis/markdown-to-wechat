@@ -9,7 +9,6 @@ import { validateWechatHtml } from '@/utils/wechatHtml'
 import { useMarkdownAnalyzer } from '@/composables/useMarkdownAnalyzer'
 import { useMarkdownWarnings } from '@/composables/useMarkdownWarnings'
 import { useClipboard } from '@/composables/useClipboard'
-import { useSmartFormat } from '@/composables/useSmartFormat'
 import { useExport } from '@/composables/useExport'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { welcomeMarkdown } from '@/config/templates'
@@ -43,7 +42,6 @@ const ui = useUiStore()
 const draftStore = useDraftStore()
 const { isMobile } = useBreakpoint()
 const { copyRenderedHtml } = useClipboard()
-const { formatMarkdown } = useSmartFormat()
 const { exportHtml } = useExport()
 
 watch(
@@ -66,8 +64,14 @@ const content = computed({
 })
 
 function recordDraftSave(saved: boolean) {
-  draftSaveFailed.value = !saved
+  draftSaveFailed.value = !saved || Boolean(editorStore.persistenceError)
   draftSaveRevision.value += 1
+}
+
+function warnBeforeUnsavedExit(event: BeforeUnloadEvent) {
+  if (!draftStore.persistenceError && !editorStore.persistenceError) return
+  event.preventDefault()
+  event.returnValue = ''
 }
 
 function handleGlobalKeydown(event: KeyboardEvent) {
@@ -83,6 +87,10 @@ function handleGlobalKeydown(event: KeyboardEvent) {
   }
   if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'c') {
     event.preventDefault()
+    if (renderError.value) {
+      ui.showToast(renderError.value, 'error')
+      return
+    }
     const hasBlocking = warnings.value.some((w) => w.level === 'danger')
     if (hasBlocking) {
       ui.openModal('preflight')
@@ -93,34 +101,53 @@ function handleGlobalKeydown(event: KeyboardEvent) {
 }
 
 onMounted(() => {
-  const initialContent = draftStore.initializeWorkspace(editorStore.content, welcomeMarkdown)
+  const initialContent = draftStore.initializeWorkspace(
+    editorStore.content,
+    welcomeMarkdown,
+    editorStore.recovery,
+  )
   if (initialContent !== editorStore.content) {
     editorStore.setContent(initialContent)
   }
+  recordDraftSave(!draftStore.persistenceError)
   document.addEventListener('keydown', handleGlobalKeydown)
+  window.addEventListener('beforeunload', warnBeforeUnsavedExit)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleGlobalKeydown)
+  window.removeEventListener('beforeunload', warnBeforeUnsavedExit)
 })
 
 watch(
-  () => draftStore.persistenceError,
+  () => draftStore.persistenceError || editorStore.persistenceError,
   (error, previousError) => {
+    draftSaveFailed.value = Boolean(error)
     if (error && error !== previousError) ui.showToast(error, 'error')
   },
+  { immediate: true },
 )
 
 const { stats } = useMarkdownAnalyzer(content)
 const { warnings: markdownWarnings } = useMarkdownWarnings(content)
 const scrollRatio = ref<number>()
 
-const renderedHtml = computed(() => {
-  return renderMarkdown(content.value, themeStore.themeBase, themeStore.currentCodeTheme)
+const renderResult = computed(() => {
+  try {
+    const html = renderMarkdown(content.value, themeStore.themeBase, themeStore.currentCodeTheme)
+    return { html, issues: validateWechatHtml(html).issues, error: '' }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '渲染未能完成，请缩短原稿后重试。'
+    return { html: '', issues: [], error: `预览已暂停：${message} 原稿已保留。` }
+  }
 })
-
-const htmlValidation = computed(() => validateWechatHtml(renderedHtml.value))
-const warnings = computed(() => [...markdownWarnings.value, ...htmlValidation.value.issues])
+const renderedHtml = computed(() => renderResult.value.html)
+const renderError = computed(() => renderResult.value.error)
+const warnings = computed(() => [
+  ...markdownWarnings.value,
+  ...renderResult.value.issues,
+  ...(renderError.value ? [{ level: 'danger' as const, text: renderError.value }] : []),
+])
 const preflightCounts = computed(() => ({
   danger: warnings.value.filter((warning) => warning.level === 'danger').length,
   warn: warnings.value.filter((warning) => warning.level === 'warn').length,
@@ -143,26 +170,21 @@ function loadSample() {
 }
 
 function handleExport() {
-  const html = renderMarkdown(
-    editorStore.content,
-    themeStore.themeBase,
-    themeStore.currentCodeTheme,
-  )
-  exportHtml(html)
-  ui.showToast('HTML 已导出')
+  if (renderError.value) {
+    ui.showToast(renderError.value, 'error')
+    return
+  }
+  try {
+    exportHtml(renderedHtml.value)
+    ui.showToast('已发起 HTML 下载')
+  } catch {
+    ui.showToast('HTML 导出失败，请重试或检查浏览器下载权限。', 'error')
+  }
 }
 
 watch(
   () => content.value,
-  (v, oldV) => {
-    if (oldV === '' && v.length > 0) {
-      const formatted = formatMarkdown(v)
-      if (formatted !== v) {
-        editorStore.setContent(formatted)
-        recordDraftSave(draftStore.updateActiveDraft(formatted))
-        return
-      }
-    }
+  (v) => {
     recordDraftSave(draftStore.updateActiveDraft(v))
   },
 )
@@ -173,6 +195,7 @@ watch(
     :rendered-html="renderedHtml"
     :warnings="warnings"
     :stats="stats"
+    :render-error="renderError"
     @export-html="handleExport"
     @feedback="ui.openModal('feedback')"
   />
@@ -192,7 +215,12 @@ watch(
         @scroll="(r: number) => (scrollRatio = r)"
       />
       <SettingsPanel :stats="stats" :warnings="warnings" class="min-h-0 min-w-0" />
-      <PreviewPane :html="renderedHtml" :scroll-ratio="scrollRatio" class="min-h-0 min-w-0" />
+      <PreviewPane
+        :html="renderedHtml"
+        :error="renderError"
+        :scroll-ratio="scrollRatio"
+        class="min-h-0 min-w-0"
+      />
     </main>
   </template>
 
@@ -200,7 +228,7 @@ watch(
   <template v-else>
     <main
       class="flex flex-col min-h-0 w-full max-w-[100vw] overflow-hidden"
-      style="height: calc(100dvh - 64px - 48px)"
+      style="height: calc(100dvh - 64px - 48px - env(safe-area-inset-bottom, 0px))"
     >
       <div v-show="mobileTab === 'editor'" class="flex-1 min-h-0 w-full min-w-0">
         <EditorPane
@@ -214,6 +242,7 @@ watch(
       <PreviewPane
         v-show="mobileTab === 'preview'"
         :html="renderedHtml"
+        :error="renderError"
         :scroll-ratio="1"
         class="flex-1 min-h-0 w-full min-w-0"
       />
@@ -226,13 +255,14 @@ watch(
     </main>
 
     <!-- Mobile tab bar -->
-    <nav class="mobile-nav safe-area-bottom">
+    <nav class="mobile-nav safe-area-bottom" aria-label="工作区切换">
       <button
         v-for="tab in ['editor', 'preview', 'inspector'] as const"
         :key="tab"
         type="button"
         class="mobile-nav__button"
         :class="mobileTab === tab ? 'mobile-nav__button--active' : ''"
+        :aria-current="mobileTab === tab ? 'page' : undefined"
         @click="mobileTab = tab"
       >
         <AppIcon
@@ -251,6 +281,9 @@ watch(
       name="toast"
       tag="div"
       class="fixed bottom-5 right-5 z-[1000] flex flex-col gap-2"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
     >
       <div
         v-for="toast in ui.toasts"
@@ -268,7 +301,12 @@ watch(
     </TransitionGroup>
   </Teleport>
 
-  <PreflightModal :warnings="warnings" :counts="preflightCounts" :html="renderedHtml" />
+  <PreflightModal
+    :warnings="warnings"
+    :counts="preflightCounts"
+    :html="renderedHtml"
+    :render-error="renderError"
+  />
   <FeedbackModal
     :open="Boolean(ui.activeModals.feedback)"
     :diagnostics="feedbackDiagnostics"
@@ -284,7 +322,7 @@ watch(
   align-items: stretch;
 }
 
-@media (max-width: 1480px) {
+@media (max-width: 1599px) {
   .desktop-workspace {
     grid-template-columns: minmax(320px, 1.15fr) minmax(292px, 0.85fr) minmax(440px, 1fr);
   }
@@ -306,7 +344,7 @@ watch(
   z-index: 50;
   width: 100%;
   max-width: 100vw;
-  height: 48px;
+  height: calc(48px + env(safe-area-inset-bottom, 0px));
   display: flex;
   align-items: stretch;
   overflow: hidden;

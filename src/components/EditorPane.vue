@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { EditorView, basicSetup } from 'codemirror'
 import { Compartment } from '@codemirror/state'
 import { markdown } from '@codemirror/lang-markdown'
@@ -7,7 +7,9 @@ import { keymap } from '@codemirror/view'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { markdownCommandsKeymap } from '@/composables/useMarkdownCommands'
 import { useAiFormatting } from '@/composables/useAiFormatting'
+import { markdownToPlainText } from '@/composables/usePlainText'
 import { useEditorStore } from '@/stores/editor'
+import { useDraftStore } from '@/stores/drafts'
 import { useSettingsStore } from '@/stores/settings'
 import { useUiStore } from '@/stores/ui'
 import {
@@ -34,6 +36,7 @@ const emit = defineEmits<{
 
 const editorHost = ref<HTMLDivElement>()
 const editorStore = useEditorStore()
+const draftStore = useDraftStore()
 const settings = useSettingsStore()
 const ui = useUiStore()
 let view: EditorView | null = null
@@ -59,6 +62,7 @@ const {
   undoFormat,
 } = useAiFormatting({
   content: modelValue,
+  documentId: computed(() => draftStore.activeDraftId),
   applyContent: (value) => {
     formatJustApplied = true
     emit('update:modelValue', value)
@@ -71,27 +75,8 @@ const {
   },
 })
 
-function stripMarkdown(input: string): string {
-  return input
-    .replace(/^#{1,6}\s+/gm, '') // headings
-    .replace(/\*\*(.+?)\*\*/g, '$1') // bold
-    .replace(/\*(.+?)\*/g, '$1') // italic
-    .replace(/~~(.+?)~~/g, '$1') // strikethrough
-    .replace(/==(.+?)==/g, '$1') // highlight
-    .replace(/`([^`]+)`/g, '$1') // inline code
-    .replace(/```[\s\S]*?```/g, '') // code blocks
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1') // images → alt text
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // links → text
-    .replace(/^\s*[-*+]\s+/gm, '') // unordered lists
-    .replace(/^\s*\d+\.\s+/gm, '') // ordered lists
-    .replace(/^\s*>\s*/gm, '') // blockquotes
-    .replace(/^\s*-\s*\[[ xX]\]\s*/gm, '') // task lists
-    .replace(/^---+\s*$/gm, '') // horizontal rules
-    .replace(/\n{3,}/g, '\n\n') // excess blank lines
-}
-
 function handlePure() {
-  const stripped = stripMarkdown(props.modelValue)
+  const stripped = markdownToPlainText(props.modelValue)
   formatJustApplied = true
   emit('update:modelValue', stripped)
   formatMode.value = 'pure'
@@ -144,6 +129,38 @@ const formatKeymap = keymap.of([
   { key: 'Mod-e', run: (v) => wrapSelection(v, '`', '`') },
 ])
 
+async function insertImages(files: File[], target: EditorView, from: number, to = from) {
+  const originalDoc = target.state.doc
+  const originalDraftId = draftStore.activeDraftId
+  try {
+    const results = []
+    for (const file of files) {
+      if (view !== target) return
+      ui.showToast(`处理图片 ${file.name}...`, 'info')
+      results.push(await processImageFile(file))
+    }
+    if (view !== target) return
+    // Avoid inserting into a newly selected draft or stale offsets while decoding images.
+    if (target.state.doc !== originalDoc || draftStore.activeDraftId !== originalDraftId) {
+      ui.showToast('处理图片期间原稿已变化，请重新粘贴或拖入图片。', 'warning')
+      return
+    }
+    const markdown = results.map((result) => result.markdown).join('\n\n')
+    target.dispatch({
+      changes: { from, to, insert: markdown },
+      selection: { anchor: from + markdown.length },
+    })
+    const size = results.reduce((total, result) => total + result.compressedSize, 0)
+    ui.showToast(`已插入 ${results.length} 张图片 (${formatFileSize(size)})`, 'success')
+  } catch (error) {
+    if (view !== target) return
+    ui.showToast(
+      error instanceof Error ? `图片插入失败：${error.message}` : '图片插入失败，请重试。',
+      'error',
+    )
+  }
+}
+
 onMounted(() => {
   if (!editorHost.value) return
   view = new EditorView({
@@ -154,6 +171,7 @@ onMounted(() => {
       markdownCommandsKeymap(),
       formatKeymap,
       EditorView.lineWrapping,
+      EditorView.contentAttributes.of({ 'aria-label': 'Markdown 原稿编辑器' }),
       colorModeCompartment.of(ui.colorMode === 'dark' ? oneDark : []),
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
@@ -173,45 +191,17 @@ onMounted(() => {
           const files = getImageFilesFromClipboard(event)
           if (files.length === 0) return false
           event.preventDefault()
-          // Fire and forget async image processing
-          void (async () => {
-            for (const file of files) {
-              ui.showToast(`处理图片 ${file.name}...`, 'info')
-              const result = await processImageFile(file)
-              const { from } = v.state.selection.main
-              v.dispatch({
-                changes: { from, insert: result.markdown },
-                selection: { anchor: from + result.markdown.length },
-              })
-              const saved = result.originalSize - result.compressedSize
-              ui.showToast(
-                saved > 1024
-                  ? `图片已插入 (${formatFileSize(result.originalSize)} → ${formatFileSize(result.compressedSize)}, 节省 ${formatFileSize(saved)})`
-                  : `图片已插入 (${formatFileSize(result.compressedSize)})`,
-                'success',
-              )
-            }
-          })()
+          const { from, to } = v.state.selection.main
+          void insertImages(files, v, from, to)
           return true
         },
         drop: (event, v) => {
           const files = getImageFilesFromDragDrop(event)
           if (files.length === 0) return false
-          event.preventDefault()
           const pos = v.posAtCoords({ x: event.clientX, y: event.clientY })
           if (pos === null) return false
-          // Fire and forget async image processing
-          void (async () => {
-            for (const file of files) {
-              ui.showToast(`处理图片 ${file.name}...`, 'info')
-              const result = await processImageFile(file)
-              v.dispatch({
-                changes: { from: pos, insert: result.markdown },
-                selection: { anchor: pos + result.markdown.length },
-              })
-              ui.showToast(`图片已插入 (${formatFileSize(result.compressedSize)})`, 'success')
-            }
-          })()
+          event.preventDefault()
+          void insertImages(files, v, pos)
           return true
         },
       }),
@@ -219,6 +209,13 @@ onMounted(() => {
     parent: editorHost.value,
   })
   editorStore.editorView = view as unknown
+})
+
+onBeforeUnmount(() => {
+  if (fadeTimer) clearTimeout(fadeTimer)
+  if (editorStore.editorView === view) editorStore.editorView = null
+  view?.destroy()
+  view = null
 })
 
 watch(
@@ -239,8 +236,9 @@ watch(
 )
 
 watch(
-  () => props.saveRevision,
+  [() => props.saveRevision, () => props.saveFailed],
   () => showSaveState(props.saveFailed ? '保存失败' : '已保存', props.saveFailed),
+  { immediate: true },
 )
 
 watch(
@@ -254,11 +252,7 @@ watch(
 </script>
 
 <template>
-  <section
-    v-bind="$attrs"
-    class="workspace-panel animate-panel-1"
-    aria-label="Markdown 编辑区"
-  >
+  <section v-bind="$attrs" class="workspace-panel animate-panel-1" aria-label="Markdown 编辑区">
     <div class="panel-toolbar">
       <div class="panel-heading">
         <span class="panel-heading__icon"><AppIcon name="pen" :size="14" /></span>
@@ -267,7 +261,9 @@ watch(
           <Transition name="fade">
             <span
               v-show="saveVisible"
-              class="inline-flex items-center gap-0.5 text-[10px] text-text-tertiary"
+              class="inline-flex items-center gap-0.5 text-[11px] text-text-tertiary"
+              role="status"
+              aria-live="polite"
             >
               <AppIcon v-if="saveLabel === '保存中...'" name="save" :size="11" />
               <AppIcon v-else-if="saveLabel === '保存失败'" name="alertCircle" :size="11" />

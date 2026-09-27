@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useModalFocus } from '@/composables/useModalFocus'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
 const props = defineProps<{
@@ -14,6 +15,12 @@ const emit = defineEmits<{
 
 const apiKey = ref('')
 const showKey = ref(false)
+const dialog = ref<HTMLElement>()
+useModalFocus(
+  () => props.open,
+  dialog,
+  () => emit('cancel'),
+)
 
 watch(
   () => props.open,
@@ -34,13 +41,31 @@ function confirm() {
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="open" class="modal-backdrop" @click.self="emit('cancel')">
-        <section class="modal ai-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="ai-confirm-title">
+        <section
+          ref="dialog"
+          tabindex="-1"
+          class="modal ai-confirm-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ai-confirm-title"
+        >
           <div class="flex items-start justify-between gap-4 px-5 pt-5 pb-4">
             <div>
-              <p class="text-[11px] font-semibold tracking-widest uppercase text-text-tertiary mb-0.5">MiMo</p>
-              <h2 id="ai-confirm-title" class="text-lg font-semibold tracking-tight">确认辅助排版</h2>
+              <p
+                class="text-[11px] font-semibold tracking-widest uppercase text-text-tertiary mb-0.5"
+              >
+                MiMo
+              </p>
+              <h2 id="ai-confirm-title" class="text-lg font-semibold tracking-tight">
+                确认辅助排版
+              </h2>
             </div>
-            <button type="button" class="modal-icon-button" aria-label="关闭" @click="emit('cancel')">
+            <button
+              type="button"
+              class="modal-icon-button"
+              aria-label="关闭"
+              @click="emit('cancel')"
+            >
               <AppIcon name="x" :size="16" />
             </button>
           </div>
@@ -61,7 +86,12 @@ function confirm() {
                   placeholder="仅保留在当前页面会话"
                   @keydown.enter="confirm"
                 />
-                <button type="button" class="modal-icon-button" :aria-label="showKey ? '隐藏密钥' : '显示密钥'" @click="showKey = !showKey">
+                <button
+                  type="button"
+                  class="modal-icon-button"
+                  :aria-label="showKey ? '隐藏密钥' : '显示密钥'"
+                  @click="showKey = !showKey"
+                >
                   <AppIcon :name="showKey ? 'eyeOff' : 'eye'" :size="15" />
                 </button>
               </div>
@@ -69,7 +99,13 @@ function confirm() {
           </div>
 
           <div class="flex justify-end gap-2.5 px-5 py-4 border-t border-border-subtle">
-            <button type="button" class="h-9 px-3.5 rounded-md text-sm border border-border bg-surface text-text" @click="emit('cancel')">取消</button>
+            <button
+              type="button"
+              class="h-9 px-3.5 rounded-md text-sm border border-border bg-surface text-text"
+              @click="emit('cancel')"
+            >
+              取消
+            </button>
             <button
               type="button"
               class="h-9 px-3.5 rounded-md text-sm font-semibold bg-accent text-accent-contrast disabled:opacity-40"

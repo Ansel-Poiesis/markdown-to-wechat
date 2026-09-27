@@ -1,0 +1,171 @@
+{
+  "node": "v24.18.0",
+  "platform": "win32/x64",
+  "limit": {
+    "perCaseTimeoutMs": 15000,
+    "childHeapMiB": 384
+  },
+  "measuredAt": "2026-09-27T01:44:49.776Z",
+  "rows": [
+    {
+      "name": "prose_10k",
+      "inputChars": 10008,
+      "inputBytes": 30024,
+      "outputBytes": 30803,
+      "elapsedMs": 2.58,
+      "heapBeforeMiB": 22.27,
+      "heapAfterMiB": 23.82,
+      "rssAfterMiB": 92.72,
+      "valid": true,
+      "issueCount": 0
+    },
+    {
+      "name": "prose_100k",
+      "inputChars": 100008,
+      "inputBytes": 300024,
+      "outputBytes": 300803,
+      "elapsedMs": 8.76,
+      "heapBeforeMiB": 21.51,
+      "heapAfterMiB": 26.8,
+      "rssAfterMiB": 88.93,
+      "valid": true,
+      "issueCount": 0
+    },
+    {
+      "name": "prose_1m",
+      "inputChars": 1000008,
+      "inputBytes": 3000024,
+      "outputBytes": 3000803,
+      "elapsedMs": 85.71,
+      "heapBeforeMiB": 21.75,
+      "heapAfterMiB": 77.05,
+      "rssAfterMiB": 178.05,
+      "valid": true,
+      "issueCount": 0
+    },
+    {
+      "name": "links_100",
+      "inputChars": 4179,
+      "inputBytes": 4179,
+      "outputBytes": 27508,
+      "elapsedMs": 11.09,
+      "heapBeforeMiB": 22.1,
+      "heapAfterMiB": 26.32,
+      "rssAfterMiB": 82.61,
+      "valid": true,
+      "issueCount": 0
+    },
+    {
+      "name": "links_1000",
+      "inputChars": 43779,
+      "inputBytes": 43779,
+      "outputBytes": 271410,
+      "elapsedMs": 42.03,
+      "heapBeforeMiB": 22.13,
+      "heapAfterMiB": 33.42,
+      "rssAfterMiB": 94.29,
+      "valid": true,
+      "issueCount": 0
+    },
+    {
+      "name": "links_5000",
+      "inputChars": 227779,
+      "inputBytes": 227779,
+      "outputBytes": 1375410,
+      "elapsedMs": 149.74,
+      "heapBeforeMiB": 22.52,
+      "heapAfterMiB": 81.23,
+      "rssAfterMiB": 168.45,
+      "valid": true,
+      "issueCount": 0
+    },
+    {
+      "name": "brackets_200k",
+      "inputChars": 200000,
+      "inputBytes": 200000,
+      "outputBytes": 200779,
+      "elapsedMs": 16.45,
+      "heapBeforeMiB": 21.46,
+      "heapAfterMiB": 26.2,
+      "rssAfterMiB": 86.32,
+      "valid": true,
+      "issueCount": 0
+    },
+    {
+      "name": "backticks_200k",
+      "error": "Command failed: C:\\Program Files\\nodejs\\node.exe --max-old-space-size=384 --import tsx C:\\Ansel_Work\\10_Projects\\20_ContentTools\\markdown-to-wechat\\scripts\\render-stress.ts --case backticks_200k\n\r\n<--- Last few GCs --->\r\n\r\n[57132:0000024C8D7FD000]     1393 ms: Mark-Compact 381.5 (386.9) -> 380.8 (388.4) MB, pooled: 0 MB, 118.39 / 0.00 ms  (average mu = 0.141, current mu = 0.016) allocation failure; scavenge might not succeed\r\n\r\nFATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory\r\n----- Native stack trace -----\r\n\r\n 1: 00007FF760DC3D9F node::OnFatalError+1343\r\n 2: 00007FF75FA0DCB7 v8::Function::NewInstance+423\r\n 3: 00007FF75F80E4F7 uv_udp_get_send_queue_count+54423\r\n 4: 00007FF75F80C196 uv_udp_get_send_queue_count+45366\r\n 5: 00007FF75F82681A X509_STORE_set_cleanup+5098\r\n 6: 00007FF75F832CB6 uv_timer_set_repeat+20694\r\n 7: 00007FF75F403907 v8::CodeEvent::GetFunctionName+131959\r\n 8: 00007FF760FA353A node::AsyncResource::CallbackScope::CallbackScope+812410\r\n 9: "
+    },
+    {
+      "name": "comments_200k",
+      "inputChars": 200011,
+      "inputBytes": 200011,
+      "outputBytes": 201610,
+      "elapsedMs": 11.3,
+      "heapBeforeMiB": 21.02,
+      "heapAfterMiB": 26.29,
+      "rssAfterMiB": 85.58,
+      "valid": true,
+      "issueCount": 0
+    },
+    {
+      "name": "nested_lists_64",
+      "inputChars": 4479,
+      "inputBytes": 4479,
+      "outputBytes": 17514,
+      "elapsedMs": 6.36,
+      "heapBeforeMiB": 22.18,
+      "heapAfterMiB": 24.52,
+      "rssAfterMiB": 77.83,
+      "valid": true,
+      "issueCount": 0
+    },
+    {
+      "name": "nested_lists_256",
+      "inputChars": 67071,
+      "inputBytes": 67071,
+      "outputBytes": 68010,
+      "elapsedMs": 16.86,
+      "heapBeforeMiB": 21.84,
+      "heapAfterMiB": 25.74,
+      "rssAfterMiB": 85.2,
+      "valid": true,
+      "issueCount": 0
+    },
+    {
+      "name": "nested_lists_512",
+      "inputChars": 265215,
+      "inputBytes": 265215,
+      "outputBytes": 135338,
+      "elapsedMs": 28.85,
+      "heapBeforeMiB": 21.85,
+      "heapAfterMiB": 25,
+      "rssAfterMiB": 85.8,
+      "valid": true,
+      "issueCount": 0
+    },
+    {
+      "name": "quote_20000",
+      "inputChars": 20005,
+      "inputBytes": 20005,
+      "outputBytes": 89666,
+      "elapsedMs": 9.39,
+      "heapBeforeMiB": 21.77,
+      "heapAfterMiB": 24.74,
+      "rssAfterMiB": 81.74,
+      "valid": true,
+      "issueCount": 0
+    },
+    {
+      "name": "table_5000",
+      "inputChars": 85028,
+      "inputBytes": 85028,
+      "outputBytes": 2436243,
+      "elapsedMs": 239.14,
+      "heapBeforeMiB": 21.29,
+      "heapAfterMiB": 77.78,
+      "rssAfterMiB": 252.15,
+      "valid": true,
+      "issueCount": 0
+    }
+  ]
+}

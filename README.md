@@ -23,6 +23,8 @@
 
 维护、发布和本地产物的唯一规则见 [VERSIONING.md](VERSIONING.md)。
 
+2026-09-27 的工程审计及本地补丁见 [评估、验证与优化计划](audit/2026-09-27/README.md)。正式交付仍为 2.0.1；补丁尚未进入线上网页或安装包。
+
 ![Markdown渲染器工作台：左侧编辑 Markdown，中间选择主题，右侧实时预览公众号文章](.github/assets/workbench-overview.jpg)
 
 ## 为什么使用
@@ -168,9 +170,15 @@ npm run build:electron
 
 `verify` 依次运行 TypeScript、Oxlint、ESLint、Vitest、生产构建和敏感信息扫描。`build:web` 生成 GitHub Pages 使用的 `docs/` 目录。
 
+`npm run audit:dependencies` 单独核查当前依赖公告；浏览器冒烟每次先重建当前源码。无头浏览器 `--window-size` 截图不能替代真实设备视口、交互和公众号后台验收。
+
+渲染器采用公众号常用 Markdown 子集，未声明完整 CommonMark/GFM 兼容。输入最多 2 Mi 字符、50,000 行，单篇最多 10,000 个行内格式标记与 20,000 个结构 token，生成 HTML 最多 4 Mi 字符；超过预算会保留原稿并暂停输出。界面明确显示保存失败，代码内容不会在首次输入时自动改写。压力数据与语法边界见审计报告。
+
 技术栈：Vue 3、TypeScript、Vite、Tailwind CSS v4、CodeMirror 6、Pinia 与 Electron。
 
 网页界面优先使用本机霞鹜文楷，并回退到系统字体栈，不下载 WebFont；公众号输出仍可在设置中选择无衬线、衬线或等宽字体栈。
+
+远程图片仍会向其 HTTP(S) 地址发起加载请求。AI 辅助排版只有在用户确认后才发送正文；完整响应与可撤销事务不代表模型改写已经通过语义保真审核。自定义反馈接口须明确返回 JSON `{ "accepted": true }`，FormSubmit 使用其 `success: true` 回执。
 
 </details>
 

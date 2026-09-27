@@ -9,6 +9,7 @@ const props = defineProps<{
   renderedHtml: string
   warnings: WarningItem[]
   stats: MarkdownStats
+  renderError?: string
 }>()
 
 const emit = defineEmits<{ exportHtml: []; feedback: [] }>()
@@ -19,6 +20,7 @@ const { copyRenderedHtml } = useClipboard()
 const hasBlockingWarnings = computed(() => props.warnings.some((w) => w.level === 'danger'))
 
 async function handleCopy() {
+  if (props.renderError) return
   if (hasBlockingWarnings.value) {
     ui.openModal('preflight')
     return
@@ -27,6 +29,7 @@ async function handleCopy() {
 }
 
 function handleExport() {
+  if (props.renderError) return
   emit('exportHtml')
 }
 </script>
@@ -38,7 +41,7 @@ function handleExport() {
         <h1 class="app-header__title">Markdown渲染器</h1>
       </div>
 
-      <div class="app-header__stats hidden md:flex">
+      <div class="app-header__stats">
         <span class="flex items-center gap-1.5 tabular-nums">
           <strong class="text-text font-bold text-sm">{{ stats.wordCount }}</strong>
           <span>字</span>
@@ -83,6 +86,8 @@ function handleExport() {
           type="button"
           class="header-secondary-button"
           title="导出 HTML"
+          aria-label="导出 HTML"
+          :disabled="Boolean(renderError)"
           @click="handleExport"
         >
           <AppIcon name="download" :size="14" />
@@ -92,6 +97,8 @@ function handleExport() {
           type="button"
           class="header-primary-button"
           title="复制到公众号"
+          aria-label="复制到公众号"
+          :disabled="Boolean(renderError)"
           @click="handleCopy"
         >
           <AppIcon name="copy" :size="14" />
@@ -146,6 +153,7 @@ function handleExport() {
 }
 
 .app-header__stats {
+  display: flex;
   align-items: center;
   gap: 4px;
   justify-self: center;
@@ -214,6 +222,12 @@ function handleExport() {
   background: var(--color-surface-hover);
 }
 
+.header-secondary-button:disabled,
+.header-primary-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .header-primary-button:hover {
   background: var(--color-accent-hover);
   border-color: var(--color-accent-hover);
@@ -237,7 +251,11 @@ function handleExport() {
   box-shadow: 0 0 0 3px var(--color-focus-ring);
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1179px) {
+  .app-header__stats {
+    display: none;
+  }
+
   .app-header__inner {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;

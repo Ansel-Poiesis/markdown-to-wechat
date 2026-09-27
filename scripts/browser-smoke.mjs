@@ -8,7 +8,8 @@
  *
  * 行为：
  *   - 启动本地静态服务（无第三方依赖），提供 dist/。
- *   - 用本机 Chrome/Edge 无头模式分别打开桌面 1280x900 与移动 390x844。
+ *   - 用本机 Chrome/Edge 无头模式生成桌面与窄窗口快照。
+ *   - --window-size 不是设备视口模拟；响应式验收还需真实 viewport 检查。
  *   - 断言应用挂载、工作台/移动导航与欢迎文本预览的关键 DOM 标记。
  *   - 把 DOM 快照与截图写入 browser-smoke/（已 gitignore，供人工复核）。
  *
@@ -17,9 +18,9 @@
 
 import { spawn, spawnSync } from 'node:child_process'
 import { createServer } from 'node:http'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, extname, join, resolve } from 'node:path'
+import { basename, dirname, extname, join, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -49,10 +50,11 @@ const MIME = {
 }
 
 function ensureBuild() {
-  if (existsSync(join(DIST, 'index.html'))) return
-  console.log('未找到 dist/index.html，先执行 npm run build-only ...')
-  const result = spawnSync('npm', ['run', 'build-only'], { cwd: ROOT, stdio: 'inherit', shell: true })
-  if (result.status !== 0) throw new Error('npm run build-only 失败')
+  console.log('先构建当前源码，避免冒烟检查到旧 dist/ ...')
+  const result = spawnSync(process.execPath, [join(ROOT, 'node_modules/vite/bin/vite.js'), 'build'], {
+    cwd: ROOT, stdio: 'inherit', windowsHide: true,
+  })
+  if (result.status !== 0) throw new Error('Vite 构建失败')
 }
 
 function findBrowser() {
@@ -71,9 +73,15 @@ function findBrowser() {
 
 async function startServer() {
   const server = createServer((req, res) => {
-    const urlPath = decodeURIComponent(new URL(req.url ?? '/', 'http://localhost').pathname)
+    let urlPath
+    try {
+      urlPath = decodeURIComponent(new URL(req.url ?? '/', 'http://localhost').pathname)
+    } catch {
+      res.writeHead(400).end('Invalid path')
+      return
+    }
     let filePath = join(DIST, urlPath === '/' ? 'index.html' : urlPath)
-    if (!filePath.startsWith(DIST) || !existsSync(filePath)) {
+    if (!filePath.startsWith(DIST + sep) || !existsSync(filePath) || !statSync(filePath).isFile()) {
       filePath = join(DIST, 'index.html')
     }
     res.setHeader('Content-Type', MIME[extname(filePath)] ?? 'application/octet-stream')
@@ -100,13 +108,18 @@ function runHeadless(browser, url, viewport, userDataDir) {
     `--screenshot=${join(OUT_DIR, `${viewport.name}.png`)}`,
     url,
   ]
-  return new Promise((resolveRun) => {
+  return new Promise((resolveRun, rejectRun) => {
     const child = spawn(browser, args, { windowsHide: true })
+    const timer = setTimeout(() => {
+      child.kill()
+      rejectRun(new Error(`${viewport.name} 浏览器超过 45 秒未退出`))
+    }, 45_000)
     let stdout = ''
     let stderr = ''
     child.stdout.on('data', (chunk) => (stdout += chunk))
     child.stderr.on('data', (chunk) => (stderr += chunk))
-    child.on('close', (code) => resolveRun({ code, stdout, stderr }))
+    child.on('error', (error) => { clearTimeout(timer); rejectRun(error) })
+    child.on('close', (code) => { clearTimeout(timer); resolveRun({ code, stdout, stderr }) })
   })
 }
 
@@ -148,11 +161,14 @@ async function main() {
       if (result.code !== 0 && result.stderr.trim()) {
         console.warn(`  （浏览器提示：${result.stderr.trim().slice(0, 300)}）`)
       }
-      allPassed = assertDom(viewport.name, result.stdout) && allPassed
+      allPassed = assertDom(viewport.name, result.stdout) && result.code === 0 && allPassed
     }
   } finally {
     server.close()
-    rmSync(userDataDir, { recursive: true, force: true })
+    const cleanupPath = resolve(userDataDir)
+    if (cleanupPath.startsWith(resolve(tmpdir()) + sep) && basename(cleanupPath).startsWith('wechat-md-smoke-')) {
+      rmSync(cleanupPath, { recursive: true, force: true })
+    }
   }
 
   console.log(`\n截图与 DOM 快照已写入 ${OUT_DIR}`)

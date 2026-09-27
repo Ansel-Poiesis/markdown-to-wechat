@@ -95,6 +95,13 @@ defineExpose({ saveCurrentAsDraft, createDraft })
 
 <template>
   <div class="flex flex-col gap-2">
+    <p
+      v-if="draftStore.persistenceError"
+      role="alert"
+      class="text-[12px] leading-relaxed text-danger"
+    >
+      {{ draftStore.persistenceError }}
+    </p>
     <div class="flex items-center justify-between gap-2 mb-1">
       <div class="min-w-0">
         <h3 class="text-[11px] font-semibold tracking-widest uppercase text-text-tertiary">
@@ -141,6 +148,7 @@ defineExpose({ saveCurrentAsDraft, createDraft })
           <template v-if="editingId === draft.id">
             <input
               v-model="editName"
+              aria-label="草稿名称"
               class="flex-1 min-w-0 h-6 px-2 text-[13px] rounded border border-accent bg-surface text-text focus:outline-none"
               @click.stop
               @keydown.enter.stop="confirmRename"
@@ -149,9 +157,15 @@ defineExpose({ saveCurrentAsDraft, createDraft })
             />
           </template>
           <template v-else>
-            <strong class="flex-1 min-w-0 text-[13px] font-medium text-text truncate">{{
-              draft.name
-            }}</strong>
+            <button
+              type="button"
+              class="flex-1 min-w-0 text-left text-[13px] font-medium text-text truncate"
+              :aria-label="`打开草稿：${draft.name}`"
+              :aria-pressed="draftStore.activeDraftId === draft.id"
+              @click.stop="loadDraft(draft.id)"
+            >
+              {{ draft.name }}
+            </button>
           </template>
           <span
             v-if="draftStore.activeDraftId === draft.id"

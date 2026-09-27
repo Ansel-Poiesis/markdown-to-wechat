@@ -1,0 +1,181 @@
+{
+  "date": "2026-09-27",
+  "sourceBaseline": "11825751a63fecc4eadd3c1ebdce83acf4124eba",
+  "patchBranch": "codex/audit-20260927",
+  "verification": {
+    "testFiles": 25,
+    "scannedTextFiles": 97,
+    "command": "npm run verify",
+    "tests": 180,
+    "exitCode": 0
+  },
+  "dependencyAudit": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "viewportChecks": [
+    {
+      "pageOverflow": false,
+      "panels": [
+        {
+          "left": 0,
+          "right": 390
+        }
+      ],
+      "width": 390
+    },
+    {
+      "pageOverflow": false,
+      "panels": [
+        {
+          "left": 0,
+          "right": 768
+        }
+      ],
+      "width": 768
+    },
+    {
+      "pageOverflow": false,
+      "panels": [
+        {
+          "left": 0,
+          "right": 1024
+        }
+      ],
+      "width": 1024
+    },
+    {
+      "pageOverflow": false,
+      "panels": [
+        {
+          "left": 16,
+          "right": 408
+        },
+        {
+          "left": 420,
+          "right": 712
+        },
+        {
+          "left": 724,
+          "right": 1164
+        }
+      ],
+      "width": 1180
+    },
+    {
+      "pageOverflow": false,
+      "panels": [
+        {
+          "left": 16,
+          "right": 467
+        },
+        {
+          "left": 479,
+          "right": 812
+        },
+        {
+          "left": 824,
+          "right": 1264
+        }
+      ],
+      "width": 1280
+    },
+    {
+      "pageOverflow": false,
+      "panels": [
+        {
+          "left": 16,
+          "right": 583
+        },
+        {
+          "left": 595,
+          "right": 1015
+        },
+        {
+          "left": 1027,
+          "right": 1520
+        }
+      ],
+      "width": 1536
+    }
+  ],
+  "themeChecks": [
+    {
+      "name": "秋河",
+      "pressed": "true",
+      "hasLiteral": true,
+      "copyEnabled": true
+    },
+    {
+      "name": "朱简",
+      "pressed": "true",
+      "hasLiteral": true,
+      "copyEnabled": true
+    },
+    {
+      "name": "松烟",
+      "pressed": "true",
+      "hasLiteral": true,
+      "copyEnabled": true
+    },
+    {
+      "name": "月白",
+      "pressed": "true",
+      "hasLiteral": true,
+      "copyEnabled": true
+    },
+    {
+      "name": "青黛",
+      "pressed": "true",
+      "hasLiteral": true,
+      "copyEnabled": true
+    },
+    {
+      "name": "竹青纸本",
+      "pressed": "true",
+      "hasLiteral": true,
+      "copyEnabled": true
+    },
+    {
+      "name": "海棠",
+      "pressed": "true",
+      "hasLiteral": true,
+      "copyEnabled": true
+    },
+    {
+      "name": "薯片纸袋",
+      "pressed": "true",
+      "hasLiteral": true,
+      "copyEnabled": true
+    },
+    {
+      "name": "流金",
+      "pressed": "true",
+      "hasLiteral": true,
+      "copyEnabled": true
+    }
+  ],
+  "finalSaveStatus": {
+    "computedColor": "rgb(101, 115, 109)",
+    "computedFontSize": "11px",
+    "whiteContrastRatio": 4.9687
+  },
+  "manualBrowserChecks": [
+    "code literals preserved",
+    "HTML and plain clipboard both inspected",
+    "actual HTML download file inspected",
+    "render limit retains input and disables output",
+    "modal ShiftTab Escape and focus return"
+  ],
+  "exclusions": [
+    "real WeChat paste",
+    "actual Electron candidate runtime",
+    "real paid AI API",
+    "remote CI for unpushed patch",
+    "physical mobile devices"
+  ]
+}
