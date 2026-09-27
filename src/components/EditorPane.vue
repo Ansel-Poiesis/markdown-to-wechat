@@ -293,6 +293,7 @@ watch(
               : 'text-text-tertiary hover:text-text'
           "
           title="清除所有 Markdown 格式，仅保留纯文本"
+          :aria-pressed="formatMode === 'pure'"
           @click="handlePure"
         >
           清除格式
@@ -307,6 +308,7 @@ watch(
             formatLoading && 'opacity-60 cursor-wait',
           ]"
           title="通过 AI 自动识别标题、加粗、引用等并写入 Markdown 语法（流式输出，再次点击取消）"
+          :aria-pressed="formatMode === 'format'"
           @click="handleAutoFormat"
         >
           <svg v-if="formatLoading" class="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
@@ -367,32 +369,34 @@ watch(
 .editor-scroll {
   flex: 1;
   min-height: 0;
-  padding: 32px 24px 8px;
-  background: var(--color-workspace);
-  overflow: auto;
+  padding: 0 14px 14px;
+  background: transparent;
+  overflow: hidden;
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .editor-canvas {
   position: relative;
   min-width: 0;
-  flex: 1 0 auto;
-  min-height: calc(100dvh - 170px);
-  background: var(--color-surface);
-  border-radius: 2px;
+  flex: 1 1 0;
+  min-height: 0;
+  background: var(--color-editor);
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: var(--shadow-canvas);
+  box-shadow: var(--shadow-inset);
 }
 
 .editor-host {
   position: absolute;
-  inset: 0;
+  inset: 4px;
+  border-radius: 11px;
+  overflow: hidden;
 }
 
 div :deep(.cm-editor) {
   height: 100%;
-  background: var(--color-surface);
+  background: transparent;
   color: var(--color-text);
   font-size: inherit;
 }
@@ -403,15 +407,27 @@ div :deep(.cm-content) {
   font-size: inherit;
 }
 div :deep(.cm-scroller) {
-  padding: 16px 20px 16px 20px;
+  padding: 18px 10px 18px 6px;
+  font-family: 'Cascadia Code', 'SFMono-Regular', Consolas, 'Microsoft YaHei UI', monospace;
+  line-height: 1.8;
 }
 div :deep(.cm-gutters) {
   border-right: 1px solid var(--color-border-subtle);
-  background: var(--color-surface);
+  background: transparent;
 }
 div :deep(.cm-lineNumbers) {
   color: var(--color-text-tertiary);
   font-size: 12px;
+}
+
+div :deep(.cm-activeLine),
+div :deep(.cm-activeLineGutter) {
+  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+}
+
+.editor-canvas:focus-within {
+  outline: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+  outline-offset: -1px;
 }
 
 .editor-actions {
@@ -422,19 +438,19 @@ div :deep(.cm-lineNumbers) {
 
 .editor-action-button {
   min-width: 0;
-  height: 28px;
+  height: 30px;
   padding: 0 10px;
-  border-radius: 6px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  color: var(--color-text-tertiary);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border-subtle);
-  font-size: 10px;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  font-size: 11px;
   line-height: 1;
-  font-weight: 650;
+  font-weight: 550;
   transition:
     background 0.16s ease,
     color 0.16s ease,
@@ -443,8 +459,32 @@ div :deep(.cm-lineNumbers) {
 
 .editor-action-button--active {
   color: var(--color-text);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-xs);
+  background: var(--color-surface-pressed);
+  box-shadow: var(--shadow-inset-soft);
+}
+
+.editor-action-button:hover {
+  background: var(--color-surface-hover);
+}
+
+.editor-action-button:active {
+  box-shadow: var(--shadow-inset-soft);
+}
+
+@media (max-width: 639px) {
+  .editor-scroll {
+    padding: 0 10px 10px;
+  }
+  .editor-actions {
+    gap: 2px;
+  }
+  .editor-action-button {
+    padding: 0 7px;
+    min-height: 34px;
+  }
+  div :deep(.cm-scroller) {
+    padding: 14px 4px;
+  }
 }
 
 .fade-enter-active,

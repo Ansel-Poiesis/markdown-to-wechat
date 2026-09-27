@@ -1,0 +1,176 @@
+{
+  "specimen": "specimen.md",
+  "themes": [
+    {
+      "key": "qiuhe",
+      "valid": true,
+      "options": {
+        "profile": "wechat",
+        "theme": "qiuhe",
+        "codeTheme": "paper",
+        "fontFamily": "serif",
+        "fontSize": 16,
+        "lineHeight": 1.9,
+        "pageMargin": 20,
+        "accent": "#a94f32",
+        "textColor": "#28241f",
+        "canvas": "#fffdf9",
+        "toc": "theme",
+        "endMark": "theme",
+        "endMarkText": ""
+      }
+    },
+    {
+      "key": "zhujian",
+      "valid": true,
+      "options": {
+        "profile": "wechat",
+        "theme": "zhujian",
+        "codeTheme": "paper",
+        "fontFamily": "sans",
+        "fontSize": 16,
+        "lineHeight": 1.85,
+        "pageMargin": 20,
+        "accent": "#9d2f2f",
+        "textColor": "#292729",
+        "canvas": "#ffffff",
+        "toc": "theme",
+        "endMark": "theme",
+        "endMarkText": ""
+      }
+    },
+    {
+      "key": "songyan",
+      "valid": true,
+      "options": {
+        "profile": "wechat",
+        "theme": "songyan",
+        "codeTheme": "paper",
+        "fontFamily": "sans",
+        "fontSize": 16,
+        "lineHeight": 1.75,
+        "pageMargin": 20,
+        "accent": "#33443d",
+        "textColor": "#161a19",
+        "canvas": "#fdfefd",
+        "toc": "theme",
+        "endMark": "theme",
+        "endMarkText": ""
+      }
+    },
+    {
+      "key": "yuebai",
+      "valid": true,
+      "options": {
+        "profile": "wechat",
+        "theme": "yuebai",
+        "codeTheme": "paper",
+        "fontFamily": "sans",
+        "fontSize": 16,
+        "lineHeight": 1.8,
+        "pageMargin": 20,
+        "accent": "#416d78",
+        "textColor": "#1d2930",
+        "canvas": "#fbfdfd",
+        "toc": "theme",
+        "endMark": "theme",
+        "endMarkText": ""
+      }
+    },
+    {
+      "key": "qingdai",
+      "valid": true,
+      "options": {
+        "profile": "wechat",
+        "theme": "qingdai",
+        "codeTheme": "paper",
+        "fontFamily": "sans",
+        "fontSize": 16,
+        "lineHeight": 1.9,
+        "pageMargin": 20,
+        "accent": "#2d6a58",
+        "textColor": "#1c2b27",
+        "canvas": "#fbfdfb",
+        "toc": "theme",
+        "endMark": "theme",
+        "endMarkText": ""
+      }
+    },
+    {
+      "key": "zhuzhi",
+      "valid": true,
+      "options": {
+        "profile": "wechat",
+        "theme": "zhuzhi",
+        "codeTheme": "paper",
+        "fontFamily": "serif",
+        "fontSize": 16,
+        "lineHeight": 2,
+        "pageMargin": 20,
+        "accent": "#56734f",
+        "textColor": "#202823",
+        "canvas": "#fffdf8",
+        "toc": "theme",
+        "endMark": "theme",
+        "endMarkText": ""
+      }
+    },
+    {
+      "key": "haitang",
+      "valid": true,
+      "options": {
+        "profile": "wechat",
+        "theme": "haitang",
+        "codeTheme": "paper",
+        "fontFamily": "sans",
+        "fontSize": 16,
+        "lineHeight": 1.9,
+        "pageMargin": 20,
+        "accent": "#a5405b",
+        "textColor": "#36272d",
+        "canvas": "#fffdfd",
+        "toc": "theme",
+        "endMark": "theme",
+        "endMarkText": ""
+      }
+    },
+    {
+      "key": "shupian",
+      "valid": true,
+      "options": {
+        "profile": "wechat",
+        "theme": "shupian",
+        "codeTheme": "paper",
+        "fontFamily": "sans",
+        "fontSize": 16,
+        "lineHeight": 1.8,
+        "pageMargin": 20,
+        "accent": "#b76524",
+        "textColor": "#25251f",
+        "canvas": "#fffdf7",
+        "toc": "theme",
+        "endMark": "theme",
+        "endMarkText": ""
+      }
+    },
+    {
+      "key": "liujin",
+      "valid": true,
+      "options": {
+        "profile": "wechat",
+        "theme": "liujin",
+        "codeTheme": "paper",
+        "fontFamily": "sans",
+        "fontSize": 16,
+        "lineHeight": 1.8,
+        "pageMargin": 20,
+        "accent": "#936b1f",
+        "textColor": "#2c291f",
+        "canvas": "#fffdf8",
+        "toc": "theme",
+        "endMark": "theme",
+        "endMarkText": ""
+      }
+    }
+  ]
+}

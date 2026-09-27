@@ -25,7 +25,9 @@
 
 2026-09-27 的工程审计及本地补丁见 [评估、验证与优化计划](audit/2026-09-27/README.md)。正式交付仍为 2.0.1；补丁尚未进入线上网页或安装包。
 
-![Markdown渲染器工作台：左侧编辑 Markdown，中间选择主题，右侧实时预览公众号文章](.github/assets/workbench-overview.jpg)
+本地功能候选 `codex/studio-agent-20260927` 在审计补丁上加入声笺风格的新拟态工作台、九套重建主题、Agent 控制台与 imagegen 长图交接。以下截图来自本地候选；在线入口与正式安装包尚未更新。见 [四项实现与验收](design/2026-09-27/README.md)。
+
+![本地候选：新拟态工作台，左侧原稿、中间主题、右侧文章预览](design/2026-09-27/ui-desktop.png)
 
 ## 为什么使用
 
@@ -37,6 +39,8 @@
 | 微信兼容输出 | 生成内联 HTML，并在复制前检查不支持的标签、属性和 CSS |
 | 本地优先 | 草稿保存在当前浏览器；网页版不携带项目密钥，也不上传文章正文 |
 | 自动化接口 | CLI 与网页预览复用同一渲染核心，可接入内容发布流程 |
+| Agent 控制台 | 导入或导出 JSON 任务，选择公众号、独立网页或 imagegen 长图；打开任务时另建草稿 |
+| 长图交接 | 三种构图方向，生成提示词、保留伴随 HTML，再回填真实图片与独立回执 |
 
 界面聚焦一件事：让原稿在进入公众号编辑器之前，完成结构、风格和兼容性检查。没有账户、社区和多图床系统，也不会用外围功能打断写作。
 
@@ -72,7 +76,7 @@ python -m http.server 5173
 
 每套主题统一定义封面、目录、章节、引用、列表、表格、图片与结尾表达。组件也可以脱离主题单独选择，或随时恢复为“跟随主题”。正文支持字体、字号、行高、页边距、段距、字距、缩进和两端对齐。
 
-常规 Markdown 会自动生成封面、目录和章节。导语、提示或签名可以通过轻量指令明确标记：
+常规 Markdown 会按主题生成封面与章节；松烟、月白、流金在至少三个章节时显示目录，其他主题默认保持连续阅读，也可手动选择目录。导语、提示或签名可以通过轻量指令明确标记：
 
 ```markdown
 ::: lead 导语
@@ -91,6 +95,18 @@ python -m http.server 5173
 指令只描述内容语义，最终外观由当前主题决定。
 
 ## 自动渲染
+
+完整 Agent 任务使用 [Agent 接口合同](AGENT_CONTROL.md)：
+
+```powershell
+npm run --silent agent -- discover
+npm run --silent agent -- validate --request task.json
+npm run --silent agent -- render --request task.json --output-root jobs
+```
+
+输出目录保留原稿、HTML、兼容性报告和 SHA-256 清单，已有任务不会被覆盖。共享技能 `markdown-renderer-agent` 已安装在本机 `C:\Users\mingc\.agents\skills\markdown-renderer-agent\SKILL.md`；其他机器需按接口合同配置自己的 Agent。网页右上角 Agent 控制台提供任务准备、JSON 预览和长图回看。
+
+imagegen 长图通过 Codex 内置工具生成，浏览器与 CLI 只准备提示词和接回真实图片；可选纸上编辑部、理性网格、墨与留白。目前实生成样稿为纸上编辑部，见 [长图样稿与核验](design/2026-09-27/imagegen.md)。生成图片需核对文字；本项目提供发布前任务包，由后续生产流程按授权接续发布。
 
 自动发布流程可以调用与网页预览相同的渲染核心，不需要 API 密钥：
 

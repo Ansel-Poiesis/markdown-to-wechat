@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import {
-  DEFAULT_COLOR_PRESETS,
-  type ColorPresetKind,
-  useSettingsStore,
-} from '@/stores/settings'
+import { DEFAULT_COLOR_PRESETS, type ColorPresetKind, useSettingsStore } from '@/stores/settings'
 
 const props = withDefaults(
   defineProps<{
@@ -31,12 +27,16 @@ const labels: Record<ColorPresetKind, string[]> = {
   background: ['纯白', '暖白', '米色', '浅灰', '淡绿', '雾蓝', '粉白', '淡紫'],
 }
 
-const presets = computed(() => settings.colorPresets[props.kind] || DEFAULT_COLOR_PRESETS[props.kind])
+const presets = computed(
+  () => settings.colorPresets[props.kind] || DEFAULT_COLOR_PRESETS[props.kind],
+)
 const editingColor = computed(() =>
   editingIndex.value === null ? '' : presets.value[editingIndex.value] || props.fallback,
 )
 const editingLabel = computed(() =>
-  editingIndex.value === null ? '' : labels[props.kind][editingIndex.value] || `色彩 ${editingIndex.value + 1}`,
+  editingIndex.value === null
+    ? ''
+    : labels[props.kind][editingIndex.value] || `色彩 ${editingIndex.value + 1}`,
 )
 
 function presetAt(index: number) {
@@ -79,12 +79,10 @@ function updatePreset(event: Event) {
         :key="`${kind}-${index}-${color}`"
         type="button"
         class="color-swatch"
-        :class="[
-          value === color ? 'color-swatch--active' : '',
-          light ? 'color-swatch--light' : '',
-        ]"
+        :class="[value === color ? 'color-swatch--active' : '', light ? 'color-swatch--light' : '']"
         :title="labels[kind][index]"
         :aria-label="labels[kind][index]"
+        :aria-pressed="value === color"
         :style="{ background: color }"
         @click="selectPreset(index)"
       />
@@ -104,13 +102,14 @@ function updatePreset(event: Event) {
   min-width: 0;
   min-height: 32px;
   padding: 4px 6px;
-  border-radius: 8px;
+  border-radius: 10px;
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr) 30px;
   align-items: center;
   gap: 7px;
-  background: var(--color-surface);
+  background: var(--color-editor);
   border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-inset-soft);
 }
 
 .preset-editor__swatch {
@@ -123,8 +122,8 @@ function updatePreset(event: Event) {
 .preset-editor__label {
   min-width: 0;
   color: var(--color-text-secondary);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 550;
   white-space: nowrap;
 }
 
@@ -142,12 +141,13 @@ function updatePreset(event: Event) {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  padding: 5px 2px;
   overflow: visible;
 }
 
 .color-swatch {
-  width: min(24px, 100%);
+  width: min(26px, 100%);
   aspect-ratio: 1;
   justify-self: center;
   border-radius: 999px;
@@ -174,6 +174,7 @@ function updatePreset(event: Event) {
   box-shadow:
     inset 0 0 0 2px var(--color-surface),
     inset 0 0 0 3px currentColor,
-    0 1px 2px rgb(0 0 0 / 0.1);
+    0 0 0 2px var(--color-surface),
+    0 0 0 3px var(--color-accent);
 }
 </style>

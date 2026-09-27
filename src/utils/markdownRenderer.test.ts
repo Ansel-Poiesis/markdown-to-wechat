@@ -72,8 +72,8 @@ describe('renderMarkdown design system', () => {
     'renders %s with its own component language and valid WeChat HTML',
     (key) => {
       const html = renderMarkdown(markdown, theme(key), codeTheme)
-      expect(html).toContain(designThemes[key].eyebrow)
-      expect(html).toContain(designThemes[key].endMark)
+      expect(html).not.toMatch(/AUTUMN NOTES|HUMAN STUDIES|CRITICAL ANALYSIS|CONTENTS|SECTIONS/)
+      expect(html).toContain('一篇用于回归的文章')
       expect(html).toContain('<span leaf="">')
       expect(html).not.toMatch(/<\/?div[\s>]/i)
       expect(html).not.toMatch(/\sclass=/i)
@@ -87,8 +87,8 @@ describe('renderMarkdown design system', () => {
     const editorial = renderMarkdown(markdown, theme('qiuhe'), codeTheme)
     const technical = renderMarkdown(markdown, theme('songyan'), codeTheme)
     expect(editorial).not.toBe(technical)
-    expect(editorial).toContain('AUTUMN NOTES')
-    expect(technical).toContain('CRITICAL ANALYSIS')
+    expect(editorial).toContain('width:32px')
+    expect(technical).toContain('border-bottom:2px solid #292524')
   })
 
   it('lets component overrides change structure without changing the selected theme', () => {
@@ -100,8 +100,8 @@ describe('renderMarkdown design system', () => {
       endMarkMode: 'hide',
     }
     const html = renderMarkdown(markdown, overridden, codeTheme)
-    expect(html).toContain('AUTUMN NOTES')
-    expect(html).not.toContain('CONTENTS')
+    expect(html).toContain('一篇用于回归的文章')
+    expect(html).not.toContain('本文目录')
     expect(html).not.toContain('秋水有声')
     expect(validateWechatHtml(html).valid).toBe(true)
   })
@@ -141,10 +141,10 @@ describe('renderMarkdown design system', () => {
     const plain = renderMarkdown(headingMarkdown, plainTheme, codeTheme)
     const decorated = renderMarkdown(headingMarkdown, decoratedTheme, codeTheme)
 
-    expect(plain).toContain('AUTUMN NOTES')
-    expect(decorated).toContain('AUTUMN NOTES')
-    expect(plain).toContain('font-size:28px')
-    expect(decorated).toContain('font-size:28px')
+    expect(plain).toContain('width:32px')
+    expect(decorated).toContain('width:32px')
+    expect(plain).toContain('font-size:27px')
+    expect(decorated).toContain('font-size:27px')
     expect(decorated).toContain('border-bottom:1.5px dashed #b45309')
     expect(decorated).toContain('background:#b45309;border-radius:3px')
     expect(decorated).toContain('border-left:4px solid #b45309')

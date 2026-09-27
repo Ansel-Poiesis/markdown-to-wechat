@@ -4,6 +4,9 @@ import { useEditorStore } from '@/stores/editor'
 import { useThemeStore } from '@/stores/theme'
 import { useUiStore } from '@/stores/ui'
 import { useDraftStore } from '@/stores/drafts'
+import { useSettingsStore } from '@/stores/settings'
+import { renderAgentArticle } from '@/agent/render'
+import type { AgentRenderRequest } from '@/agent/contract'
 import { renderMarkdown } from '@/utils/markdownRenderer'
 import { validateWechatHtml } from '@/utils/wechatHtml'
 import { useMarkdownAnalyzer } from '@/composables/useMarkdownAnalyzer'
@@ -35,11 +38,14 @@ const EditorPane = defineAsyncComponent({
 })
 const PreflightModal = defineAsyncComponent(() => import('@/components/modals/PreflightModal.vue'))
 const FeedbackModal = defineAsyncComponent(() => import('@/components/modals/FeedbackModal.vue'))
+const AgentControlPanel = defineAsyncComponent(() => import('@/components/AgentControlPanel.vue'))
 
 const editorStore = useEditorStore()
 const themeStore = useThemeStore()
 const ui = useUiStore()
 const draftStore = useDraftStore()
+const settingsStore = useSettingsStore()
+const agentControlOpen = ref(false)
 const { isMobile } = useBreakpoint()
 const { copyRenderedHtml } = useClipboard()
 const { exportHtml } = useExport()
@@ -182,6 +188,41 @@ function handleExport() {
   }
 }
 
+function openAgentDraft(request: AgentRenderRequest) {
+  try {
+    const prepared = renderAgentArticle(request)
+    if (!draftStore.updateActiveDraft(content.value) || editorStore.persistenceError) {
+      throw new Error('当前原稿尚未保存成功，请先备份原稿，再打开 Agent 稿件。')
+    }
+    draftStore.createDraft(prepared.request.markdown!, prepared.request.title)
+    editorStore.setContent(prepared.request.markdown!)
+    settingsStore.applyStylePreset(prepared.request.theme)
+    const options = prepared.rendered.options
+    settingsStore.fontFamilyKey = options.fontFamily
+    settingsStore.fontSize = options.fontSize
+    settingsStore.lineHeight = options.lineHeight
+    settingsStore.pageMargin = options.pageMargin
+    settingsStore.accentColor = options.accent
+    settingsStore.textColor = options.textColor
+    settingsStore.canvasColor = options.canvas
+    settingsStore.componentTocMode = options.toc
+    settingsStore.componentEndMarkMode = options.endMark
+    settingsStore.componentEndMarkText = options.endMarkText
+    themeStore.currentCodeThemeKey = options.codeTheme
+    recordDraftSave(!draftStore.persistenceError)
+    agentControlOpen.value = false
+    mobileTab.value = 'preview'
+    ui.showToast(
+      draftSaveFailed.value
+        ? '已在内存中打开新稿，保存失败，请另行备份。'
+        : '已作为新草稿打开，原稿已保留。',
+      draftSaveFailed.value ? 'error' : 'success',
+    )
+  } catch (error) {
+    ui.showToast(error instanceof Error ? error.message : 'Agent 稿件未能打开。', 'error')
+  }
+}
+
 watch(
   () => content.value,
   (v) => {
@@ -196,16 +237,15 @@ watch(
     :warnings="warnings"
     :stats="stats"
     :render-error="renderError"
+    :agent-control-open="agentControlOpen"
     @export-html="handleExport"
     @feedback="ui.openModal('feedback')"
+    @agent-control="agentControlOpen = true"
   />
 
   <!-- Desktop layout: Editor | Settings | Preview -->
   <template v-if="!isMobile">
-    <main
-      class="desktop-workspace mx-auto w-full gap-3 px-4 py-3 min-h-0"
-      style="height: calc(100dvh - 64px)"
-    >
+    <main class="desktop-workspace mx-auto w-full px-4 min-h-0" style="height: calc(100dvh - 64px)">
       <EditorPane
         v-model="content"
         :save-revision="draftSaveRevision"
@@ -312,19 +352,38 @@ watch(
     :diagnostics="feedbackDiagnostics"
     @close="ui.closeModal('feedback')"
   />
+  <AgentControlPanel
+    v-if="agentControlOpen"
+    :open="agentControlOpen"
+    :markdown="content"
+    :initial-theme="themeStore.themeBase.designKey || 'qiuhe'"
+    @close="agentControlOpen = false"
+    @apply="openAgentDraft"
+  />
 </template>
 
 <style scoped>
 .desktop-workspace {
   max-width: min(1760px, 100vw);
   display: grid;
-  grid-template-columns: minmax(520px, 1fr) minmax(340px, 0.62fr) 679px;
+  grid-template-columns: minmax(500px, 1fr) minmax(340px, 0.62fr) 679px;
   align-items: stretch;
+  gap: 18px;
+  padding-top: 18px;
+  padding-bottom: 18px;
 }
 
 @media (max-width: 1599px) {
   .desktop-workspace {
-    grid-template-columns: minmax(320px, 1.15fr) minmax(292px, 0.85fr) minmax(440px, 1fr);
+    grid-template-columns: minmax(0, 1.15fr) minmax(270px, 0.85fr) minmax(370px, 1fr);
+  }
+}
+
+@media (max-width: 1279px) {
+  .desktop-workspace {
+    gap: 12px;
+    padding-top: 12px;
+    padding-bottom: 12px;
   }
 }
 
@@ -348,10 +407,10 @@ watch(
   display: flex;
   align-items: stretch;
   overflow: hidden;
-  border-top: 1px solid var(--color-border-subtle);
-  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
-  box-shadow: 0 -4px 14px rgb(0 0 0 / 0.04);
-  backdrop-filter: blur(14px);
+  padding: 5px 8px;
+  gap: 8px;
+  background: var(--color-surface);
+  box-shadow: 0 -3px 12px var(--neo-dark);
 }
 
 .mobile-nav__button {
@@ -359,6 +418,7 @@ watch(
   flex: 1;
   min-width: 0;
   height: 100%;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -383,11 +443,12 @@ watch(
 
 .mobile-nav__button--active {
   color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-inset-soft);
 }
 
 .mobile-nav__button--active::before {
-  background: var(--color-accent);
+  background: transparent;
 }
 
 .mobile-nav__button:focus {

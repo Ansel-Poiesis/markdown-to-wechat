@@ -45,7 +45,7 @@ const openSections = ref<Record<ComponentSection, boolean>>({
 
 const tabs: Array<{ key: SettingsTab; label: string; icon: IconName }> = [
   { key: 'theme', label: '主题', icon: 'palette' },
-  { key: 'style', label: '样式', icon: 'palette' },
+  { key: 'style', label: '细调', icon: 'settings' },
   { key: 'drafts', label: '草稿', icon: 'draft' },
 ]
 
@@ -64,7 +64,7 @@ const fontFamilyOptions = (
 ).map(([key, v]) => ({ key, label: v.label }))
 
 const fontSizeOptions = [12, 14, 16, 18, 20]
-const lineHeightOptions = [1, 1.6, 2, 2.6, 3]
+const lineHeightOptions = [1, 1.6, 1.75, 1.8, 1.85, 1.9, 2, 2.6, 3]
 const pageMarginOptions = [12, 20, 28, 34, 36]
 const paragraphSpacingOptions = [
   { label: '0.5', value: 0.5 },
@@ -174,7 +174,7 @@ const visibilityOptions = [
 
 const typographySummary = computed(() => {
   const family = FONT_FAMILIES[settings.fontFamilyKey]?.label ?? '字体'
-  return `${family} · ${settings.fontSize}px · ${settings.lineHeight.toFixed(1)}`
+  return `${family} · ${settings.fontSize}px · ${settings.lineHeight}`
 })
 
 const activeThemeEndMark = computed(
@@ -220,7 +220,7 @@ function optionLabel(options: Array<{ key: string; label: string }>, key: string
 
 function formatLineHeight(value: number) {
   if (value === 1 || value === 3) return String(value)
-  return value.toFixed(1)
+  return String(value)
 }
 
 function toggleSection(section: ComponentSection) {
@@ -250,7 +250,7 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 </script>
 
 <template>
-  <aside class="workspace-panel" aria-label="设置">
+  <aside class="workspace-panel settings-panel" aria-label="设置">
     <header class="panel-toolbar">
       <div class="panel-heading">
         <span class="panel-heading__icon">
@@ -267,6 +267,7 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
         type="button"
         class="settings-tab"
         :class="activeTab === tab.key ? 'settings-tab--active' : ''"
+        :aria-pressed="activeTab === tab.key"
         @click="activeTab = tab.key"
       >
         <AppIcon :name="tab.icon" :size="15" />
@@ -276,6 +277,10 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 
     <div class="settings-body">
       <section v-if="activeTab === 'theme'" class="section-stack">
+        <div class="theme-intro">
+          <span>文章风格</span>
+          <span>{{ STYLE_PRESETS.length }} 套主题</span>
+        </div>
         <div class="theme-grid">
           <button
             v-for="preset in STYLE_PRESETS"
@@ -385,19 +390,16 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
           </div>
 
           <div class="setting-row setting-row--inline">
-            <span class="control-label">行高</span>
-            <div class="segmented">
-              <button
-                v-for="height in lineHeightOptions"
-                :key="height"
-                type="button"
-                class="segmented-button"
-                :class="settings.lineHeight === height ? 'segmented-button--active' : ''"
-                @click="settings.lineHeight = height"
-              >
-                {{ formatLineHeight(height) }}
-              </button>
-            </div>
+            <label class="control-label" for="article-line-height">行高</label>
+            <select
+              id="article-line-height"
+              v-model.number="settings.lineHeight"
+              class="w-full min-w-0"
+            >
+              <option v-for="height in lineHeightOptions" :key="height" :value="height">
+                {{ formatLineHeight(height) }} 倍
+              </option>
+            </select>
           </div>
 
           <div class="setting-row setting-row--inline">
@@ -971,11 +973,6 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
       </section>
 
       <section v-else class="section-stack">
-        <div class="section-heading">
-          <div>
-            <h3>草稿</h3>
-          </div>
-        </div>
         <DraftPanel />
       </section>
     </div>
@@ -986,23 +983,24 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 .settings-tabs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0;
-  padding: 0 10px;
-  border-bottom: 1px solid var(--color-border-subtle);
-  background: var(--color-surface);
+  gap: 4px;
+  margin: 0 14px 4px;
+  padding: 4px;
+  border-radius: 13px;
+  background: var(--color-bg);
   flex-shrink: 0;
 }
 
 .settings-tab {
   min-width: 0;
-  min-height: 42px;
-  border-radius: 0;
+  min-height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 550;
   color: var(--color-text-tertiary);
   transition:
     background 0.16s ease,
@@ -1016,8 +1014,10 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 }
 
 .settings-tab--active {
-  color: var(--color-accent);
-  box-shadow: inset 0 -2px 0 var(--color-accent);
+  color: var(--color-text);
+  background: var(--color-surface-pressed);
+  box-shadow: var(--shadow-inset);
+  font-weight: 650;
 }
 
 .settings-tab:focus {
@@ -1025,48 +1025,62 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 }
 
 .settings-tab:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--color-focus-ring);
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .settings-tab--active:focus-visible {
-  box-shadow:
-    inset 0 -2px 0 var(--color-accent),
-    inset 0 0 0 2px var(--color-focus-ring);
+  box-shadow: var(--shadow-inset);
 }
 
 .settings-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 14px;
+  padding: 18px 16px;
 }
 
 .section-stack {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
+}
+
+.theme-intro {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 2px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.theme-intro span:last-child {
+  color: var(--color-text-tertiary);
+  font-size: 11px;
 }
 
 .theme-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 8px;
+  gap: 10px;
 }
 
 .theme-card {
   min-width: 0;
-  min-height: 96px;
-  padding: 9px 36px 9px 9px;
-  border-radius: 8px;
+  min-height: 108px;
+  padding: 12px 30px 12px 12px;
+  border-radius: 15px;
   display: grid;
-  grid-template-columns: 82px minmax(0, 1fr);
+  grid-template-columns: 70px minmax(0, 1fr);
   align-items: stretch;
   gap: 12px;
   color: var(--color-text);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: transparent;
+  border: 1px solid transparent;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 550;
   text-align: left;
   position: relative;
   transition:
@@ -1077,51 +1091,51 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 
 .theme-card__state {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 20px;
-  height: 20px;
+  top: 12px;
+  right: 11px;
+  width: 17px;
+  height: 17px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   color: var(--color-accent-contrast);
-  background: var(--theme-color, var(--color-accent));
+  background: var(--color-accent);
 }
 
 .theme-card:hover {
-  border-color: color-mix(
-    in srgb,
-    var(--theme-color, var(--color-accent)) 54%,
-    var(--color-border)
-  );
-  background: var(--color-surface-hover);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-control);
 }
 
 .theme-card--active {
-  border-color: var(--theme-color, var(--color-accent));
-  box-shadow:
-    inset 3px 0 0 var(--theme-color, var(--color-accent)),
-    var(--shadow-xs);
+  border-color: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  background: var(--color-surface-pressed);
+  box-shadow: var(--shadow-inset);
+}
+
+.theme-card--active:hover {
+  background: var(--color-surface-pressed);
+  box-shadow: var(--shadow-inset);
 }
 
 .theme-card__preview {
   min-width: 0;
-  min-height: 72px;
-  border-radius: 6px;
-  padding: 8px;
+  min-height: 82px;
+  border-radius: 5px;
+  padding: 6px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   background: var(--theme-canvas, #ffffff);
   border: 1px solid color-mix(in srgb, var(--theme-border, #e4e4e7) 72%, transparent);
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.04);
+  box-shadow: 0 2px 4px rgb(40 53 35 / 0.07);
 }
 
 .theme-paper {
-  min-height: 42px;
-  padding: 8px;
-  border-radius: 6px;
+  min-height: 57px;
+  padding: 6px;
+  border-radius: 3px;
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -1149,7 +1163,7 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 }
 
 .theme-paper__line--long {
-  width: 43px;
+  width: 100%;
 }
 
 .theme-paper__accent {
@@ -1171,7 +1185,7 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 }
 
 .theme-card--songyan .theme-paper__title {
-  width: 46px;
+  width: 100%;
   background: var(--theme-text);
 }
 
@@ -1222,7 +1236,7 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 }
 
 .theme-card__swatches span {
-  height: 8px;
+  height: 5px;
   border-radius: 99px;
   box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
 }
@@ -1237,16 +1251,16 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 
 .theme-card__copy strong {
   color: var(--color-text);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.2;
-  font-weight: 760;
+  font-weight: 600;
 }
 
 .theme-card__copy small {
   color: var(--color-text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.55;
-  font-weight: 550;
+  font-weight: 400;
 }
 
 .section-heading h3 {
@@ -1254,7 +1268,7 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   color: var(--color-text);
   font-size: 14px;
   line-height: 1.25;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .section-heading p {
@@ -1274,12 +1288,13 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 .reset-command {
   min-height: 30px;
   padding: 0 9px;
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--color-text-secondary);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface);
+  border: 1px solid transparent;
+  box-shadow: var(--shadow-control);
   font-size: 11px;
-  font-weight: 650;
+  font-weight: 550;
 }
 
 .reset-command:disabled {
@@ -1310,7 +1325,7 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 
 .control-label {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.2;
   color: var(--color-text-tertiary);
 }
@@ -1328,9 +1343,9 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   display: flex;
   gap: 4px;
   padding: 3px;
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--color-bg);
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid transparent;
 }
 
 .segmented--compact {
@@ -1353,10 +1368,10 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   min-width: 0;
   min-height: 30px;
   padding: 0 6px;
-  border-radius: 6px;
+  border-radius: 7px;
   color: var(--color-text-tertiary);
   font-size: 11px;
-  font-weight: 650;
+  font-weight: 550;
   white-space: nowrap;
   transition:
     background 0.16s ease,
@@ -1374,10 +1389,9 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 
 .segmented-button--active {
   color: var(--color-text);
-  background: var(--color-surface);
-  box-shadow:
-    var(--shadow-xs),
-    inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 20%, transparent);
+  background: var(--color-surface-pressed);
+  box-shadow: var(--shadow-inset-soft);
+  font-weight: 650;
 }
 
 .switch-grid {
@@ -1394,16 +1408,16 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   min-width: 0;
   min-height: 40px;
   padding: 0 10px;
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   color: var(--color-text-secondary);
-  background: var(--color-bg);
+  background: transparent;
   border: 1px solid var(--color-border-subtle);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 500;
 }
 
 .switch-card--wide {
@@ -1412,8 +1426,9 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 
 .switch-card--active {
   color: var(--color-text);
-  background: var(--color-surface);
-  border-color: color-mix(in srgb, var(--color-accent) 38%, var(--color-border));
+  background: var(--color-surface-pressed);
+  border-color: transparent;
+  box-shadow: var(--shadow-inset-soft);
 }
 
 .switch-dot {
@@ -1422,7 +1437,8 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   border-radius: 999px;
   position: relative;
   flex-shrink: 0;
-  background: var(--color-border);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-inset-soft);
   transition: background 0.18s ease;
 }
 
@@ -1454,9 +1470,9 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 }
 
 .accordion-item {
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  border-radius: 12px;
+  border: 1px solid var(--color-border-subtle);
+  background: transparent;
   overflow: hidden;
 }
 
@@ -1475,13 +1491,13 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   min-width: 0;
   color: var(--color-text);
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .accordion-button strong {
   color: var(--color-text-tertiary);
   font-size: 11px;
-  font-weight: 650;
+  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -1504,7 +1520,8 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   padding: 0 10px;
   border-radius: 8px;
   border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: var(--color-editor);
+  box-shadow: var(--shadow-inset-soft);
   color: var(--color-text);
   font-size: 12px;
 }
@@ -1533,9 +1550,10 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   border-radius: 6px;
   color: var(--color-text-secondary);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 1px solid transparent;
+  box-shadow: var(--shadow-control);
   font-size: 11px;
-  font-weight: 650;
+  font-weight: 550;
 }
 
 .field-reset:disabled {

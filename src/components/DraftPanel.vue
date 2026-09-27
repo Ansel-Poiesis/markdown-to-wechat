@@ -94,7 +94,7 @@ defineExpose({ saveCurrentAsDraft, createDraft })
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-3">
     <p
       v-if="draftStore.persistenceError"
       role="alert"
@@ -104,15 +104,15 @@ defineExpose({ saveCurrentAsDraft, createDraft })
     </p>
     <div class="flex items-center justify-between gap-2 mb-1">
       <div class="min-w-0">
-        <h3 class="text-[11px] font-semibold tracking-widest uppercase text-text-tertiary">
-          草稿管理
-        </h3>
+        <h3 class="draft-panel-title">本地草稿</h3>
+        <p class="draft-panel-caption">随时接着写</p>
       </div>
       <div class="flex gap-1">
         <button
           type="button"
           title="保存当前为新草稿"
-          class="w-7 h-7 flex items-center justify-center rounded-md text-text-tertiary hover:text-accent hover:bg-accent/10 transition-all active:scale-90"
+          aria-label="保存当前为新草稿"
+          class="neu-icon-button draft-panel-command"
           @click="saveCurrentAsDraft"
         >
           <AppIcon name="save" :size="14" />
@@ -120,7 +120,8 @@ defineExpose({ saveCurrentAsDraft, createDraft })
         <button
           type="button"
           title="新建空白草稿"
-          class="w-7 h-7 flex items-center justify-center rounded-md text-text-tertiary hover:text-accent hover:bg-accent/10 transition-all active:scale-90"
+          aria-label="新建空白草稿"
+          class="neu-icon-button draft-panel-command"
           @click="createDraft"
         >
           <AppIcon name="plus" :size="14" />
@@ -136,7 +137,7 @@ defineExpose({ saveCurrentAsDraft, createDraft })
       <p>输入内容后会自动保存草稿</p>
     </div>
 
-    <div class="flex flex-col gap-1 max-h-[280px] overflow-y-auto">
+    <div class="draft-list">
       <div
         v-for="draft in draftStore.sortedDrafts"
         :key="draft.id"
@@ -167,17 +168,14 @@ defineExpose({ saveCurrentAsDraft, createDraft })
               {{ draft.name }}
             </button>
           </template>
-          <span
-            v-if="draftStore.activeDraftId === draft.id"
-            class="text-[9px] font-semibold text-accent bg-accent/10 px-1.5 py-0.5 rounded-full shrink-0"
-          >
+          <span v-if="draftStore.activeDraftId === draft.id" class="draft-current-label">
             当前
           </span>
-          <span class="text-[10px] text-text-tertiary shrink-0">{{
+          <span class="text-[11px] text-text-tertiary shrink-0">{{
             formatDate(draft.updatedAt)
           }}</span>
         </div>
-        <p class="text-[11px] text-text-tertiary leading-relaxed line-clamp-2">
+        <p class="text-[12px] text-text-secondary leading-relaxed line-clamp-2">
           {{ getPreview(draft.content) }}
         </p>
         <div class="draft-card__actions">
@@ -222,13 +220,46 @@ defineExpose({ saveCurrentAsDraft, createDraft })
 </template>
 
 <style scoped>
+.draft-panel-title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.draft-panel-caption {
+  margin: 4px 0 0;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+}
+
+.draft-panel-command {
+  width: 30px;
+  min-height: 30px;
+  border-radius: 9px;
+}
+
+.draft-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 3px;
+}
+
+.draft-current-label {
+  flex-shrink: 0;
+  color: var(--color-accent);
+  font-size: 10px;
+  font-weight: 600;
+}
+
 .draft-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 10px;
+  padding: 13px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 13px;
   background: transparent;
   cursor: pointer;
   transition:
@@ -238,21 +269,28 @@ defineExpose({ saveCurrentAsDraft, createDraft })
 
 .draft-card:hover,
 .draft-card:focus-within {
-  border-color: var(--color-border-subtle);
-  background: var(--color-surface-hover);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-control);
 }
 
 .draft-card--active {
-  border-color: color-mix(in srgb, var(--color-accent) 30%, var(--color-border));
-  background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  background: var(--color-surface-pressed);
+  box-shadow: var(--shadow-inset);
+}
+
+.draft-card--active:hover,
+.draft-card--active:focus-within {
+  background: var(--color-surface-pressed);
+  box-shadow: var(--shadow-inset);
 }
 
 .draft-card__actions {
-  margin-top: 6px;
+  margin-top: 10px;
   display: flex;
   align-items: center;
   gap: 4px;
-  opacity: 0;
+  opacity: 0.65;
   transition: opacity 0.16s ease;
 }
 

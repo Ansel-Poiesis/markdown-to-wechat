@@ -1,6 +1,6 @@
 import type { Theme, CodeTheme } from '@/types'
 
-// 暖色杂志 — 唯一主题
+// 九套文章设计共享的排版基础；具体节奏由 STYLE_PRESETS 与 designThemes 定义。
 const MAGAZINE_THEME: Theme = {
   name: '暖色杂志',
   description: '温和有层次，适合叙事和访谈。',
@@ -12,10 +12,10 @@ const MAGAZINE_THEME: Theme = {
     border: '#ead8c7',
     bgSoft: '#fff6ee',
     quoteBg: '#fff3e9',
-    h1Mode: 'center',
+    h1Mode: 'plain',
     headingMode: 'plain',
     h2Mode: 'plain',
-    h3Mode: 'bar',
+    h3Mode: 'plain',
     h4Mode: 'plain',
     quoteMode: 'soft',
     quoteMode2: 'fade',
@@ -66,7 +66,7 @@ export const CODE_THEME_KEY = 'wechat-md-code-theme'
 export const MAGAZINE_DEFAULTS = {
   fontFamilyKey: 'serif' as const,
   fontSize: 16,
-  lineHeight: 1.6,
+  lineHeight: 1.8,
   contentWidth: 440,
   pageMargin: 20,
   textColor: '#332b24',
@@ -75,16 +75,16 @@ export const MAGAZINE_DEFAULTS = {
   bgSoftColor: '#fff6ee',
   quoteBgColor: '#fff3e9',
   accentColor: '#b14f2a',
-  h1Mode: 'center' as const,
+  h1Mode: 'plain' as const,
   headingMode: 'plain' as const,
   h2Mode: 'plain' as const,
-  h3Mode: 'bar' as const,
+  h3Mode: 'plain' as const,
   h4Mode: 'plain' as const,
   quoteMode: 'soft' as const,
   quoteMode2: 'fade' as const,
   textIndent: 0,
   textJustify: false,
-  macCodeBlock: true,
+  macCodeBlock: false,
   codeLineNumbers: false,
   h1Color: '',
   h2Color: '',

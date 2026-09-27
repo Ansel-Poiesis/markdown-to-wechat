@@ -15,6 +15,7 @@
     "smoke:browser": "node scripts/browser-smoke.mjs",
     "preview": "vite preview",
     "render": "tsx --tsconfig tsconfig.node.json scripts/render-wechat.ts",
+    "agent": "tsx --tsconfig tsconfig.node.json scripts/agent-render.ts",
     "feedback:sync": "tsx --tsconfig tsconfig.node.json scripts/feedback-inbox.ts",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",

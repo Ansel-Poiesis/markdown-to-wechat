@@ -37,6 +37,14 @@ Audit evidence and the proposed improvement sequence: [audit/2026-09-27/README.m
 
 ## Promotion Rules
 
+### 2026-09-27 studio feature candidate
+
+`codex/studio-agent-20260927` continues the verified local audit commit `d0b1b42`, under the user's request to extend that work. It contains the voice-project-inspired neumorphic workbench, nine rebuilt article presets, a shared Agent JSON/CLI contract, and imagegen preparation/attachment workflow. The package version remains `2.0.1` until an approved release is prepared. This branch is a local source candidate; it is not merged, pushed, packaged, deployed or promoted to Products.
+
+Implementation, screenshots, shared-skill installation and verification evidence: [studio delivery](design/2026-09-27/README.md). The installed skill lives in the user's shared skill root outside this repository; its local SHA-256 is recorded with the delivery evidence. The existing `docs/` Pages build remains untouched. Follow-on work can continue this candidate branch without pretending it is the synchronized main line.
+
+### General rules
+
 1. Development work only starts from a clean `main` synchronized with `origin/main`.
 2. A desktop build is stored once under `candidates/<version>` until it passes the release gate.
 3. Promotion to `release/` requires explicit approval, a recorded source commit, verification, desktop smoke testing, and an updated Products release record. The current `2.0.1` package is promoted from the verified candidate because a repeat build was blocked by the network.

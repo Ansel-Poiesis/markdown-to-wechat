@@ -32,9 +32,8 @@ const effectiveZoom = computed(() => {
   const availableWidth = hostWidth.value
   if (!availableWidth) return desiredZoom
   const basePadding = previewDevice.value === 'desktop' ? 0 : 48
-  const availableForBase = Math.max(0, availableWidth - basePadding)
-  const fitZoom = Math.min(1, availableForBase / previewWidth.value)
-  return Math.max(0.45, fitZoom * desiredZoom)
+  const fitZoom = Math.max(0.1, (availableWidth - basePadding) / previewWidth.value)
+  return Math.max(0.1, Math.min(desiredZoom, fitZoom))
 })
 const previewSidePadding = computed(() => {
   if (previewDevice.value === 'desktop') return 0
@@ -125,15 +124,11 @@ defineExpose({ scrollHost })
       </div>
       <div class="flex items-center gap-2">
         <!-- Device toggle -->
-        <div class="flex gap-0.5 bg-bg rounded-md p-0.5 border border-border-subtle">
+        <div class="preview-device-switch" aria-label="预览设备">
           <button
             type="button"
-            class="flex items-center gap-1 h-6 px-2 rounded-sm text-[10px] font-medium transition-all active:scale-95"
-            :class="
-              previewDevice === 'mobile'
-                ? 'bg-surface text-text shadow-sm font-semibold'
-                : 'text-text-tertiary hover:text-text'
-            "
+            class="preview-device-button"
+            :class="{ 'preview-device-button--active': previewDevice === 'mobile' }"
             title="移动端预览 (375px)"
             :aria-pressed="previewDevice === 'mobile'"
             @click="setPreviewDevice('mobile')"
@@ -143,12 +138,8 @@ defineExpose({ scrollHost })
           </button>
           <button
             type="button"
-            class="flex items-center gap-1 h-6 px-2 rounded-sm text-[10px] font-medium transition-all active:scale-95"
-            :class="
-              previewDevice === 'desktop'
-                ? 'bg-surface text-text shadow-sm font-semibold'
-                : 'text-text-tertiary hover:text-text'
-            "
+            class="preview-device-button"
+            :class="{ 'preview-device-button--active': previewDevice === 'desktop' }"
             title="网页端预览"
             :aria-pressed="previewDevice === 'desktop'"
             @click="setPreviewDevice('desktop')"
@@ -186,13 +177,16 @@ defineExpose({ scrollHost })
   overflow: auto;
   background: var(--color-workspace);
   display: grid;
+  margin: 0 12px 12px;
+  border-radius: 14px;
+  box-shadow: var(--shadow-inset);
 }
 
 .preview-canvas {
   width: max-content;
   min-width: max(100%, var(--preview-canvas-min, 100%));
   min-height: 100%;
-  padding: 32px var(--preview-canvas-x-padding, 24px) 8px;
+  padding: 22px var(--preview-canvas-x-padding, 24px) 22px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -204,10 +198,54 @@ defineExpose({ scrollHost })
   flex: 0 0 auto;
   overflow: hidden;
   overflow-wrap: break-word;
-  border-radius: 2px;
+  border-radius: 3px;
   box-shadow: var(--shadow-canvas);
   transition:
     width 0.2s ease,
     box-shadow 0.2s ease;
+}
+.preview-device-switch {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 11px;
+  background: var(--color-bg);
+}
+
+.preview-device-button {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 9px;
+  border-radius: 8px;
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+  font-weight: 500;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.preview-device-button:hover {
+  color: var(--color-text);
+}
+
+.preview-device-button--active {
+  color: var(--color-text);
+  background: var(--color-surface-pressed);
+  box-shadow: var(--shadow-inset-soft);
+  font-weight: 600;
+}
+
+@media (max-width: 639px) {
+  .preview-scroll {
+    margin: 0 10px 10px;
+  }
+  .preview-device-button {
+    min-height: 34px;
+  }
 }
 </style>

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "taskId": "editorial-long-sample",
+  "status": "needs_review",
+  "createdAt": "2026-09-27T03:20:34.252Z",
+  "manifestSha256": "9199877bbf2b48c58daa8a859c7b95a58a148c458036112f0eac76db0c836cdb",
+  "image": {
+    "path": "generated-image.png",
+    "sha256": "824d0cdbfd48ce8bcbfb38c9b381967312994535f7bc89565b99c255e651b3a9",
+    "bytes": 1975304,
+    "format": "png",
+    "extension": ".png",
+    "width": 941,
+    "height": 1672
+  },
+  "validation": "header_and_container_only; no complete image decode or OCR",
+  "providerProvenance": "caller_supplied; file does not attest which generator produced it",
+  "humanReview": "required",
+  "textFidelity": "unverified",
+  "publication": "not_started"
+}
