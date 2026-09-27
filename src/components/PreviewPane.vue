@@ -15,6 +15,7 @@ const settingsStore = useSettingsStore()
 const scrollHost = ref<HTMLElement>()
 const hostWidth = ref(0)
 let resizeObserver: ResizeObserver | null = null
+let resizeFrame: number | null = null
 
 // Desktop / Mobile preview toggle
 const previewDevice = ref<'desktop' | 'mobile'>('mobile')
@@ -97,8 +98,14 @@ watch(
 
 onMounted(() => {
   resizeObserver = new ResizeObserver((entries) => {
-    const entry = entries[0]
-    hostWidth.value = entry?.contentRect.width ?? 0
+    const width = entries[0]?.contentRect.width ?? 0
+    if (resizeFrame !== null) cancelAnimationFrame(resizeFrame)
+    // The fitted preview can change scrollbars. Defer its reactive layout write
+    // beyond observer delivery to avoid ResizeObserver feedback-loop errors.
+    resizeFrame = requestAnimationFrame(() => {
+      resizeFrame = null
+      if (hostWidth.value !== width) hostWidth.value = width
+    })
   })
   if (scrollHost.value) {
     hostWidth.value = scrollHost.value.clientWidth
@@ -108,6 +115,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (resizeFrame !== null) cancelAnimationFrame(resizeFrame)
   resizeObserver?.disconnect()
   resizeObserver = null
 })

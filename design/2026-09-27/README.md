@@ -44,6 +44,7 @@ npm run --silent agent -- attach-image --job-dir jobs/article-001 --image actual
 3. 连续排版数值被存储白名单重置，以及新导入的 24px 页边距误触旧迁移：范围校验与一次性迁移版本修复，并先复现失败再补回归。
 4. 长图使用 blob URL 被现有 CSP 拒绝：改为有体积限制的 data URL 读取，保持现有安全策略，实际回填复测通过。
 5. Windows 生成图片的文件锁使 Vite watcher 报 EBUSY 退出：只排除工程根级成果树的监听；源码监听与成果 HTTP 查看继续可用。修后九主题画廊仍可打开。
+6. 开发日志的 ResizeObserver 反馈警告：把缩放宽度的响应式更新延后一帧，并在卸载时取消待处理回调。实际快速切换八次屏宽均无横溢，浏览器错误列表为空，重新启动的 Vite 日志未再出现反馈警告：[切换测量](resize-regression.json)。
 
 ## 审美判断与验收边界
 
