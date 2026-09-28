@@ -74,7 +74,7 @@ describe('rich HTML clipboard reliability', () => {
     expect(await useClipboard().copyRenderedHtml('<p>正文</p>')).toBe(true)
     expect(write).toHaveBeenCalledOnce()
     expect(dom.command).toHaveBeenCalledWith('copy')
-    expect(showToast).toHaveBeenCalledWith('已复制到剪贴板')
+    expect(showToast).toHaveBeenCalledWith('已复制，可粘贴到公众号编辑器')
   })
 
   it('writes both MIME types with the async API without changing the selection', async () => {
