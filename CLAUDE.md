@@ -89,7 +89,7 @@ Key renderer behaviors:
 
 - Entry: `scripts/render-wechat.ts`; formats `fragment` / `document` / `json`.
 - Exit codes: `0` compliant success, `1` input/run error, `2` output failed the WeChat gate.
-- Parameter contract lives in `--help` and the `render-wechat-markdown` skill (`C:\Users\mingc\.codex\skills\render-wechat-markdown`).
+- Parameter contract lives in `--help` and the `render-wechat-markdown` skill (`C:\Users\mingc\.agents\skills\render-wechat-markdown`).
 
 ## Styling conventions
 

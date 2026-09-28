@@ -1,6 +1,6 @@
 {
   "name": "markdown-to-wechat",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "本地优先的微信公众号 Markdown 排版与内联 HTML 渲染工具",
   "author": "Ansel",
   "private": true,

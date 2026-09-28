@@ -9,7 +9,7 @@
 [**在线使用**](https://ansel-poiesis.github.io/markdown-to-wechat/) · [快速开始](#快速开始) · [自动渲染](#自动渲染)
 
 [![quality](https://github.com/Ansel-Poiesis/markdown-to-wechat/actions/workflows/quality.yml/badge.svg)](https://github.com/Ansel-Poiesis/markdown-to-wechat/actions/workflows/quality.yml)
-![version](https://img.shields.io/badge/version-2.1.0-17795f)
+![version](https://img.shields.io/badge/version-2.1.1-17795f)
 ![Vue](https://img.shields.io/badge/Vue-3.5-42b883?logo=vuedotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178c6?logo=typescript&logoColor=white)
 
@@ -17,8 +17,8 @@
 
 ## 版本状态
 
-- 当前版本：`2.1.0`，源码发布线为 `main` / `v2.1.0`。
-- Windows x64 安装包与便携包见 [GitHub Release](https://github.com/Ansel-Poiesis/markdown-to-wechat/releases/tag/v2.1.0)。
+- 当前源码版本：`2.1.1`（2026-09-29 源码小版本：全局核验、UI 细节与回归素材；未发布 Release/Pages/安装包）。
+- 正式发布线：`v2.1.0`。Windows x64 安装包与便携包见 [GitHub Release](https://github.com/Ansel-Poiesis/markdown-to-wechat/releases/tag/v2.1.0)。
 - 本版变更与验收边界见 [2.1.0 发布说明](release-notes/2.1.0.md)；历史版本保留在 Release 与 Products 归档中。
 
 维护、发布和本地产物的唯一规则见 [VERSIONING.md](VERSIONING.md)。
