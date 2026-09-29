@@ -309,7 +309,7 @@ watch(
           :name="tab === 'editor' ? 'pencil' : tab === 'preview' ? 'eye' : 'settings'"
           :size="18"
         />
-        <span class="text-[10px] font-medium">{{
+        <span class="text-[11px] font-medium leading-none">{{
           tab === 'editor' ? '编辑' : tab === 'preview' ? '预览' : '设置'
         }}</span>
       </button>

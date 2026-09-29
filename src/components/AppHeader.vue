@@ -51,22 +51,22 @@ function handleExport() {
       </div>
 
       <div class="app-header__stats">
-        <span class="flex items-center gap-1.5 tabular-nums">
+        <span class="flex items-center gap-1.5 tabular-nums" title="全文字数">
           <strong class="text-text font-bold text-sm">{{ stats.wordCount }}</strong>
           <span>字</span>
         </span>
         <span class="w-px h-3 bg-border mx-2" />
-        <span class="flex items-center gap-1.5 tabular-nums">
+        <span class="flex items-center gap-1.5 tabular-nums" title="预计阅读时长">
           <strong class="text-text font-bold text-sm">{{ stats.readingMinutes }}</strong>
           <span>分钟</span>
         </span>
         <span class="w-px h-3 bg-border mx-2" />
-        <span class="flex items-center gap-1.5 tabular-nums">
+        <span class="flex items-center gap-1.5 tabular-nums" title="标题数量">
           <strong class="text-text font-bold text-sm">{{ stats.headings }}</strong>
           <span>标题</span>
         </span>
         <span class="w-px h-3 bg-border mx-2" />
-        <span class="flex items-center gap-1.5 tabular-nums">
+        <span class="flex items-center gap-1.5 tabular-nums" title="图片数量">
           <strong class="text-text font-bold text-sm">{{ stats.images }}</strong>
           <span>图片</span>
         </span>
@@ -201,7 +201,7 @@ function handleExport() {
   align-items: center;
   gap: 4px;
   justify-self: center;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
   padding: 8px 0;
   font-size: 11px;
 }

@@ -25,7 +25,7 @@ export function useClipboard() {
       }
       if (!copied) copied = copyUsingSelection(html)
       if (!copied) throw new Error('Rich HTML clipboard is unavailable')
-      ui.showToast('已复制到剪贴板')
+      ui.showToast('已复制，可粘贴到公众号编辑器')
       return true
     } catch {
       ui.showToast('复制失败，请在浏览器权限中允许剪贴板', 'error')

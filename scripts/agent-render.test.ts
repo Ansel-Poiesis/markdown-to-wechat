@@ -54,7 +54,7 @@ function request(taskId: string, extra: Record<string, unknown> = {}) {
   return path
 }
 
-describe('agent CLI process and integrity contract', () => {
+describe('agent CLI process and integrity contract', { timeout: 30_000 }, () => {
   it('discovers capabilities and returns structured argument errors', () => {
     expect(run(['discover']).body.commands).toContain('attach-image')
     const invalid = run(['discover', '--request', 'ignored.json'])

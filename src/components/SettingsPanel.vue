@@ -346,14 +346,24 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
             <h3>正文样式</h3>
             <p>{{ typographySummary }}</p>
           </div>
-          <button
-            type="button"
-            class="reset-command"
-            :disabled="!hasComponentOverrides"
-            @click="settings.resetComponentOverrides()"
-          >
-            组件跟随主题
-          </button>
+          <div class="section-heading__commands">
+            <button
+              type="button"
+              class="reset-command"
+              title="把字号、行高、颜色等排版参数恢复为当前主题的默认值"
+              @click="settings.applyStylePreset(settings.activeStylePreset || 'qiuhe')"
+            >
+              恢复主题排版
+            </button>
+            <button
+              type="button"
+              class="reset-command"
+              :disabled="!hasComponentOverrides"
+              @click="settings.resetComponentOverrides()"
+            >
+              组件跟随主题
+            </button>
+          </div>
         </div>
 
         <div class="setting-group setting-group--plain">
@@ -1093,14 +1103,15 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   position: absolute;
   top: 12px;
   right: 11px;
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   color: var(--color-accent-contrast);
   background: var(--color-accent);
+  box-shadow: 0 1px 3px rgb(40 53 35 / 0.25);
 }
 
 .theme-card:hover {
@@ -1109,7 +1120,7 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 }
 
 .theme-card--active {
-  border-color: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent) 46%, transparent);
   background: var(--color-surface-pressed);
   box-shadow: var(--shadow-inset);
 }
@@ -1117,6 +1128,10 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
 .theme-card--active:hover {
   background: var(--color-surface-pressed);
   box-shadow: var(--shadow-inset);
+}
+
+.theme-card--active .theme-card__copy strong {
+  color: var(--color-accent);
 }
 
 .theme-card__preview {
@@ -1283,6 +1298,13 @@ function themeCardStyle(preset: (typeof STYLE_PRESETS)[number]) {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.section-heading__commands {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .reset-command {

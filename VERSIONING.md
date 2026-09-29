@@ -15,9 +15,13 @@ No other local directory is a development or release source.
 
 | Line | Version | Evidence | Status |
 | --- | --- | --- | --- |
-| Source release line | 2.1.0 | `v2.1.0` / `main` | Release receipts identify the exact commit |
+| Source release line | 2.1.1 | merged to `main` on 2026-09-29 | Source-only minor version; no Release/Pages/desktop artifacts |
 | Desktop release line | 2.1.0 | GitHub Release and Products `RELEASES.md` | Installer, portable and SHA-256 manifest |
 | Historical desktop releases | 2.0.1 / 2.0.0 | Products `archive/<version>` and GitHub Releases | Retained for recovery |
+
+### 2.1.1 source-only minor version (2026-09-29)
+
+Authorized by the user as a small-version commit/push. Scope: project-wide walkthrough (four user paths with screenshots, connectivity checks, system decomposition), UI polish (theme-card active state, typography reset command, copy toast guidance, header stats contrast, mobile nav labels), a stale skill-path fix in `CLAUDE.md`, and the WeChat regression long-form fixture imported from the open `maintenance-202609` branch (PR #7 itself remains open and conflicting; its doc changes are superseded by `main`). `verify` passed before and after (0 lint warnings, 256 tests, secret scan clean). No GitHub Release, Pages rebuild, desktop packaging, PR closure, 2FA or scheduling change: those remain user-gated. Project-archive record: Poiesis `版本状态.md` and qc report `04-全局核验与小版本迭代-20260929`.
 
 The 2.1.0 release rebuilds tracked `docs/` from the release source. GitHub Pages serves `main:/docs`; a release claim requires the deployed commit and online asset hashes, recorded in the Release manifest and Products release record. Source merge and deployment completion are separate states. The former 2.0.1 web build (`25bdac5`, included by tag commit `e07e866`) remains recoverable in Git and the historical Products snapshot.
 
